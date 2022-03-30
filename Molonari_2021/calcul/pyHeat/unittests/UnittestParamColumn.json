@@ -1,0 +1,5 @@
+{
+    "name": "Soil Column",
+    "hydroFile": "paramHyd.json",
+    "sedFile": "paramSed.json"  
+}

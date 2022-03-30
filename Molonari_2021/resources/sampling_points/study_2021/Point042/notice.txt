@@ -1,0 +1,30 @@
+#nom_point
+42
+#date_implantation
+05-04-2017
+#date_recolte
+18-05-2017; 12-07-2017;  
+#coordonnees_geographiques
+latitude="48.853006" longitude="3.148049" elavation=127.69
+#metrage_fibre
+5740
+#derive_tige_temperature:
+0;0;1.152;0.911
+#commentaire_terrain
+Tres dur a enfoncer. Presence des cailloux durs
+AR: 18/05/2017 : intervenants Pierre S. et Agnès R.
+AR: A pris l'eau mais le capteur fonctionne
+12/07/2017 : intervenants Pierre S. et Agnès R.
+modification de la profondeur de la boite de pression
+il a été constaté que le niveau de la rivière se trouvait en dessous le niveau du tube rivière le 06/07/2012.
+Aucune trace d'eau dans les deux boites T° P°
+batterie capteur de pression: 7.3V
+batterie Hobo P°: 100%
+batterie Hobo T°: 90%
+
+
+#commentaire_mesures
+La figure de charge et de temperature en fonction du temps montre une exfiltration la majorité du temps avec une difference de charge qui varie entre 5 et 10cm.
+Une importante infiltration est observée entre 09/05/2017 et 17/05/2017 suivie d'ne augmentation de la température de la ZH. 
+Entre 01/06/2017 et 12/07/2017, il y a une augmentation de temperature de la rivière, les températures hyporhéiques superficielles à une profondeur de 10 et 20 cm suivent les fluctuations de la température de la rivière,
+les températures hyporhéiques les plus profondes (à 30 et 40 cm) ont un aspect plus stable. 

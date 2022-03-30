@@ -1,0 +1,2 @@
+Name: sample_study6 
+SensorsDirectory: ../../resources/configuration

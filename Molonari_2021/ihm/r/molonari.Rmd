@@ -1,0 +1,159 @@
+---
+title: "Molonari"
+author: "F. Ors"
+date: "7 décembre 2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(shinyFiles)
+knitr::opts_chunk$set(echo = TRUE)
+msg.folder = "Please, choose a raw data folder"
+msg.point = "Please, choose a measure point"
+msg.up.to.date = "Results are 'up-to-date'"
+```
+
+```{r Internal functions}
+st.display.func <- function(input)
+{
+  if (input$law == "Uniform") 
+    x <- runif(input$data)
+  else
+    x <- rnorm(input$data)
+  bins <- seq(min(x), max(x), length.out = input$bins + 1)
+  hist(x, breaks = bins, 
+       col = c("blue","red","green")[as.numeric(input$color)],
+       border = c("black","orange","pink")[as.numeric(input$border)],
+       xlab = "Simulated values",
+       main = input$title)
+}
+
+st.eval.debug <- function(env,input)
+{
+  if (! miss(input$ligne))
+    eval(parse(text = input$ligne))
+}
+
+st.update.msg <- function(env,reset=TRUE)
+{
+  if (reset)
+    env$message = msg.folder
+  else if (env$message != msg.folder)
+    env$message = msg.point
+  else if (env$message != msg.up.to.date)
+  env
+}
+
+st.print <- function(env)
+{
+  if (! miss(env$message))
+    cat(env$message)
+}
+
+st.init <- function(env,input)
+{
+  env$message = msg.folder
+  env
+}
+```
+
+```{r User-Interface}
+ui <- shinyUI(
+  navbarPage("", id="navbar",
+             tabPanel("Histogram",
+                      sidebarLayout(
+                        # Side Bar
+                        sidebarPanel(
+                          radioButtons("law", "Distribution Law",inline=TRUE,choices=c("Uniform","Normal")),
+                          sliderInput(inputId = "data", label = "Number of Data:", 
+                                      min = 1, max = 1000,  value = 200),
+                          sliderInput(inputId = "bins", label = "Number of Classes:", 
+                                      min = 1, max = 200,  value = 100),
+                          selectInput("color", label = "Bin Color", 
+                                      choices = list("blue" = 1, "red" = 2, "green" = 3), 
+                                      selected = 1),
+                          selectInput("border", label = "Border Color", 
+                                      choices = list("black" = 1, "orange" = 2, "pink" = 3), 
+                                      selected = 1),
+                          textInput("title", label = "Graphic title", value = "Histogram")
+                        ),
+                        
+                        # Main panel for displaying outputs ----
+                        mainPanel(
+                          plotOutput(outputId = "histPlot"),
+                          verbatimTextOutput("mesarea")
+                        )
+                      )
+             ),
+             tabPanel("Data Visualization",
+                      sidebarLayout(
+                        sidebarPanel(
+                          shinyDirButton("dir", "Choose data directory", "Browse")
+                        ),
+                      
+                        mainPanel(
+                          h4("output$dir"),
+                          verbatimTextOutput("dir"), br(),
+                          h4("Files in that dir"),
+                          verbatimTextOutput("files")
+                        )
+                      )
+			       ),
+             tabPanel("Debug",
+                      sidebarLayout(
+                        sidebarPanel(
+                          textInput(inputId = "ligne", 
+                                    label = "Enter the Code Line to be executed", 
+                                    value = "ls()") 
+                        ),
+                        mainPanel(
+                          verbatimTextOutput("debug.text"),
+                          plotOutput(outputId="debug.plot")
+                        )
+                      )
+             )
+  )
+)
+
+```
+                  
+```{r Server Part}
+server <- shinyServer(function(input, output, session) 
+{
+  env = reactiveValues(data.folder = "",
+                       data.point = "",
+                       message = msg.folder)
+  
+  output$histPlot  <- renderPlot ({ st.display.func(input)   })
+  
+  output$mesarea   <- renderPrint({ st.print(env)            })
+  
+  output$debug.text<- renderPrint({ st.eval.debug(env,input) })
+  output$debug.plot<- renderPlot ({ st.eval.debug(env,input) })
+  
+  # dir
+  shinyDirChoose(input, 'dir', roots = c(home = '~'), filetypes = c('', 'txt'))
+  dir <- reactive(input$dir)
+  output$dir <- renderPrint(dir())
+
+  # path
+  path <- reactive({
+    home <- normalizePath("~")
+    file.path(home, paste(unlist(dir()$path[-1]), collapse = .Platform$file.sep))
+  })
+
+  # files
+  output$files <- renderPrint(list.files(path()))
+})
+```
+
+```{r Launching application}
+shinyApp(ui = ui,
+         server = server,
+         options = list(launch.browser = TRUE,
+                        width = "100%",
+                        height = 800))
+```
+
+

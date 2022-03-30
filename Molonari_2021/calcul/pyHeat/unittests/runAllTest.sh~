@@ -1,0 +1,3 @@
+for f in test*.py ; do
+    print'File $f'
+    done

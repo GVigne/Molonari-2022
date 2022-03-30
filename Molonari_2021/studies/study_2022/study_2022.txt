@@ -1,0 +1,2 @@
+Name: study_2022 
+SensorsDirectory: ../../resources/configuration

@@ -1,0 +1,13 @@
+{
+    "permeability" : "unitHyd",
+    "lambda" : "unitPropT",
+    "specificHeatCapacity" : "unitPropT",
+    "rho" :  "unitHyd",
+    "depth" : "unitL",
+    "dH" : "unitL",
+    "Triv" : "unitT",
+    "Taq" : "unitT",
+    "Taverage" : "unitT",
+    "Tampli" : "unitT",
+    "Period" : "unitTime"
+}

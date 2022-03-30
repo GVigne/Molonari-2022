@@ -1,0 +1,27 @@
+{
+    "Taverage": {
+        "val": 12,
+        "unit": "°C"
+    },
+    "sinus": [ {
+        "Tampli": {
+            "val": 12,
+            "unit": "K"
+                    },  
+        "Period": {
+            "val": 1,
+            "unit": "yr"
+        }
+    },
+    {
+        "Tampli": {
+            "val": 1,
+            "unit": "K"
+                    },  
+        "Period": {
+            "val": 1,
+            "unit": "j"
+        }
+    }
+]
+}

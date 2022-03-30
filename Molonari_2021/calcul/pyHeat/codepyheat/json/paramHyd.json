@@ -1,0 +1,11 @@
+{
+    "hydro": {
+        "permeability" : {
+            "val": "8e-4",
+            "unit": "m/s"
+        },
+        "porosity" : {
+            "val" : "0.15"
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "sediment": {
+        "specificHeatCapacity" : {
+            "val": "957",
+            "unit" : "m2 s-2 K-1"
+        },
+        "lambda" : {
+            "val": "2",
+            "unit": "W m-1 K-1"
+        },
+        "rho" : {
+            "val" : "3",
+            "unit" : "g/m3"
+        }
+    }
+  
+}

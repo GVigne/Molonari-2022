@@ -1,0 +1,22 @@
+#nom_point
+41
+#date_implantation
+05-04-2017
+#date_recolte
+18-05-2017; 11-07-2017;  
+#coordonnees_geographiques
+latitude="48.853006" longitude="3.148049"
+#metrage_fibre
+5520
+#derive_tige_temperature:
+0.12;0;0;0.096
+
+#commentaire_terrain
+AR: 05/04/2017 Installation
+Localisation: en amont du pont 2
+Presence des argiles vertes a une profondeur de 20 cm a peu pres.
+AR: 18/05/2017 : intervenants Pierre S. et Agnès R.
+AR : Hobo de la boite de température ne fonctionne pas à Verifier
+
+#commentaire_mesures
+La figure de charge et de temperature en fonction du temps montre une alternance entre infiltration et exfiltration avec des valeurs qui varient entre -6 cm et 4 cm.
