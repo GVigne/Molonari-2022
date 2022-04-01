@@ -4,7 +4,7 @@ The active software currently under development is the one situated in molonaviz
 This code is based on the software developed by Sandra Clodion and Charlotte de Mailly Nesle:<br/>
 https://github.com/SandraClodion/projet_molonaviz
     
-This requires pyHeat (see folder calcul), PyQt and matplotlib modules
+This requires pyheatme (see folder calcul), PyQt and matplotlib modules
 
 ## Usage
 Just launch the mainwindow.py script
