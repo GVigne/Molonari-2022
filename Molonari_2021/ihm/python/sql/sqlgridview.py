@@ -42,6 +42,47 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         # TODO : Still string to date conversion needed!
         self.axes.plot(mdates.date2num(times), values)
 
+class MplCanvasTimeScatter(FigureCanvasQTAgg):
+
+    def __init__(self):
+        self.fig = Figure()
+        self.axes = self.fig.add_subplot(111)
+        super(MplCanvasTimeScatter, self).__init__(self.fig)
+        
+        # Beautiful time axis
+        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
+        self.axes.xaxis.set_major_formatter(formatter)
+        self.axes.xaxis.set_major_locator(MaxNLocator(4))
+        self.setFocusPolicy( QtCore.Qt.ClickFocus )
+        self.setFocus()
+
+    def refresh(self, times, values):
+        # TODO : Still string to date conversion needed!
+        self.axes.plot(mdates.date2num(times), values,'.',picker=5)
+    
+    def click_connect(self):
+        def onpick(event):
+            ind = event.ind
+            datax,datay = event.artist.get_data()
+            datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
+            if len(ind) > 1:              
+                msx, msy = event.mouseevent.xdata, event.mouseevent.ydata
+                dist = np.sqrt((np.array(datax_)-msx)**2+(np.array(datay_)-msy)**2)
+                
+                ind = [ind[np.argmin(dist)]]
+                x = datax[ind]
+                y = datay[ind]
+            else:
+                x = datax_
+                y = datay_
+            datax = np.delete(datax,ind)
+            datay = np.delete(datay,ind)
+            event.artist.get_figure().clear()
+            event.artist.get_figure().gca().plot(datax,datay,'.',picker=5)
+            # event.artist.get_figure().gca().plot(x,y,'.',color="red")  
+            event.artist.get_figure().canvas.draw()
+
+        self.fig.canvas.mpl_connect("pick_event", onpick)
 
 class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
     
@@ -450,19 +491,9 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         print("Columns in the solved_temp table:", self.modelTemp.columnCount())
 
     def plotRawSQL(self):
-        """
-        Read the SQL database and display measures in a plot
-        """
-        print("Tables in the SQL Database:", self.rawCon.tables())
-
-        # Read the database and print its content using SELECT
-        selectDataQuery = QSqlQuery(self.rawCon)
-        ### TODO
-        selectDataQuery.exec("SELECT date, t1, t2, t3, t4 FROM Temperatures")
-
-        selectDataQuery.finish()
         
-        # Re-Load the table directly in a QSqlTableModel
+        
+        # Load the table directly in a QSqlTableModel
 
         model = QSqlTableModel(None, self.rawCon) # Without parent but with connection
         model.setTable("Temperatures") # Name of the table
@@ -473,13 +504,16 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
         if model.rowCount() <= 0:
             return 
+        
         times = [model.data(model.index(r,1)) for r in range(model.rowCount())]
         temperatures = [model.data(model.index(r,1+2)) for r in range(model.rowCount())]
 
-        self.mplRawTempCurve = MplCanvasTimeCurve()
+        self.mplRawTempCurve = MplCanvasTimeScatter()
         self.mplRawTempCurve.refresh(times, temperatures)
+        # self.mplRawTempCurve.fig.canvas.mpl_connect("pick_event", onpick)
+        self.mplRawTempCurve.click_connect()
 
-        self.widgetRawData.layout().addWidget(self.mplRawTempCurve)
+        self.widgetRawData.addWidget(self.mplRawTempCurve)
         
 
                 
