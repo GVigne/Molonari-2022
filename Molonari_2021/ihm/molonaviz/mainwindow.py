@@ -250,7 +250,12 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             subWin = SubWindow(point, self.currentStudy)
             subWin.setPointWidget()
 
-            if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView:
+            if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView and not self.actionSwitch_To_Cascade_View.isEnabled():
+                self.mdi.addSubWindow(subWin)
+                subWin.show()
+                self.mdi.cascadeSubWindows()
+
+            elif self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView and not self.actionSwitch_To_SubWindow_View.isEnabled():
                 self.mdi.addSubWindow(subWin)
                 subWin.show()
                 self.mdi.tileSubWindows()
