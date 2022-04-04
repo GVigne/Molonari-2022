@@ -253,6 +253,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
+        self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
+        self.pushButtonPrevisualize.clicked.connect(self.previsualizeCleaning)
         
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
@@ -277,6 +279,9 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.comboBoxDepth.setModel(self.modelDepth)
         self.tableView.setModel(self.modelTemp)
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        self.comboBoxRawVar.addItems(["t1", "t2", "t3", "t4", "t_stream", "charge_diff"])
+        self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         # Create a timer for asynchronous launch of refresh
         self.timer = QtCore.QTimer(self)
@@ -356,6 +361,20 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 cleanupPressure(dftemp)
                 # Convert the dates
                 convertDates(dftemp)
+                return dftemp
+
+            except Exception as e :
+                displayCriticalMessage(f"{str(e)}", "Please choose a different file")
+    
+        # If failure, return an empty dataframe
+        return pd.DataFrame()
+    
+    def readCalibrationCSV(self):
+        path = self.lineEditCalibrationFile.text()
+        if path:
+            try :
+                # Load the CSV file
+                dftemp = loadCSV(path)
                 return dftemp
 
             except Exception as e :
@@ -552,6 +571,70 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
         ### End TODO
         dynamicInsertQuery.finish()
+
+    def writeCalibrationSQL(self, df: pd.DataFrame):
+        """
+        Write the given Pandas dataframe into the SQL database
+        """
+        # Remove the previous measures table (if so)
+        dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query        
+        dropTableQuery.exec("DROP TABLE IF EXISTS Calibration") 
+        dropTableQuery.finish()
+        
+        # Create the table for storing the temperature measures (id, date, temp*4)
+        createTableQuery = QSqlQuery(self.rawCon) 
+        # Columns and their data type are defined
+        createTableQuery.exec(
+            """
+            CREATE TABLE IF NOT EXISTS Calibration (
+                Var VARCHAR(20),
+                Value VARCHAR(40)  
+            )
+            """
+        )
+        createTableQuery.finish()
+        # Construct the dynamic insert SQL request and execute it
+        dynamicInsertQuery = QSqlQuery(self.rawCon)
+        # In a dynamic query, first of all the query is prepared with placeholders (?)
+        dynamicInsertQuery.prepare(
+            """
+            INSERT INTO Calibration (
+                Var,
+                Value
+            )
+            VALUES (?, ?)
+            """
+        )
+
+        for i in range(df.shape[0]): 
+            val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
+            dynamicInsertQuery.addBindValue(str(val[0]))
+            dynamicInsertQuery.addBindValue(str(val[1]))
+            dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
+        dynamicInsertQuery.finish()
+
+    def readCalibrationSQL(self):
+        """
+        Read the SQL database and display measures
+        """
+        print("Tables in the SQL Database:", self.rawCon.tables())
+
+        # Read the database and print its content
+        selectDataQuery = QSqlQuery(self.rawCon)
+        selectDataQuery.exec("SELECT Var, Value FROM Calibration")
+
+        while selectDataQuery.next() :
+            print("  ", selectDataQuery.value(0),
+                        selectDataQuery.value(1))
+        selectDataQuery.finish()    
+
+        selectDataQuery = QSqlQuery(self.rawCon)
+        selectDataQuery.exec("PRAGMA table_info(Calibration)") #get column names
+        while selectDataQuery.next():
+            print(selectDataQuery.value(1))
+        selectDataQuery.finish()
+
+
     def readSQL(self):
         """
         Read the SQL database and display measures
@@ -627,7 +710,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             df = self.readRawZHCSV()            
             # Dump the measures to SQL database
             self.writeRawZHSQL(df)
-            # self.plotRawSQL()
 
     def browseFileRawPressure(self):
         """
@@ -639,7 +721,60 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             df = self.readRawPressureCSV()            
             # Dump the measures to SQL database
             self.writeRawPressureSQL(df)
-            self.plotRawSQL()
+            
+    def bbrowseFileCalibration(self):
+        """
+        Get the CSV file for the raw data to be cleaned up
+        """
+        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Calibration File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/configuration/pressure_sensors', filter='*.csv')[0]
+        if filePath:
+            self.lineEditCalibrationFile.setText(filePath)
+            df = self.readCalibrationCSV()            
+            # Dump the measures to SQL database
+            self.writeCalibrationSQL(df)
+
+    def load_pandas(self,db, statement, cols):    
+        query = QSqlQuery(db)
+        query.exec(statement)
+        table = []
+        while query.next():
+            values = []
+            for i in range(query.record().count()):
+                values.append(query.value(i))
+            table.append(values)
+        df = pd.DataFrame(table)
+        # for i in range(0, len(cols)) :
+        #     df.columns.values[i] = cols[i]
+        df.columns = cols
+        return df
+
+    def plotPrevisualizedVar(self):
+        "Refresh plot"
+        print(1-2)
+
+    def previsualizeCleaning(self):
+        "Cleans data and shows a previsuaization"
+        df_ZH = self.load_pandas(self.rawCon, "SELECT date, t1, t2, t3, t4 FROM ZH", ["date", "t1", "t2", "t3", "t4"])
+        convertDates(df_ZH)
+        print(df_ZH.shape)
+        df_Pressure = self.load_pandas(self.rawCon, "SELECT date, tension, t_stream FROM Pressure", ["date", "tension", "t_stream"])
+        convertDates(df_Pressure)
+        print(df_Pressure.shape)
+        df_Calibration = self.load_pandas(self.rawCon, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
+
+
+        intercept = float(df_Calibration.iloc[2][list(df_Calibration.columns)[-1]])
+        dUdH = float(df_Calibration.iloc[3][list(df_Calibration.columns)[-1]])
+        dUdT = float(df_Calibration.iloc[4][list(df_Calibration.columns)[-1]])
+
+        df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
+        df_Pressure.drop(labels="tension",axis=1,inplace=True)
+
+        df = df_Pressure.join(df_ZH.set_index("date"), on="date")
+        print(df.head())
+        print(df.tail())
+        self.plotPrevisualizedVar()
+
 
     def refresh(self):
         """
