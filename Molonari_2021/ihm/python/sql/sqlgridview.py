@@ -42,6 +42,47 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         # TODO : Still string to date conversion needed!
         self.axes.plot(mdates.date2num(times), values)
 
+class MplCanvasTimeScatter(FigureCanvasQTAgg):
+
+    def __init__(self):
+        self.fig = Figure()
+        self.axes = self.fig.add_subplot(111)
+        super(MplCanvasTimeScatter, self).__init__(self.fig)
+        
+        # Beautiful time axis
+        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
+        self.axes.xaxis.set_major_formatter(formatter)
+        self.axes.xaxis.set_major_locator(MaxNLocator(4))
+        self.setFocusPolicy( QtCore.Qt.ClickFocus )
+        self.setFocus()
+
+    def refresh(self, times, values):
+        # TODO : Still string to date conversion needed!
+        self.axes.plot(mdates.date2num(times), values,'.',picker=5)
+    
+    def click_connect(self):
+        def onpick(event):
+            ind = event.ind
+            datax,datay = event.artist.get_data()
+            datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
+            if len(ind) > 1:              
+                msx, msy = event.mouseevent.xdata, event.mouseevent.ydata
+                dist = np.sqrt((np.array(datax_)-msx)**2+(np.array(datay_)-msy)**2)
+                
+                ind = [ind[np.argmin(dist)]]
+                x = datax[ind]
+                y = datay[ind]
+            else:
+                x = datax_
+                y = datay_
+            datax = np.delete(datax,ind)
+            datay = np.delete(datay,ind)
+            event.artist.get_figure().clear()
+            event.artist.get_figure().gca().plot(datax,datay,'.',picker=5)
+            # event.artist.get_figure().gca().plot(x,y,'.',color="red")  
+            event.artist.get_figure().canvas.draw()
+
+        self.fig.canvas.mpl_connect("pick_event", onpick)
 
 class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
     
@@ -97,6 +138,38 @@ def loadCSV(path: str):
     df = pd.read_csv(path)
     
     return df
+
+def loadRawCSV(path: str):
+    df = pd.read_csv(path,header=1)
+    return df
+
+def cleanupTempZH(df: pd.DataFrame):
+    """
+    Cleanup raw temperature Pandas Dataframe:
+        - Rename the columns,
+        - Remove lines having missing values 
+        - Remove unexpected last columns and
+        - Delete Index column
+    
+    This function works directly on the giving Pandas Dataframe (in place)
+    """
+    # New column names
+    val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
+    all_cols = ["Idx", "Date"] + val_cols
+    # Rename the 6 first columns
+    # Remove lines having at least one missing value
+    # Remove last columns
+    # Remove first column
+
+    df.rename(columns={list(df.columns)[0]: all_cols[0], list(df.columns)[1]: all_cols[1], 
+                        list(df.columns)[2]: all_cols[2],  list(df.columns)[3]: all_cols[3], 
+                        list(df.columns)[4]: all_cols[4], list(df.columns)[5]: all_cols[5]}, inplace =  True)
+
+    df.drop(labels = list(df.columns)[6:],axis=1,inplace=True)
+
+    df.drop(labels = list(df.columns)[0],axis=1,inplace=True)
+
+    df.dropna(inplace = True) #Dropna is used once the useless columns are dropped. Otherwise, it could result an empty DataFrame
 
 
 def convertDates(df: pd.DataFrame):
@@ -169,6 +242,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonBrowseTemp.clicked.connect(self.browseFileTemp)
         self.pushButtonBrowseDepth.clicked.connect(self.browseFileDepth)
         self.pushButtonRefresh.clicked.connect(self.refresh)
+
+        self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
@@ -181,22 +256,28 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         if not self.con.open():
             displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
 
+        self.rawCon = QSqlDatabase.addDatabase("QSQLITE") #Creates the connection with a database
+        self.rawCon.setDatabaseName("molonari_temp.sqlite") #The database is self.sql
+        if not self.rawCon.open(): #Try to open the connection. If it fails, returns error
+            displayCriticalMessage(self.rawCon.lastError().databaseText(), "There was an error opening the database")
+            sys.exit(1)
+
         # Create data models and associate to corresponding viewers
         self.modelDepth = QSqlQueryModel(self)
         self.modelTemp = QSqlTableModel(self, self.con)
         self.comboBoxDepth.setModel(self.modelDepth)
         self.tableView.setModel(self.modelTemp)
-        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
+        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         # Create a timer for asynchronous launch of refresh
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.doRefresh)
         
         # TODO : to be removed
-        self.lineEditDepthFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/depths.csv")
-        self.lineEditTempFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/solved_temperatures.csv")
-        self.refreshImage()
-        self.refreshCurve()
+        # self.lineEditDepthFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/depths.csv")
+        # self.lineEditTempFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/solved_temperatures.csv")
+        # self.refreshImage()
+        # self.refreshCurve()
         
         
     def __del__(self):
@@ -205,6 +286,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         # Close the SQL connection
         self.con.close() ####
+        self.rawCon.close()
 
 
     def readCSV(self):
@@ -237,6 +319,23 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             
         return dfdepth, dftemp
     
+    def readRawZHCSV(self):
+        trawfile = self.lineEditRawZHFile.text()
+        if trawfile:
+            try :
+                # Load the CSV file
+                dftemp = loadRawCSV(trawfile)
+                # Cleanup the dataframe
+                cleanupTempZH(dftemp)
+                # Convert the dates
+                convertDates(dftemp)
+                return dftemp
+
+            except Exception as e :
+                displayCriticalMessage(f"{str(e)}", "Please choose a different file")
+    
+        # If failure, return an empty dataframe
+        return pd.DataFrame()
     
     def writeSQL(self, dfdepth: pd.DataFrame, df: pd.DataFrame):
         """
@@ -311,6 +410,63 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         
         self.con.commit()
 
+    def writeRawSQL(self, df: pd.DataFrame):
+        """
+        Write the given Pandas dataframe into the SQL database
+        """
+        # Remove the previous measures table (if so)
+        dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
+        
+        ### TODO
+        dropTableQuery.exec("DROP TABLE IF EXISTS Temperatures") 
+        ### End TODO
+        dropTableQuery.finish()
+        
+        # Create the table for storing the temperature measures (id, date, temp*4)
+        ### TODO
+
+        createTableQuery = QSqlQuery(self.rawCon) 
+        # Columns and their data type are defined
+        createTableQuery.exec(
+            """
+            CREATE TABLE IF NOT EXISTS Temperatures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+                date TIMESTAMP,
+                t1 FLOAT,
+                t2 FLOAT,
+                t3 FLOAT,
+                t4 FLOAT           
+            )
+            """
+        )
+        ### End TODO
+
+        # Construct the dynamic insert SQL request and execute it
+        ### TODO
+        
+        dynamicInsertQuery = QSqlQuery(self.rawCon)
+        # In a dynamic query, first of all the query is prepared with placeholders (?)
+        dynamicInsertQuery.prepare(
+            """
+            INSERT INTO Temperatures (
+                date,
+                t1,
+                t2,
+                t3,
+                t4
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """
+        )
+
+         
+        for i in range(df.shape[0]): 
+            val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
+            dynamicInsertQuery.addBindValue(str(val[0])) # The first placeholder is for the date. Then, it should be a string
+            for j in range(1,5):
+                dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
+            dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
+        ### End TODO
 
 
     def readSQL(self):
@@ -333,6 +489,33 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.modelTemp.select()
         print("Rows in the solved_temp table:", self.modelTemp.rowCount())
         print("Columns in the solved_temp table:", self.modelTemp.columnCount())
+
+    def plotRawSQL(self):
+        
+        
+        # Load the table directly in a QSqlTableModel
+
+        model = QSqlTableModel(None, self.rawCon) # Without parent but with connection
+        model.setTable("Temperatures") # Name of the table
+        model.select() # "Upload" the table
+        
+        while model.canFetchMore():
+            model.fetchMore()
+
+        if model.rowCount() <= 0:
+            return 
+        
+        times = [model.data(model.index(r,1)) for r in range(model.rowCount())]
+        temperatures = [model.data(model.index(r,1+2)) for r in range(model.rowCount())]
+
+        self.mplRawTempCurve = MplCanvasTimeScatter()
+        self.mplRawTempCurve.refresh(times, temperatures)
+        # self.mplRawTempCurve.fig.canvas.mpl_connect("pick_event", onpick)
+        self.mplRawTempCurve.click_connect()
+
+        self.widgetRawData.addWidget(self.mplRawTempCurve)
+        
+
                 
     def browseFileTemp(self):
         """
@@ -351,6 +534,18 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Depths File")[0]
         if filePath:
             self.lineEditDepthFile.setText(filePath)
+    
+    def browseFileRawZH(self):
+        """
+        Get the CSV file for the raw data to be cleaned up
+        """
+        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw ZH File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
+        if filePath:
+            self.lineEditRawZHFile.setText(filePath)
+            df = self.readRawZHCSV()            
+            # Dump the measures to SQL database
+            self.writeRawSQL(df)
+            self.plotRawSQL()
 
     def refresh(self):
         """
