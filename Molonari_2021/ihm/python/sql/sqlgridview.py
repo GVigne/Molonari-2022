@@ -156,21 +156,29 @@ def cleanupTempZH(df: pd.DataFrame):
     # New column names
     val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
     all_cols = ["Idx", "Date"] + val_cols
+
     # Rename the 6 first columns
+    for i in range(0, len(all_cols)) :
+        df.columns.values[i] = all_cols[i]
     # Remove lines having at least one missing value
+    df.dropna(subset=val_cols,inplace=True)
     # Remove last columns
+    df.dropna(axis=1,inplace=True)
     # Remove first column
+    df.drop(["Idx"],axis=1,inplace=True)
 
-    df.rename(columns={list(df.columns)[0]: all_cols[0], list(df.columns)[1]: all_cols[1], 
-                        list(df.columns)[2]: all_cols[2],  list(df.columns)[3]: all_cols[3], 
-                        list(df.columns)[4]: all_cols[4], list(df.columns)[5]: all_cols[5]}, inplace =  True)
-
-    df.drop(labels = list(df.columns)[6:],axis=1,inplace=True)
-
-    df.drop(labels = list(df.columns)[0],axis=1,inplace=True)
-
-    df.dropna(inplace = True) #Dropna is used once the useless columns are dropped. Otherwise, it could result an empty DataFrame
-
+def cleanupPressure(df: pd.DataFrame):
+    val_cols = ["tension_V", "Temp_Stream"]
+    all_cols = ["Idx", "Date"] + val_cols
+    # Rename the 6 first columns
+    for i in range(0, len(all_cols)) :
+        df.columns.values[i] = all_cols[i]
+    # Remove lines having at least one missing value
+    df.dropna(subset=val_cols,inplace=True)
+    # Remove last columns
+    df.dropna(axis=1,inplace=True)
+    # Remove first column
+    df.drop(["Idx"],axis=1,inplace=True)
 
 def convertDates(df: pd.DataFrame):
     """
@@ -244,6 +252,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonRefresh.clicked.connect(self.refresh)
 
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
+        self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
         
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
@@ -257,7 +266,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
 
         self.rawCon = QSqlDatabase.addDatabase("QSQLITE") #Creates the connection with a database
-        self.rawCon.setDatabaseName("molonari_temp.sqlite") #The database is self.sql
+        self.rawCon.setDatabaseName("molonari_raw.sqlite") #The database is self.sql
         if not self.rawCon.open(): #Try to open the connection. If it fails, returns error
             displayCriticalMessage(self.rawCon.lastError().databaseText(), "There was an error opening the database")
             sys.exit(1)
@@ -327,6 +336,24 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 dftemp = loadRawCSV(trawfile)
                 # Cleanup the dataframe
                 cleanupTempZH(dftemp)
+                # Convert the dates
+                convertDates(dftemp)
+                return dftemp
+
+            except Exception as e :
+                displayCriticalMessage(f"{str(e)}", "Please choose a different file")
+    
+        # If failure, return an empty dataframe
+        return pd.DataFrame()
+
+    def readRawPressureCSV(self):
+        trawfile = self.lineEditRawPressureFile.text()
+        if trawfile:
+            try :
+                # Load the CSV file
+                dftemp = loadRawCSV(trawfile)
+                # Cleanup the dataframe
+                cleanupPressure(dftemp)
                 # Convert the dates
                 convertDates(dftemp)
                 return dftemp
@@ -410,7 +437,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         
         self.con.commit()
 
-    def writeRawSQL(self, df: pd.DataFrame):
+    def writeRawZHSQL(self, df: pd.DataFrame):
         """
         Write the given Pandas dataframe into the SQL database
         """
@@ -418,7 +445,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
         
         ### TODO
-        dropTableQuery.exec("DROP TABLE IF EXISTS Temperatures") 
+        dropTableQuery.exec("DROP TABLE IF EXISTS ZH") 
         ### End TODO
         dropTableQuery.finish()
         
@@ -429,7 +456,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # Columns and their data type are defined
         createTableQuery.exec(
             """
-            CREATE TABLE IF NOT EXISTS Temperatures (
+            CREATE TABLE IF NOT EXISTS ZH (
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
                 date TIMESTAMP,
                 t1 FLOAT,
@@ -439,6 +466,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             )
             """
         )
+        createTableQuery.finish()
         ### End TODO
 
         # Construct the dynamic insert SQL request and execute it
@@ -448,7 +476,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # In a dynamic query, first of all the query is prepared with placeholders (?)
         dynamicInsertQuery.prepare(
             """
-            INSERT INTO Temperatures (
+            INSERT INTO ZH (
                 date,
                 t1,
                 t2,
@@ -466,9 +494,64 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             for j in range(1,5):
                 dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
             dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
+        dynamicInsertQuery.finish()
         ### End TODO
 
+    def writeRawPressureSQL(self, df: pd.DataFrame):
+        """
+        Write the given Pandas dataframe into the SQL database
+        """
+        # Remove the previous measures table (if so)
+        dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
+        
+        ### TODO
+        dropTableQuery.exec("DROP TABLE IF EXISTS Pressure") 
+        ### End TODO
+        dropTableQuery.finish()
+        
+        # Create the table for storing the temperature measures (id, date, temp*4)
+        ### TODO
 
+        createTableQuery = QSqlQuery(self.rawCon) 
+        # Columns and their data type are defined
+        createTableQuery.exec(
+            """
+            CREATE TABLE IF NOT EXISTS Pressure (
+                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+                date TIMESTAMP,
+                tension FLOAT,
+                t_stream FLOAT      
+            )
+            """
+        )
+        createTableQuery.finish()
+        ### End TODO
+
+        # Construct the dynamic insert SQL request and execute it
+        ### TODO
+        
+        dynamicInsertQuery = QSqlQuery(self.rawCon)
+        # In a dynamic query, first of all the query is prepared with placeholders (?)
+        dynamicInsertQuery.prepare(
+            """
+            INSERT INTO Pressure (
+                date,
+                tension,
+                t_stream
+            )
+            VALUES (?, ?, ?)
+            """
+        )
+
+         
+        for i in range(df.shape[0]): 
+            val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
+            dynamicInsertQuery.addBindValue(str(val[0])) # The first placeholder is for the date. Then, it should be a string
+            for j in range(1,3):
+                dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
+            dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
+        ### End TODO
+        dynamicInsertQuery.finish()
     def readSQL(self):
         """
         Read the SQL database and display measures
@@ -496,7 +579,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # Load the table directly in a QSqlTableModel
 
         model = QSqlTableModel(None, self.rawCon) # Without parent but with connection
-        model.setTable("Temperatures") # Name of the table
+        model.setTable("Pressure") # Name of the table
         model.select() # "Upload" the table
         
         while model.canFetchMore():
@@ -506,14 +589,13 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             return 
         
         times = [model.data(model.index(r,1)) for r in range(model.rowCount())]
-        temperatures = [model.data(model.index(r,1+2)) for r in range(model.rowCount())]
+        values = [model.data(model.index(r,1+2)) for r in range(model.rowCount())]
 
-        self.mplRawTempCurve = MplCanvasTimeScatter()
-        self.mplRawTempCurve.refresh(times, temperatures)
-        # self.mplRawTempCurve.fig.canvas.mpl_connect("pick_event", onpick)
-        self.mplRawTempCurve.click_connect()
+        self.mplRawPressureCurve = MplCanvasTimeScatter()
+        self.mplRawPressureCurve.refresh(times, values)
+        self.mplRawPressureCurve.click_connect()
 
-        self.widgetRawData.addWidget(self.mplRawTempCurve)
+        self.widgetRawData.addWidget(self.mplRawPressureCurve)
         
 
                 
@@ -544,7 +626,19 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.lineEditRawZHFile.setText(filePath)
             df = self.readRawZHCSV()            
             # Dump the measures to SQL database
-            self.writeRawSQL(df)
+            self.writeRawZHSQL(df)
+            # self.plotRawSQL()
+
+    def browseFileRawPressure(self):
+        """
+        Get the CSV file for the raw data to be cleaned up
+        """
+        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw Pressure File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
+        if filePath:
+            self.lineEditRawPressureFile.setText(filePath)
+            df = self.readRawPressureCSV()            
+            # Dump the measures to SQL database
+            self.writeRawPressureSQL(df)
             self.plotRawSQL()
 
     def refresh(self):
