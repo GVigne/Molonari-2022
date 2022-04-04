@@ -71,6 +71,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionRemove_Point.triggered.connect(self.removePoint)
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
+        self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)####
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
@@ -298,12 +299,21 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
         self.actionSwitch_To_Tabbed_View.setEnabled(False)
         self.actionSwitch_To_SubWindow_View.setEnabled(True)
+        self.actionSwitch_To_Cascade_View.setEnabled(True)
 
     def switchToSubWindowView(self):
         self.mdi.setViewMode(QtWidgets.QMdiArea.SubWindowView)
         self.mdi.tileSubWindows()
         self.actionSwitch_To_Tabbed_View.setEnabled(True)
         self.actionSwitch_To_SubWindow_View.setEnabled(False)
+        self.actionSwitch_To_Cascade_View.setEnabled(True)
+        
+    def switchToCascadeView(self):
+        self.mdi.setViewMode(QtWidgets.QMdiArea.SubWindowView)
+        self.mdi.cascadeSubWindows()
+        self.actionSwitch_To_Tabbed_View.setEnabled(True)
+        self.actionSwitch_To_SubWindow_View.setEnabled(True)
+        self.actionSwitch_To_Cascade_View.setEnabled(False)
         
 
 

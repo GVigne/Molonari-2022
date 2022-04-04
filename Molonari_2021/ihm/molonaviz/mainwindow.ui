@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
+    <width>1827</width>
     <height>901</height>
    </rect>
   </property>
@@ -49,6 +49,7 @@
     </property>
     <addaction name="actionSwitch_To_Tabbed_View"/>
     <addaction name="actionSwitch_To_SubWindow_View"/>
+    <addaction name="actionSwitch_To_Cascade_View"/>
     <addaction name="separator"/>
     <addaction name="actionData_Points"/>
     <addaction name="actionSensors"/>
@@ -352,6 +353,11 @@
   <action name="actionTempToCelsius">
    <property name="text">
     <string>Celsius</string>
+   </property>
+  </action>
+  <action name="actionSwitch_To_Cascade_View">
+   <property name="text">
+    <string>Switch To Cascade View</string>
    </property>
   </action>
  </widget>

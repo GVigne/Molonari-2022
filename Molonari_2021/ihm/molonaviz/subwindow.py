@@ -27,10 +27,18 @@ class SubWindow(QtWidgets.QMdiSubWindow):
         if mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView:
             mdi.removeSubWindow(self)
             mdi.tileSubWindows()
-        elif mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
+        if mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
+            mdi.setViewMode(QtWidgets.QMdiArea.SubWindowView)
+            mdi.removeSubWindow(self)
+            mdi.setViewMode(QtWidgets.QMdiArea.CascadeView)
+            mdi.removeSubWindow(self)
+            mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
+        elif mdi.viewMode() == QtWidgets.QMdiArea.CascadeView:
             mdi.setViewMode(QtWidgets.QMdiArea.SubWindowView)
             mdi.removeSubWindow(self)
             mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
+            mdi.removeSubWindow(self)
+            mdi.setViewMode(QtWidgets.QMdiArea.CascadeView)
 
 
 
