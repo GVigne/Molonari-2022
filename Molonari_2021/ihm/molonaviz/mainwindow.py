@@ -236,32 +236,36 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             pointname = dlg.getPointName()
-            print(f"Opening {pointname} ...") 
             point = self.pointModel.findItems(pointname)[0].data(QtCore.Qt.UserRole)
             self.openPointView(point)
-            print(" ==> done")
 
     def openPointfromTree(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
-        print(f"Opening {point.getName()} ...")
         self.openPointView(point)
-        print(" ==> done")
 
     def openPointView(self, point: Point):
-        subWin = SubWindow(point, self.currentStudy)
-        subWin.setPointWidget()
+        print(f"Opening {point.getName()} ...")
 
-        if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView:
-            self.mdi.addSubWindow(subWin)
-            subWin.show()
-            self.mdi.tileSubWindows()
+        if point.getName() not in [openedSubwindow.getName() for openedSubwindow in self.mdi.subWindowList()]:
+            subWin = SubWindow(point, self.currentStudy)
+            subWin.setPointWidget()
 
-        elif self.mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
-            self.switchToSubWindowView()
-            self.mdi.addSubWindow(subWin)
-            subWin.show()
-            self.mdi.tileSubWindows()
-            self.switchToTabbedView()
+            if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView:
+                self.mdi.addSubWindow(subWin)
+                subWin.show()
+                self.mdi.tileSubWindows()
+
+            elif self.mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
+                self.switchToSubWindowView()
+                self.mdi.addSubWindow(subWin)
+                subWin.show()
+                self.mdi.tileSubWindows()
+                self.switchToTabbedView()
+
+            print(" ==> done")
+
+        else:
+            print(f"{point.getName()} is already open")
         
     def removePoint(self):
         dlg = DialogRemovePoint()
