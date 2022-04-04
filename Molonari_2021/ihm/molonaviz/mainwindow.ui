@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
+    <width>918</width>
     <height>901</height>
    </rect>
   </property>
@@ -19,8 +19,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1019</width>
-     <height>22</height>
+     <width>918</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -49,6 +49,7 @@
     </property>
     <addaction name="actionSwitch_To_Tabbed_View"/>
     <addaction name="actionSwitch_To_SubWindow_View"/>
+    <addaction name="actionSwitch_To_Cascade_View"/>
     <addaction name="separator"/>
     <addaction name="actionData_Points"/>
     <addaction name="actionSensors"/>
@@ -319,6 +320,11 @@
    </property>
    <property name="text">
     <string>Application Messages</string>
+   </property>
+  </action>
+  <action name="actionSwitch_To_Cascade_View">
+   <property name="text">
+    <string>Switch To Cascade View</string>
    </property>
   </action>
  </widget>
