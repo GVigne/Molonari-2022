@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
+    <width>1827</width>
     <height>901</height>
    </rect>
   </property>
@@ -20,7 +20,7 @@
      <x>0</x>
      <y>0</y>
      <width>1019</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -49,6 +49,7 @@
     </property>
     <addaction name="actionSwitch_To_Tabbed_View"/>
     <addaction name="actionSwitch_To_SubWindow_View"/>
+    <addaction name="actionSwitch_To_Cascade_View"/>
     <addaction name="separator"/>
     <addaction name="actionData_Points"/>
     <addaction name="actionSensors"/>
@@ -58,8 +59,21 @@
     <property name="title">
      <string>MolonaViz</string>
     </property>
+    <widget class="QMenu" name="menuPreferences">
+     <property name="title">
+      <string>Preferences</string>
+     </property>
+     <widget class="QMenu" name="menuTemperature">
+      <property name="title">
+       <string>Temperature</string>
+      </property>
+      <addaction name="actionTempToKelvin"/>
+      <addaction name="actionTempToCelsius"/>
+     </widget>
+     <addaction name="menuTemperature"/>
+    </widget>
     <addaction name="actionAbout_MolonaViz"/>
-    <addaction name="actionPreferences"/>
+    <addaction name="menuPreferences"/>
     <addaction name="separator"/>
     <addaction name="actionQuit_MolonaViz"/>
    </widget>
@@ -92,6 +106,9 @@
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
+       <attribute name="headerVisible">
+        <bool>false</bool>
+       </attribute>
       </widget>
      </item>
     </layout>
@@ -115,7 +132,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -138,7 +155,11 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QTreeView" name="treeViewPressureSensors"/>
+          <widget class="QTreeView" name="treeViewPressureSensors">
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -163,7 +184,11 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QTreeView" name="treeViewShafts"/>
+          <widget class="QTreeView" name="treeViewShafts">
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -188,7 +213,11 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QTreeView" name="treeViewThermometers"/>
+          <widget class="QTreeView" name="treeViewThermometers">
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -283,11 +312,6 @@
     <string>Quit MolonaViz</string>
    </property>
   </action>
-  <action name="actionPreferences">
-   <property name="text">
-    <string>Preferences</string>
-   </property>
-  </action>
   <action name="actionData_Points">
    <property name="checkable">
     <bool>true</bool>
@@ -319,6 +343,21 @@
    </property>
    <property name="text">
     <string>Application Messages</string>
+   </property>
+  </action>
+  <action name="actionTempToKelvin">
+   <property name="text">
+    <string>Kelvin</string>
+   </property>
+  </action>
+  <action name="actionTempToCelsius">
+   <property name="text">
+    <string>Celsius</string>
+   </property>
+  </action>
+  <action name="actionSwitch_To_Cascade_View">
+   <property name="text">
+    <string>Switch To Cascade View</string>
    </property>
   </action>
  </widget>
