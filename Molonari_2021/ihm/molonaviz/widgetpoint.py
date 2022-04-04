@@ -14,6 +14,7 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
+from sql.creationinput import DataBase
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -93,7 +94,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         else:
             self.dftemp = readCSVWithDates(self.TemperatureDir)
         self.currentTemperatureModel = PandasModel(self.dftemp)
-        self.tableViewTemp.setModel(self.currentTemperatureModel)
+        # self.tableViewTemp.setModel(self.currentTemperatureModel)
+        temp = DataBase(self.dftemp, self.dfpress)
+        self.tableViewTemp.setModel(temp.model)
         #self.tableViewTemp.resizeColumnsToContents()
 
 
