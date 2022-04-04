@@ -143,7 +143,7 @@ def loadRawCSV(path: str):
     df = pd.read_csv(path,header=1)
     return df
 
-def cleanupTemp(df: pd.DataFrame):
+def cleanupTempZH(df: pd.DataFrame):
     """
     Cleanup raw temperature Pandas Dataframe:
         - Rename the columns,
@@ -243,7 +243,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonBrowseDepth.clicked.connect(self.browseFileDepth)
         self.pushButtonRefresh.clicked.connect(self.refresh)
 
-        self.pushButtonBrowseRaw.clicked.connect(self.browseFileRaw)
+        self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
@@ -267,7 +267,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.modelTemp = QSqlTableModel(self, self.con)
         self.comboBoxDepth.setModel(self.modelDepth)
         self.tableView.setModel(self.modelTemp)
-        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
+        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         # Create a timer for asynchronous launch of refresh
         self.timer = QtCore.QTimer(self)
@@ -319,14 +319,14 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             
         return dfdepth, dftemp
     
-    def readRawCSV(self):
-        trawfile = self.lineEditRawDataFile.text()
+    def readRawZHCSV(self):
+        trawfile = self.lineEditRawZHFile.text()
         if trawfile:
             try :
                 # Load the CSV file
                 dftemp = loadRawCSV(trawfile)
                 # Cleanup the dataframe
-                cleanupTemp(dftemp)
+                cleanupTempZH(dftemp)
                 # Convert the dates
                 convertDates(dftemp)
                 return dftemp
@@ -535,14 +535,14 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         if filePath:
             self.lineEditDepthFile.setText(filePath)
     
-    def browseFileRaw(self):
+    def browseFileRawZH(self):
         """
         Get the CSV file for the raw data to be cleaned up
         """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Depths File",'../../../studies/study_2022/Point034/raw_data', filter='*.csv')[0]
+        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw ZH File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
         if filePath:
-            self.lineEditRawDataFile.setText(filePath)
-            df = self.readRawCSV()            
+            self.lineEditRawZHFile.setText(filePath)
+            df = self.readRawZHCSV()            
             # Dump the measures to SQL database
             self.writeRawSQL(df)
             self.plotRawSQL()
