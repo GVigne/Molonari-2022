@@ -309,7 +309,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_Cascade_View.setEnabled(True)
 
     def switchToCascadeView(self):
-        # what is self.mdi, QMdiArea
         self.mdi.setViewMode(QtWidgets.QMdiArea.SubWindowView)
         self.mdi.cascadeSubWindows()
         self.actionSwitch_To_Tabbed_View.setEnabled(True)
