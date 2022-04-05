@@ -17,7 +17,7 @@ class DialogAboutUs(QtWidgets.QDialog,From_DialogAboutUs):
         logo1path = os.path.join(os.path.dirname(__file__), "LogoMines.jpeg")
         logo2path = os.path.join(os.path.dirname(__file__), "MolonavizIcon.png")
 
-        # self.labelLogo1.setPixmap(QPixmap(logo1path))
-        # self.labelLogo2.setPixmap(QPixmap(logo2path))
+        #self.labelLogo1.setPixmap(QPixmap(logo1path))
+        #self.labelLogo2.setPixmap(QPixmap(logo2path))
         # self.labelLogo1.setScaledContents(True)
         # self.labelLogo2.setScaledContents(True)
