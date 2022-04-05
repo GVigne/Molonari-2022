@@ -6,14 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>530</height>
+    <width>979</width>
+    <height>733</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>About Us</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetFixedSize</enum>
+   </property>
    <item row="0" column="0" colspan="2">
     <widget class="QLabel" name="label">
      <property name="sizePolicy">
@@ -29,8 +38,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">
-</string>
+      <string notr="true"/>
      </property>
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -66,9 +74,9 @@
         <property name="plainText">
          <string>Objectif : Développer une chaîne d’acquisition globale depuis le capteur jusqu’au poste de contrôle pour le suivi des échanges entre un cours d'eau et une nappe afin de proposer un outil innovant de suivi de la ressource en eau.
 
-Projet divisé en quatre groupes : capteur, calcul, interface homme-machine, stratégie.
+Projet divisé en trois groupes : capteur, calcul, interface homme-machine.
 
-Copyright in 2021
+Copyright in 2022
 Expiration date : unlimited
 Contact : nicolas.flipo@mines-paristech.fr
 </string>
