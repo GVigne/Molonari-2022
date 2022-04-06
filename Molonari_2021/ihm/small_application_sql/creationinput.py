@@ -54,11 +54,31 @@ def createTableMeasures(connection):
         date        TIME    NOT NULL
                             UNIQUE,
         pressure    REAL    NOT NULL,
+        bed_temp    REAL,
         point_key   INTEGER,
         uncertaincy REAL
         );
         """
     )
+    
+    createTablesQuery.exec_(
+        """
+        CREATE TABLE processed_measures (
+        id            INTEGER  PRIMARY KEY AUTOINCREMENT,
+        date          DATETIME UNIQUE,
+        temp_bed      REAL     NOT NULL,
+        t1            REAL     NOT NULL,
+        t2            REAL     NOT NULL,
+        t3            REAL     NOT NULL,
+        t4            REAL     NOT NULL,
+        pressure      REAL     NOT NULL,
+        point_key     INTEGER,
+        uncertainties INTEGER
+        );
+
+        """
+    )
+    
     createTablesQuery.finish()
 
 
@@ -104,10 +124,11 @@ def writeRawPressuresSql(con, dfpress):
         INSERT INTO measures_press (
            date,
            pressure,
+           bed_temp,
            point_key,
            uncertaincy
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         """
     )
     
@@ -116,13 +137,50 @@ def writeRawPressuresSql(con, dfpress):
     for ind in dfpress.index:
         insertPressuresQuery.addBindValue(str(dfpress[col[0]][ind]))
         insertPressuresQuery.addBindValue(str(dfpress[col[1]][ind]))
+        insertPressuresQuery.addBindValue(str(dfpress[col[2]][ind]))
         insertPressuresQuery.addBindValue("0")
         insertPressuresQuery.addBindValue("0")
         
         insertPressuresQuery.exec_()
     insertPressuresQuery.finish()
 
+
+def writeProcessedMeasuresSql(con, df):
+    insertProcessedMeasuresQuery = QSqlQuery(con)
+    insertProcessedMeasuresQuery.prepare(
+        """
+        INSERT INTO processed_measures (
+            date,
+            temp_bed,
+            t1,
+            t2,
+            t3,
+            t4,
+            pressure,
+            point_key,
+            uncertainties
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+    )
     
+    col = df.columns
+    
+    for ind in df.index:
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[0]][ind]))
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[-1]][ind]))
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[1]][ind]))
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[2]][ind]))
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[3]][ind]))
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[4]][ind]))
+        insertProcessedMeasuresQuery.addBindValue(str(df[col[5]][ind]))
+        insertProcessedMeasuresQuery.addBindValue("0")
+        insertProcessedMeasuresQuery.addBindValue("0")
+        
+        insertProcessedMeasuresQuery.exec_()
+    insertProcessedMeasuresQuery.finish()
+        
+
 
 class DataBase(version_ui[0], version_ui[1]):
     def __init__(self) -> None:
@@ -177,6 +235,8 @@ class DataBase(version_ui[0], version_ui[1]):
             self.model.setTable("measures_temp")
         elif self.comboBox.currentText() == "Raw pressures":
             self.model.setTable("measures_press")
+        elif self.comboBox.currentText() == "Processed measures":
+            self.model.setTable("processed_measures")
         
         self.model.select()
         
@@ -200,6 +260,7 @@ class DataBase(version_ui[0], version_ui[1]):
             # Read the CSV file
             df_processed_temp = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_temperatures.csv")
             df_processed_press = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_pressures.csv")
+            df_processed_measures = df_processed_temp.merge(df_processed_press)
             df_raw_temp = pd.read_csv(StudyFolderPath + "/Point034/raw_data/raw_temperatures.csv", skiprows=1)
             df_raw_temp = df_raw_temp.iloc[:, 1:]
             df_raw_press = pd.read_csv(StudyFolderPath + "/Point034/raw_data/raw_pressures.csv", skiprows=1)
@@ -208,6 +269,7 @@ class DataBase(version_ui[0], version_ui[1]):
             # Dump the measures to SQL database
             writeRawTemperaturesSql(self.con, df_raw_temp)
             writeRawPressuresSql(self.con, df_raw_press)
+            writeProcessedMeasuresSql(self.con, df_processed_measures)
             
             # Read the SQL and update the views
             self.displaySQL()
