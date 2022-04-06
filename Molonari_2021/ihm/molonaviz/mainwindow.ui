@@ -10,6 +10,12 @@
     <height>901</height>
    </rect>
   </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::CustomContextMenu</enum>
+  </property>
   <property name="windowTitle">
    <string>MolonaViz</string>
   </property>
@@ -19,8 +25,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1019</width>
-     <height>26</height>
+     <width>1827</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -103,6 +109,9 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTreeView" name="treeViewDataPoints">
+       <property name="contextMenuPolicy">
+        <enum>Qt::CustomContextMenu</enum>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -132,7 +141,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -362,5 +371,22 @@
   </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>treeViewDataPoints</sender>
+   <signal>customContextMenuRequested(QPoint)</signal>
+   <receiver>menuPoint</receiver>
+   <slot>show()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>139</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>76</x>
+     <y>52</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

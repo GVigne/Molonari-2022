@@ -16,6 +16,7 @@ from queuethread import *
 from usefulfonctions import *
 from errors import *
 
+
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
 
 class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
@@ -66,7 +67,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionCreate_Study.triggered.connect(self.createStudy)
         self.actionClose_Study.triggered.connect(self.closeStudy)
         self.actionImport_Point.triggered.connect(self.importPoint)
-        self.actionOpen_Point.triggered.connect(self.openPoint)
+        self.actionOpen_Point.triggered.connect(self.openPointTimer)
         self.actionRemove_Point.triggered.connect(self.removePoint)
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
@@ -74,10 +75,14 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
-        self.treeViewDataPoints.doubleClicked.connect(self.openPointfromTree)
+        self.treeViewDataPoints.doubleClicked.connect(self.openPointTimer)
 
-        self.pushButtonClear.clicked.connect(self.clearText)     
-        
+        self.pushButtonClear.clicked.connect(self.clearText)
+
+        self.timer = QtCore.QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.openPoint)
+
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
         # self.setGeometry(screenSize)
@@ -229,21 +234,13 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 print(f"Point import aborted : {str(e)}")
                 displayCriticalMessage('Point import aborted', f"Couldn't import point due to the following error : \n{str(e)}")
            
-    def openPoint(self):
-        dlg = DialogOpenPoint()
-        dlg.setPointsList(self.pointModel)
-        res = dlg.exec()
-        if res == QtWidgets.QDialog.Accepted:
-            pointname = dlg.getPointName()
-            point = self.pointModel.findItems(pointname)[0].data(QtCore.Qt.UserRole)
-            self.openPointView(point)
-
-    def openPointfromTree(self):
+    def openPointTimer(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
-        self.openPointView(point)
-
-    def openPointView(self, point: Point):
         print(f"Opening {point.getName()} ...")
+        self.timer.start(200)
+
+    def openPoint(self):
+        point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
 
         if point.getName() not in [openedSubwindow.getName() for openedSubwindow in self.mdi.subWindowList()]:
             subWin = SubWindow(point, self.currentStudy)
@@ -271,37 +268,31 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         else:
             print(f"{point.getName()} is already open")
         
-    def removePoint(self):
-        dlg = DialogRemovePoint()
-        dlg.setPointsList(self.pointModel)
-        res = dlg.exec()
+    def removePoint(self):  
+        title = "Warning ! You are about to delete a point"
+        message = "All point data will be deleted. Are you sure you want to proceed ?"
+        msgBox = displayConfirmationMessage(title, message)
         
-        if res == QtWidgets.QDialog.Accepted:
+        if msgBox == QtWidgets.QMessageBox.Ok:
+            pointName = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+            pointItem = self.pointModel.findItems(pointName)[0]
             
-            title = "Warning ! You are about to delete a point"
-            message = "All point data will be deleted. Are you sure you want to proceed ?"
-            msgBox = displayConfirmationMessage(title, message)
+            point = pointItem.data(QtCore.Qt.UserRole)
+            point.delete() #supprime le dossier du rootDir
+
+            pointIndex = self.pointModel.indexFromItem(pointItem)
+            self.pointModel.removeRow(pointIndex.row()) #supprime l'item du model
+
+            #On ferme la fenêtre associée au point qu'on enlève
+            openedSubWindows = self.mdi.subWindowList()
+            for subWin in openedSubWindows:
+                if subWin.getName() == pointName:
+                    subWin.close()
             
-            if msgBox == QtWidgets.QMessageBox.Ok:
-                pointName = dlg.getPointToDelete()
-                pointItem = self.pointModel.findItems(pointName)[0]
-                
-                point = pointItem.data(QtCore.Qt.UserRole)
-                point.delete() #supprime le dossier du rootDir
-
-                pointIndex = self.pointModel.indexFromItem(pointItem)
-                self.pointModel.removeRow(pointIndex.row()) #supprime l'item du model
-
-                #On ferme la fenêtre associée au point qu'on enlève
-                openedSubWindows = self.mdi.subWindowList()
-                for subWin in openedSubWindows:
-                    if subWin.getName() == pointName:
-                        subWin.close()
-                
-                print(f"{pointName} successfully removed")
-            else : 
-                #displayInfoMessage("Point removal aborted")
-                print("Point removal aborted")
+            print(f"{pointName} successfully removed")
+        else : 
+            #displayInfoMessage("Point removal aborted")
+            print("Point removal aborted")
 
     def switchToTabbedView(self):
         self.mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
