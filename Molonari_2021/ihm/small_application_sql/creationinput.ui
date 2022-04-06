@@ -50,12 +50,17 @@
      <widget class="QComboBox" name="comboBox">
       <item>
        <property name="text">
-        <string>Processed temperatures</string>
+        <string>Processed measures</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>Processed pressure</string>
+        <string>Raw temperatures</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Raw pressures</string>
        </property>
       </item>
      </widget>

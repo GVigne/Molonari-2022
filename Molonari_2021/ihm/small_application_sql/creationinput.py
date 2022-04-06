@@ -195,9 +195,9 @@ class DataBase(version_ui[0], version_ui[1]):
         """
         
         # Re-Load the table directly in a QSqlTableModel
-        if self.comboBox.currentText() == "Processed temperatures":
+        if self.comboBox.currentText() == "Processed measures":
             self.model.setTable("processed_measures_temp")
-        else:
+        elif self.comboBox.currentText() == "":
             self.model.setTable("processed_measures_press")
         
         self.model.select()
