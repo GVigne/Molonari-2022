@@ -54,7 +54,7 @@ def loadCSV(path: str):
         df = pd.read_csv(path, sep='\t', skiprows=1)
     # Re-Check the number of columns
     if df.shape[1] < 6 or df.shape[1] > 10 :  # Idx + Date + Temp x4
-        raise LoadingError(trawfile, "Wrong number of columns in temperature file. Is it a CSV file?")
+        raise LoadingError(path, "Wrong number of columns in temperature file. Is it a CSV file?")
     return df
 
 

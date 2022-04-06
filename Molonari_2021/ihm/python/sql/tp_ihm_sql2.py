@@ -4,10 +4,8 @@ import pandas as pd
 # Import PyQt sub-modules
 from PyQt5 import QtWidgets, QtCore, uic
 # Import PyQt5.QtSql classes 
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel, QSqlQueryModel
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 
-# Import matplolib backend for PyQt
-# https://www.pythonguis.com/tutorials/plotting-matplotlib/
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
@@ -23,7 +21,7 @@ from matplotlib.ticker import MaxNLocator
 # This function returns a pair of "types" : (generated_class, base_class) :
 #  - generated_class: Ui_TemperatureViewer (contains all graphical controls/views defined with QtDesigner
 #  - base_class: PyQt5.QtWidgets.QDialog (parent class of the UI)
-From_sqlgridview = uic.loadUiType(os.path.join(os.path.dirname(__file__),"sqlgridview.ui"))
+From_tp_ihm_sql2 = uic.loadUiType(os.path.join(os.path.dirname(__file__),"tp_ihm_sql2.ui"))
 
 
 class MplCanvasTimeCurve(FigureCanvasQTAgg):
@@ -42,29 +40,6 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         # TODO : Still string to date conversion needed!
         self.axes.plot(mdates.date2num(times), values)
 
-
-class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
-    
-    def __init__(self):
-        self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
-        super(MplCanvaTimeDepthImage, self).__init__(self.fig)
-        
-        # TODO : test this
-        self.fig.tight_layout(h_pad=2, pad=2)
-        
-        # Beautiful time axis
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-        self.axes.xaxis.set_major_formatter(formatter)
-        self.axes.xaxis.set_major_locator(MaxNLocator(4))
-
-    def refresh(self, times, depths, values):
-        # TODO : Still string to date conversion needed!
-        self.x = mdates.date2num(times)
-        
-        image = self.axes.imshow(values, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], depths[-1], depths[0]])
-
-        
 class LoadingError(Exception):
     """
     Override Exception base class for particular case of a file loading error
@@ -92,11 +67,44 @@ def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
 
 def loadCSV(path: str):
     """
-    Open and read the CSV file
+    Open and read the CSV file. Raise a LoadingError exception if :
+     - less than 6 columns are read
+     - more than 10 columns are read
     """
-    df = pd.read_csv(path)
-    
+    df = pd.read_csv(path, skiprows=1)
+    #df = pd.read_csv(trawfile) #### To be fixed
+    # Check the number of columns
+    if df.shape[1] < 6 or df.shape[1] > 10 :  # Idx + Date + Temp x4
+        # Try with another separator
+        df = pd.read_csv(path, sep='\t', skiprows=1)
+    # Re-Check the number of columns
+    if df.shape[1] < 6 or df.shape[1] > 10 :  # Idx + Date + Temp x4
+        raise LoadingError(path, "Wrong number of columns in temperature file. Is it a CSV file?")
     return df
+
+
+def cleanupTemp(df: pd.DataFrame):
+    """
+    Cleanup raw temperature Pandas Dataframe:
+        - Rename the columns,
+        - Remove lines having missing values 
+        - Remove unexpected last columns and
+        - Delete Index column
+    
+    This function works directly on the giving Pandas Dataframe (in place)
+    """
+    # New column names
+    val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
+    all_cols = ["Idx", "Date"] + val_cols
+    # Rename the 6 first columns
+    for i in range(0, len(all_cols)) :
+        df.columns.values[i] = all_cols[i]
+    # Remove lines having at least one missing value
+    df.dropna(subset=val_cols,inplace=True)
+    # Remove last columns
+    df.dropna(axis=1,inplace=True)
+    # Remove first column
+    df.drop(["Idx"],axis=1,inplace=True)
 
 
 def convertDates(df: pd.DataFrame):
@@ -118,10 +126,6 @@ def convertDates(df: pd.DataFrame):
                "%d/%m/%y %H:%M",    "%d/%m/%y %I:%M %p",
                "%m/%d/%Y %H:%M:%S", "%m/%d/%Y %I:%M:%S %p", 
                "%d/%m/%Y %H:%M",    "%d/%m/%Y %I:%M %p",
-               "%y/%m/%d %H:%M:%S", "%y/%m/%d %I:%M:%S %p", 
-               "%y/%m/%d %H:%M",    "%y/%m/%d %I:%M %p",
-               "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %I:%M:%S %p", 
-               "%Y/%m/%d %H:%M",    "%Y/%m/%d %I:%M %p",
                None)
     times = df[df.columns[0]]
     for f in formats:
@@ -148,10 +152,10 @@ def convertDates(df: pd.DataFrame):
     raise ValueError("Cannot convert dates: No known formats match your data!")
 
 
-class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
+class TemperatureViewer(From_tp_ihm_sql2[0], From_tp_ihm_sql2[1]):
     """
     Dialog class that inherits from BOTH :
-     - the QtDesigner generated_class: UI_TemperatureViewer 
+     - the QtDesigner generated_class: UI_TemeperatureViewer 
      - the UI base_class (here QDialog)
     This offers the possibility to access directly the graphical controls variables (i.e. self.editFile)
     """
@@ -165,13 +169,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
-        # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFile*'
-        self.pushButtonBrowseTemp.clicked.connect(self.browseFileTemp)
-        self.pushButtonBrowseDepth.clicked.connect(self.browseFileDepth)
-        self.pushButtonRefresh.clicked.connect(self.refresh)
+        # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFile'
+        self.pushButtonBrowseCleanTemp.clicked.connect(self.browseFile)
         
         # Remove existing SQL database file (if so)
-        self.sql = "molonari_grid_temp.sqlite"
+        self.sql = "molonari_temppress.sqlite"
         if os.path.exists(self.sql):
             os.remove(self.sql)
 
@@ -182,30 +184,26 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
 
         # Create data models and associate to corresponding viewers
-        self.modelDepth = QSqlQueryModel(self)
+        self.modelDepth = QSqlTableModel(self, self.con)
         self.modelTemp = QSqlTableModel(self, self.con)
-        self.comboBoxDepth.setModel(self.modelDepth)
-        self.tableView.setModel(self.modelTemp)
-        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
+        self.tableViewDataArray.setModel(self.modelTemp)
+        self.tableViewDataArray.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
 
-        # Create a timer for asynchronous launch of refresh
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.doRefresh)
-        
-        # TODO : to be removed
-        self.lineEditDepthFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/depths.csv")
-        self.lineEditTempFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/solved_temperatures.csv")
-        self.refreshImage()
-        self.refreshCurve()
-        
-        
+        #Refresh button allows arrays and plots to appear
+        self.pushButtonRefresh.clicked.connect(self.doRefresh)
+
+        self.lineEditCleanTempFile.setText("C:/Users/benja/Documents/MOLONARI/Molonari-2022/Molonari_2021/studies/study_2022/Point034/processed_data/processed_temperatures.csv")
+        self.lineEditCleanPressFile.setText("C:/Users/benja/Documents/MOLONARI/Molonari-2022/Molonari_2021/studies/study_2022/Point034/processed_data/processed_pressure.csv")
+        self.lineEditRawTempFile.setText("C:/Users/benja/Documents/MOLONARI/Molonari-2022/Molonari_2021/studies/study_2022/Point034/raw_data/raw_temperatures.csv")
+        self.lineEditRawPressFile.setText("C:/Users/benja/Documents/MOLONARI/Molonari-2022/Molonari_2021/studies/study_2022/Point034/raw_data/raw_pressure.csv")
+
+
     def __del__(self):
         """
         Destructor
         """
         # Close the SQL connection
-        self.con.close() ####
-
+        self.con.close()
 
     def readCSV(self):
         """
@@ -213,104 +211,100 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         and load it into a Pandas dataframes
         """
         # Retrieve the CSV file paths from lineEditDepthFile and lineEditTempFile
-        depthfile = self.lineEditDepthFile.text()
-        gridfile = self.lineEditTempFile.text()
-        if depthfile and gridfile:
+        cleantempfile = self.lineEditCleanTempFile.text()
+        cleanpressfile = self.lineEditCleanPressFile.text()
+        rawtempfile = self.lineEditRawTempFile.text()
+        rawpressfile = self.lineEditRawPressFile.text()
+        if cleantempfile and cleanpressfile:
             try :
                 # Load the CSV file
-                dfdepth = loadCSV(depthfile)
-                
-            except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different depth file")
-                return pd.DataFrame(), pd.DataFrame()
-            
-            try :
-                # Load the CSV file
-                dftemp = loadCSV(gridfile)
-                
+                dfcleantemp = loadCSV(cleantempfile)
                 # Convert the dates
-                convertDates(dftemp)
+                convertDates(dfcleantemp)
                 
             except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different temperatures file")
+                displayCriticalMessage(f"{str(e)}", "Please choose a different clean temp file")
+                return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+            
+            try :
+                dfcleanpress = loadCSV(cleanpressfile)
+                convertDates(dfcleanpress)
+                
+            except Exception as e :
+                displayCriticalMessage(f"{str(e)}", "Please choose a different clean press file")
                 return pd.DataFrame(), pd.DataFrame()
             
-        return dfdepth, dftemp
+            try :
+                dfrawtemp = loadCSV(rawtempfile)
+                convertDates(dfrawtemp)
+                
+            except Exception as e :
+                displayCriticalMessage(f"{str(e)}", "Please choose a different raw temp file")
+                return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+            try :
+                dfrawpress = loadCSV(rawpressfile)
+                convertDates(dfrawpress)
+                
+            except Exception as e :
+                displayCriticalMessage(f"{str(e)}", "Please choose a different raw press file")
+                return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+            
+        return dfcleantemp, dfcleanpress, dfrawtemp, dfrawpress
     
     
-    def writeSQL(self, dfdepth: pd.DataFrame, df: pd.DataFrame):
+    def writeSQL(self, df: pd.DataFrame):
         """
         Write the given Pandas dataframe into the SQL database
         """
-        # Number of depths
-        #self.ndepth = df.shape[1] - 1 # Remove Date/Time column
-        #if self.ndepth != dfdepth.shape[0]:
-            #displayCriticalMessage(f"{str(e)}", "Number of depths doesn't match")
-            #return
-            
-        # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.con) 
-        createTableQuery.exec(
-            """
-            CREATE TABLE solved_depth (
-                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                depth FLOAT NOT NULL
-            )
+        # Remove the previous measures table
+        dropTableQuery = QSqlQuery(self.con)
+        dropTableQuery.exec(
+            """       
+            DROP TABLE measures
             """
         )
-        createTableQuery.finish() #### Do not forget to finish your queries (close the transaction and free memory)
+        dropTableQuery.finish()
         
-        # Insert temperatures
-        insertDataQuery = QSqlQuery(self.con)
-        insertDataQuery.prepare(
-            f"""
-            INSERT INTO solved_depth (
-                depth
-            )
-            VALUES (?)
-            """
-        )
-        for row in range(0, dfdepth.shape[0]): # TODO Not efficient !!
-            insertDataQuery.addBindValue(float(dfdepth.iloc[row, 0]))
-            insertDataQuery.exec()
-        insertDataQuery.finish()
-
-
-        # Create the table for storing the solved temperature (id, date, temp in ndepth columns)
+        # Create the table for storing the temperature measures (id, date, temp*4)
+        createTableQuery = QSqlQuery(self.con)
         createTableQuery.exec(
-            f"""
-            CREATE TABLE solved_temp (
+            """
+            CREATE TABLE measures (
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                date DATETIME NOT NULL,
-                {', '.join(['d_' + str(i) + ' FLOAT NOT NULL' for i in range(1, self.ndepth+1)])}
+                date TIMESTAMP NOT NULL,
+                t1 FLOAT NOT NULL,
+                t2 FLOAT NOT NULL,
+                t3 FLOAT NOT NULL,
+                t4 FLOAT NOT NULL
             )
             """
         )
         createTableQuery.finish()
 
-        # For large dataset, try a transaction :
-        self.con.transaction()
-        
-        # Insert temperatures
+        # Construct the dynamic insert SQL request
+        insertDataQuery = QSqlQuery(self.con)
         insertDataQuery.prepare(
-            f"""
-            INSERT INTO solved_temp (
+            """
+            INSERT INTO measures (
                 date,
-                {', '.join(['d_' + str(i) for i in range(1, self.ndepth+1)])}
+                t1,
+                t2,
+                t3,
+                t4,
+
             )
-            VALUES (?, {', '.join('?'*self.ndepth)})
+            VALUES (?, ?, ?, ?, ?)
             """
         )
-        # https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
-        for row in range(0, df.shape[0]): # TODO : There is a limit of the query size ! (no more than 250 rows inserted)
-            insertDataQuery.addBindValue(str(df.iloc[row,0]))
-            for col in range(1, df.shape[1]): # TODO Not efficient !!
-                insertDataQuery.addBindValue(float(df.iloc[row, col]))
+        for ind in df.index:
+            insertDataQuery.addBindValue(str(df['Date'][ind]))
+            insertDataQuery.addBindValue(str(df['Temp1'][ind]))
+            insertDataQuery.addBindValue(str(df['Temp2'][ind]))
+            insertDataQuery.addBindValue(str(df['Temp3'][ind]))
+            insertDataQuery.addBindValue(str(df['Temp4'][ind]))
             insertDataQuery.exec()
         insertDataQuery.finish()
-        
-        self.con.commit()
-
 
 
     def readSQL(self):
@@ -319,46 +313,26 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         print("Tables in the SQL Database:", self.con.tables())
 
-        #selectDataQuery = QSqlQuery(self.con)
-        #selectDataQuery.exec("SELECT depth FROM solved_depth")
-        #print("Rows in the solved_depth table:", selectDataQuery.size()) # TODO : why -1 ??
-        #selectDataQuery.finish()
+        # Read the database and print its content
+        selectDataQuery = QSqlQuery(self.con)
+        selectDataQuery.exec("SELECT date, t1, t2, t3, t4 FROM measures")
+        date, t1, t2, t3, t4 = range(5)
+        while selectDataQuery.next() :
+            print("  ", selectDataQuery.value(date),
+                        selectDataQuery.value(t1),
+                        selectDataQuery.value(t2),
+                        selectDataQuery.value(t3),
+                        selectDataQuery.value(t4))
+        selectDataQuery.finish()
         
-        # Update depths combo box
-        self.modelDepth.setQuery("SELECT depth FROM solved_depth", self.con) 
-        print("Rows in the solved_depth table:", self.modelDepth.rowCount())
-        
-        # Update temperature table
-        self.modelTemp.setTable("solved_temp") 
-        self.modelTemp.select()
-        print("Rows in the solved_temp table:", self.modelTemp.rowCount())
-        print("Columns in the solved_temp table:", self.modelTemp.columnCount())
-                
-    def browseFileTemp(self):
-        """
-        Display an "Open file dialog" when the user click on the 'Browse' button then
-        store the selected CSV file path in the LineEdit (solved temperature)
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Temperature File")[0]
-        if filePath:
-            self.lineEditTempFile.setText(filePath)
-        
-    def browseFileDepth(self):
-        """
-        Display an "Open file dialog" when the user click on the 'Browse' button then
-        store the selected CSV file path in the LineEdit (solved depths)
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Depths File")[0]
-        if filePath:
-            self.lineEditDepthFile.setText(filePath)
-
-    def refresh(self):
-        """
-        Update status message and trigger a timer
-        This permits to display the status message 
-        """
-        self.labelStatus.setText("Please wait while loading your files...")
-        self.timer.start(200) # ms
+        # Load the table directly in a QSqlTableModel
+        model = QSqlTableModel()
+        model.setTable("measures") 
+        model.select()
+        # Set the model to the GUI table view
+        self.tableViewDataArray.setModel(model)
+        # Prevent from editing the table
+        self.tableViewDataArray.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
         
     def doRefresh(self):
         """
@@ -366,7 +340,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         - Write the dataframes into a SQL database
         - Reload the SQL database into a model and display it as an image and a curve
         """
-        self.timer.stop()
         try:
             # Read the CSV file
             dfdepth, df = self.readCSV()
@@ -378,35 +351,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.readSQL()
             
             # Refresh the plots
-            self.refreshImage()
             self.refreshCurve()
             
         except Exception as e:
             displayCriticalMessage("Error", f"{str(e)}")
-            
-        self.labelStatus.setText("")
 
-
-    def refreshImage(self):
-        """
-        Display the image according
-        """
-        
-        # If not ready, return
-        if self.modelTemp.rowCount() <= 0:
-            return 
-        
-        # https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
-        # TODO : how to guarantee that dates in the model are stored as datetime (and not strings)?
-        times = [self.modelTemp.data(self.modelTemp.index(r,1)) for r in range(self.modelTemp.rowCount())]
-        depths = [self.modelDepth.data(self.modelDepth.index(r,0)) for r in range(self.modelDepth.rowCount())]
-        temperatures = [[self.modelTemp.data(self.modelTemp.index(r,c+2)) for r in range(self.modelTemp.rowCount())] for c in range(0, self.ndepth)]
-
-        self.mplTempImage = MplCanvaTimeDepthImage()
-        self.mplTempImage.refresh(times, depths, temperatures)
-        self.widgetImage.layout().addWidget(self.mplTempImage)
-        
-        
     def refreshCurve(self):
         """
         Display the curve according the selected depth in the combo box
@@ -427,7 +376,28 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.mplTempCurve = MplCanvasTimeCurve()
         self.mplTempCurve.refresh(times, temperatures)
         self.widgetCurve.layout().addWidget(self.mplTempCurve)
-        
+
+    def browseFile(self):
+        """
+        Display an "Open file dialog" when the user click on the 'Browse' button then
+        - Store the selected CSV file path in the LineEdit (temperature measures)
+        - Load the CSV file into a Pandas dataframe
+        - Write the Pandas dataframe into a SQL database
+        - Reload the SQL database into a model and display it in the table view
+        """
+        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Temperature Measures File")[0]
+        if filePath:
+            self.lineEditCleanTempFile.setText(filePath)
+            
+            # Read the CSV file
+            df = self.readCSV()
+            
+            # Dump the measures to SQL database
+            self.writeSQL(df)
+            
+            # Read the SQL and update the views
+            self.readSQL()
+    
 
 
 if __name__ == '__main__':
