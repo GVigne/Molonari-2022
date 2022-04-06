@@ -84,6 +84,9 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
         self.fig.canvas.mpl_connect("pick_event", onpick)
 
+    def clear(self):
+        self.fig.clf()
+
 class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
     
     def __init__(self):
@@ -280,7 +283,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.tableView.setModel(self.modelTemp)
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        self.comboBoxRawVar.addItems(["t1", "t2", "t3", "t4", "t_stream", "charge_diff"])
+        self.comboBoxRawVar.addItems(["t_stream", "charge_diff","t1", "t2", "t3", "t4"])
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         # Create a timer for asynchronous launch of refresh
@@ -673,13 +676,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         
         times = [model.data(model.index(r,1)) for r in range(model.rowCount())]
         values = [model.data(model.index(r,1+2)) for r in range(model.rowCount())]
-
+        
         self.mplRawPressureCurve = MplCanvasTimeScatter()
         self.mplRawPressureCurve.refresh(times, values)
         self.mplRawPressureCurve.click_connect()
 
         self.widgetRawData.addWidget(self.mplRawPressureCurve)
-        
 
                 
     def browseFileTemp(self):
@@ -750,7 +752,19 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def plotPrevisualizedVar(self):
         "Refresh plot"
-        print(1-2)
+        try:
+            if type(self.df_previsualize) == pd.DataFrame:
+                id = self.comboBoxRawVar.currentIndex()
+                self.mplPrevisualizeCurve.clear()
+                self.mplPrevisualizeCurve.refresh(self.df_previsualize["date"], self.df_previsualize[list(self.df_previsualize.columns)[id]])
+                self.mplPrevisualizeCurve.click_connect()
+
+                self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
+
+        except AttributeError:
+            print("Entered exception")
+            pass
+            
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
@@ -770,9 +784,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
         df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
-        df = df_Pressure.join(df_ZH.set_index("date"), on="date")
-        print(df.head())
-        print(df.tail())
+        # df = df_Pressure.join(df_ZH.set_index("date"), on="date")
+        self.df_previsualize = df_Pressure.merge(df_ZH, on="date")
+
+        print(self.df_previsualize.isna().sum())
+
         self.plotPrevisualizedVar()
 
 
