@@ -20,7 +20,7 @@ def dropTableMeasures(connection):
     dropTableQuery = QSqlQuery(connection)
     dropTableQuery.exec_(
         """       
-        DROP TABLE processed_measures_temp
+        DROP TABLE measures_temp
         """
     )
     dropTableQuery.finish()
@@ -30,7 +30,7 @@ def createTableMeasures(connection):
     createTablesQuery = QSqlQuery(connection)
     createTablesQuery.exec_(
         """
-        CREATE TABLE processed_measures_temp (
+        CREATE TABLE measures_temp (
         id          INTEGER UNIQUE
                             PRIMARY KEY AUTOINCREMENT,
         date        TIME    NOT NULL
@@ -47,10 +47,10 @@ def createTableMeasures(connection):
     
     createTablesQuery.exec_(
         """
-        CREATE TABLE processed_measures_press (
+        CREATE TABLE measures_press (
         id          INTEGER UNIQUE
                             PRIMARY KEY AUTOINCREMENT
-                            REFERENCES processed_measures_temp (id),
+                            REFERENCES measures_temp (id),
         date        TIME    NOT NULL
                             UNIQUE,
         pressure    REAL    NOT NULL,
@@ -62,35 +62,13 @@ def createTableMeasures(connection):
     createTablesQuery.finish()
 
 
-def cleanupTemp(df: pd.DataFrame):
-    """
-    Cleanup raw temperature Pandas Dataframe:
-        - Rename the columns,
-        - Remove lines having missing values 
-        - Remove unexpected last columns and
-        - Delete Index column
-    
-    This function works directly on the giving Pandas Dataframe (in place)
-    """
-    # New column names
-    val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
-    all_cols = ["Date"] + val_cols
-    # Rename the 6 first columns
-    for i in range(0, len(all_cols)) :
-        df.columns.values[i] = all_cols[i]
-    # Remove lines having at least one missing value
-    # df.dropna(subset=val_cols,inplace=True)
-    # Remove last columns
-    # df.dropna(axis=1,inplace=True)
-
-
-def writeTemperaturesSql(con, dftemp):
+def writeRawTemperaturesSql(con, dftemp):
     con.transaction()
     
     insertTemperaturesQuery = QSqlQuery(con)
     insertTemperaturesQuery.prepare(
         """
-        INSERT INTO processed_measures_temp (
+        INSERT INTO measures_temp (
             date,
             t1,
             t2,
@@ -119,11 +97,11 @@ def writeTemperaturesSql(con, dftemp):
     insertTemperaturesQuery.finish()
     con.commit()
 
-def writePressuresSql(con, dfpress):
+def writeRawPressuresSql(con, dfpress):
     insertPressuresQuery = QSqlQuery(con)
     insertPressuresQuery.prepare(
         """
-        INSERT INTO processed_measures_press (
+        INSERT INTO measures_press (
            date,
            pressure,
            point_key,
@@ -195,10 +173,10 @@ class DataBase(version_ui[0], version_ui[1]):
         """
         
         # Re-Load the table directly in a QSqlTableModel
-        if self.comboBox.currentText() == "Processed measures":
-            self.model.setTable("processed_measures_temp")
-        elif self.comboBox.currentText() == "":
-            self.model.setTable("processed_measures_press")
+        if self.comboBox.currentText() == "Raw temperatures":
+            self.model.setTable("measures_temp")
+        elif self.comboBox.currentText() == "Raw pressures":
+            self.model.setTable("measures_press")
         
         self.model.select()
         
@@ -220,12 +198,16 @@ class DataBase(version_ui[0], version_ui[1]):
             self.lineEditTempFile.setText(StudyFolderPath)
         
             # Read the CSV file
-            dftemp = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_temperatures.csv")
-            dfpress = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_pressures.csv")
-
+            df_processed_temp = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_temperatures.csv")
+            df_processed_press = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_pressures.csv")
+            df_raw_temp = pd.read_csv(StudyFolderPath + "/Point034/raw_data/raw_temperatures.csv", skiprows=1)
+            df_raw_temp = df_raw_temp.iloc[:, 1:]
+            df_raw_press = pd.read_csv(StudyFolderPath + "/Point034/raw_data/raw_pressures.csv", skiprows=1)
+            df_raw_press = df_raw_press.iloc[:, 1:]
+            
             # Dump the measures to SQL database
-            writeTemperaturesSql(self.con, dftemp)
-            writePressuresSql(self.con, dfpress)
+            writeRawTemperaturesSql(self.con, df_raw_temp)
+            writeRawPressuresSql(self.con, df_raw_press)
             
             # Read the SQL and update the views
             self.displaySQL()
