@@ -16,7 +16,6 @@ from queuethread import *
 from usefulfonctions import *
 from errors import *
 
-
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
 
 class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
@@ -77,8 +76,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.treeViewDataPoints.doubleClicked.connect(self.openPointfromTree)
 
-        self.pushButtonClear.clicked.connect(self.clearText)
-
+        self.pushButtonClear.clicked.connect(self.clearText)     
+        
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
         # self.setGeometry(screenSize)
