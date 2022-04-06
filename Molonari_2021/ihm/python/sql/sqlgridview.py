@@ -49,19 +49,17 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         self.axes = self.fig.add_subplot(111)
         super(MplCanvasTimeScatter, self).__init__(self.fig)
         
-        # Beautiful time axis
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-        self.axes.xaxis.set_major_formatter(formatter)
-        self.axes.xaxis.set_major_locator(MaxNLocator(4))
-        self.setFocusPolicy( QtCore.Qt.ClickFocus )
-        self.setFocus()
 
     def refresh(self, times, values):
         # TODO : Still string to date conversion needed!
+        print(type(times))
         self.axes.plot(mdates.date2num(times), values,'.',picker=5)
+        self.format_axes()
+        self.fig.canvas.draw()
     
     def click_connect(self):
         def onpick(event):
+            print("Enters the envent")
             ind = event.ind
             datax,datay = event.artist.get_data()
             datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
@@ -75,17 +73,30 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
             else:
                 x = datax_
                 y = datay_
+            print(datax[ind])
+            print(datay[ind])
             datax = np.delete(datax,ind)
             datay = np.delete(datay,ind)
-            event.artist.get_figure().clear()
-            event.artist.get_figure().gca().plot(datax,datay,'.',picker=5)
+            datax = pd.Series(mdates.num2date(datax))
+            # event.artist.get_figure().clear()
+            # event.artist.get_figure().gca().plot(datax,datay,'.',picker=5)
+            self.clear()
+            self.refresh(datax,datay)
+            # self.format_axes()
             # event.artist.get_figure().gca().plot(x,y,'.',color="red")  
-            event.artist.get_figure().canvas.draw()
+            # event.artist.get_figure().canvas.draw()
 
         self.fig.canvas.mpl_connect("pick_event", onpick)
 
     def clear(self):
         self.fig.clf()
+        self.axes = self.fig.add_subplot(111)
+
+    def format_axes(self):
+        # Beautiful time axis
+        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
+        self.axes.xaxis.set_major_formatter(formatter)
+        self.axes.xaxis.set_major_locator(MaxNLocator(4))
 
 class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
     
@@ -374,6 +385,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     
     def readCalibrationCSV(self):
         path = self.lineEditCalibrationFile.text()
+        
         if path:
             try :
                 # Load the CSV file
@@ -756,8 +768,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             if type(self.df_previsualize) == pd.DataFrame:
                 id = self.comboBoxRawVar.currentIndex()
                 self.mplPrevisualizeCurve.clear()
-                self.mplPrevisualizeCurve.refresh(self.df_previsualize["date"], self.df_previsualize[list(self.df_previsualize.columns)[id]])
-                self.mplPrevisualizeCurve.click_connect()
+                self.mplPrevisualizeCurve.refresh(self.df_previsualize["date"], self.df_previsualize[list(self.df_previsualize.columns)[id+1]])
+                
 
                 self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
 
@@ -788,7 +800,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.df_previsualize = df_Pressure.merge(df_ZH, on="date")
 
         print(self.df_previsualize.isna().sum())
-
+        self.mplPrevisualizeCurve = MplCanvasTimeScatter()
+        self.mplPrevisualizeCurve.click_connect()
         self.plotPrevisualizedVar()
 
 
