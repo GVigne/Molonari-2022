@@ -40,7 +40,7 @@ class MplCanvas(FigureCanvasQTAgg):
 
     def setTime(self):
         self.x = mdates.date2num(self.pdf[self.pdf.columns[0]])
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
+        formatter = mdates.DateFormatter("%y/%m/%d")
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
         plt.setp(self.axes.get_xticklabels(), rotation = 15)
