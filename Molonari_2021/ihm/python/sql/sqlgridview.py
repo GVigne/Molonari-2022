@@ -269,6 +269,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
         self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
         self.pushButtonPrevisualize.clicked.connect(self.previsualizeCleaning)
+        self.pushButtonSelectPoints.clicked.connect(self.selectPoints)
         
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
@@ -294,11 +295,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.tableView.setModel(self.modelTemp)
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        self.comboBoxRawVar.addItems(["t_stream", "charge_diff","t1", "t2", "t3", "t4"])
-        self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
+        # self.getDF()
+        # self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
+        # self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         # Create a timer for asynchronous launch of refresh
-        self.timer = QtCore.QTimer(self)
+        self.timer = QtCore.QTimer(self) 
         self.timer.timeout.connect(self.doRefresh)
         
         # TODO : to be removed
@@ -780,12 +782,16 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
+        self.mplPrevisualizeCurve = MplCanvasTimeScatter()
+        self.mplPrevisualizeCurve.click_connect()
+        self.plotPrevisualizedVar()
+
+    def getDF(self):
+        "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
         df_ZH = self.load_pandas(self.rawCon, "SELECT date, t1, t2, t3, t4 FROM ZH", ["date", "t1", "t2", "t3", "t4"])
         convertDates(df_ZH)
-        print(df_ZH.shape)
         df_Pressure = self.load_pandas(self.rawCon, "SELECT date, tension, t_stream FROM Pressure", ["date", "tension", "t_stream"])
         convertDates(df_Pressure)
-        print(df_Pressure.shape)
         df_Calibration = self.load_pandas(self.rawCon, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
 
 
@@ -797,13 +803,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
         # df = df_Pressure.join(df_ZH.set_index("date"), on="date")
-        self.df_previsualize = df_Pressure.merge(df_ZH, on="date")
+        self.df_loaded= df_Pressure.merge(df_ZH, on="date")
 
-        print(self.df_previsualize.isna().sum())
-        self.mplPrevisualizeCurve = MplCanvasTimeScatter()
-        self.mplPrevisualizeCurve.click_connect()
-        self.plotPrevisualizedVar()
-
+    def selectPoints(self):
+        dig = DialogCleanPoints()
+        dig.exec()
 
     def refresh(self):
         """
