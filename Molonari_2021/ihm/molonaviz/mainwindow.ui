@@ -110,7 +110,7 @@
      <item>
       <widget class="QTreeView" name="treeViewDataPoints">
        <property name="contextMenuPolicy">
-        <enum>Qt::CustomContextMenu</enum>
+        <enum>Qt::DefaultContextMenu</enum>
        </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
@@ -371,22 +371,5 @@
   </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>treeViewDataPoints</sender>
-   <signal>customContextMenuRequested(QPoint)</signal>
-   <receiver>menuPoint</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>139</x>
-     <y>163</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>76</x>
-     <y>52</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

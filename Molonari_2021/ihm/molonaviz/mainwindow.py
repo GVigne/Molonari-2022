@@ -74,6 +74,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
         self.treeViewDataPoints.doubleClicked.connect(self.openPointTimer)
+        self.treeViewDataPoints.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.treeViewDataPoints.addAction(self.actionImport_Point)
+        self.treeViewDataPoints.addAction(self.actionOpen_Point)
+        self.treeViewDataPoints.addAction(self.actionRemove_Point)
 
         self.pushButtonClear.clicked.connect(self.clearText)
 
@@ -233,9 +237,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 displayCriticalMessage('Point import aborted', f"Couldn't import point due to the following error : \n{str(e)}")
            
     def openPointTimer(self):
-        point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
-        print(f"Opening {point.getName()} ...")
-        self.timer.start(200)
+        if len(self.treeViewDataPoints.selectedIndexes()) != 0:
+            point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
+            print(f"Opening {point.getName()} ...")
+            self.timer.start(200)
 
     def openPoint(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
@@ -266,31 +271,32 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         else:
             print(f"{point.getName()} is already open")
         
-    def removePoint(self):  
-        title = "Warning ! You are about to delete a point"
-        message = "All point data will be deleted. Are you sure you want to proceed ?"
-        msgBox = displayConfirmationMessage(title, message)
-        
-        if msgBox == QtWidgets.QMessageBox.Ok:
-            pointName = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
-            pointItem = self.pointModel.findItems(pointName)[0]
+    def removePoint(self):
+        if len(self.treeViewDataPoints.selectedIndexes()) != 0: 
+            title = "Warning ! You are about to delete a point"
+            message = "All point data will be deleted. Are you sure you want to proceed ?"
+            msgBox = displayConfirmationMessage(title, message)
             
-            point = pointItem.data(QtCore.Qt.UserRole)
-            point.delete() #supprime le dossier du rootDir
+            if msgBox == QtWidgets.QMessageBox.Ok:
+                pointName = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+                pointItem = self.pointModel.findItems(pointName)[0]
+                
+                point = pointItem.data(QtCore.Qt.UserRole)
+                point.delete() #supprime le dossier du rootDir
 
-            pointIndex = self.pointModel.indexFromItem(pointItem)
-            self.pointModel.removeRow(pointIndex.row()) #supprime l'item du model
+                pointIndex = self.pointModel.indexFromItem(pointItem)
+                self.pointModel.removeRow(pointIndex.row()) #supprime l'item du model
 
-            #On ferme la fenêtre associée au point qu'on enlève
-            openedSubWindows = self.mdi.subWindowList()
-            for subWin in openedSubWindows:
-                if subWin.getName() == pointName:
-                    subWin.close()
-            
-            print(f"{pointName} successfully removed")
-        else : 
-            #displayInfoMessage("Point removal aborted")
-            print("Point removal aborted")
+                #On ferme la fenêtre associée au point qu'on enlève
+                openedSubWindows = self.mdi.subWindowList()
+                for subWin in openedSubWindows:
+                    if subWin.getName() == pointName:
+                        subWin.close()
+                
+                print(f"{pointName} successfully removed")
+            else : 
+                #displayInfoMessage("Point removal aborted")
+                print("Point removal aborted")
 
     def switchToTabbedView(self):
         self.mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
