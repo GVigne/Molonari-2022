@@ -297,9 +297,9 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.tableView.setModel(self.modelTemp)
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-        # self.getDF()
-        # self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
-        # self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
+        self.getDF()
+        self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
+        self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         # Create a timer for asynchronous launch of refresh
         self.timer = QtCore.QTimer(self)
@@ -809,7 +809,9 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def selectPoints(self):
         dig = DialogCleanPoints()
+        dig.plot(self.comboBoxRawVar, self.df_loaded)
         dig.exec()
+        
 
     def refresh(self):
         """

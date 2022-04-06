@@ -17,11 +17,15 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
         super(MplCanvasTimeScatter, self).__init__(self.fig)
+        self.df_selected = pd.DataFrame(columns=["date","value"]) 
         
-    def refresh(self, times, values):
-        # TODO : Still string to date conversion needed!
-        print(type(times))
-        self.axes.plot(mdates.date2num(times), values,'.',picker=5)
+    def refresh(self, times, values, color):
+        print("Types: ")
+        # print(type(times))
+        # print(type(values))
+        # print(type(times.iloc[-1]))
+        # print(type(values.iloc[-1]))
+        self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=5)
         self.format_axes()
         self.fig.canvas.draw()
     
@@ -30,6 +34,7 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
             print("Enters the envent")
             ind = event.ind
             datax,datay = event.artist.get_data()
+            print("len datax: ",datax.shape)
             datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
             if len(ind) > 1:              
                 msx, msy = event.mouseevent.xdata, event.mouseevent.ydata
@@ -41,18 +46,27 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
             else:
                 x = datax_
                 y = datay_
-            print(datax[ind])
-            print(datay[ind])
+            
+            # print("Types in event: ")
+            # print(type(datax))
+            # print(type(datay))
+            # print(type(datax[-1]))
+            # print(type(datay[-1]))
+
             datax = np.delete(datax,ind)
             datay = np.delete(datay,ind)
             datax = pd.Series(mdates.num2date(datax))
-            # event.artist.get_figure().clear()
-            # event.artist.get_figure().gca().plot(datax,datay,'.',picker=5)
+            x = mdates.num2date(x)
+            
+            # print(type(datax))
+            # print(type(datax.iloc[-1]))
+            
+            
+
             self.clear()
-            self.refresh(datax,datay)
-            # self.format_axes()
-            # event.artist.get_figure().gca().plot(x,y,'.',color="red")  
-            # event.artist.get_figure().canvas.draw()
+            self.refresh(datax,datay,'blue')
+            self.refresh(self.selected_x,self.selected_y,"red")  
+
 
         self.fig.canvas.mpl_connect("pick_event", onpick)
 
@@ -83,5 +97,13 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
     def resetSelection(Self):
         print("Reset all!!")
     
-    def plot():
-        print("plot")
+    def plot(self,combobox,df):
+        print("entra al plot")
+        self.mplPrevisualizeCurve = MplCanvasTimeScatter()
+        self.mplPrevisualizeCurve.click_connect()
+        id = combobox.currentIndex()
+
+        self.mplPrevisualizeCurve.clear()
+        self.mplPrevisualizeCurve.refresh(df["date"], df[list(df.columns)[id+1]],"blue")
+        
+        self.widgetScatter.addWidget(self.mplPrevisualizeCurve)
