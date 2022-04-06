@@ -12,7 +12,7 @@ from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 # This function returns a pair of "types" : (generated_class, base_class) :
 #  - generated_class: Ui_TemperatureViewer (contains all graphical controls/views defined with QtDesigner
 #  - base_class: PyQt5.QtWidgets.QDialog (parent class of the UI)
-From_tp_ihm_sql = uic.loadUiType(os.path.join(os.path.dirname(__file__),"tp_ihm_sql.ui"))
+From_tp_ihm_sql = uic.loadUiType(os.path.join(os.path.dirname(__file__),"tp_ihm_sql.ui")) #### Do not forget to load the appropriate UI file
 
 
 class LoadingError(Exception):
@@ -25,9 +25,10 @@ class LoadingError(Exception):
 
     # Override __str__ operator for string representation
     # See https://www.pythontutorial.net/python-oop/python-__str__
-    def __str__(self): ####
-        return f"Error : Couldn't load {self.object}\n{self.reason}" ####
-    
+    ### TODO
+    def __str__(self):
+        return f"Error : Couldn't load {self.object}\n{self.reason}"
+    ### End TODO
     
 def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
     """
@@ -35,9 +36,12 @@ def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
     """
     msg = QtWidgets.QMessageBox()
     msg.setIcon(QtWidgets.QMessageBox.Critical)
-    msg.setText(mainMessage) ####
-    msg.setInformativeText(infoMessage) ####
+    # https://doc.qt.io/qt-5/qmessagebox.html#details
+    ### TODO
+    msg.setText(mainMessage)
+    msg.setInformativeText(infoMessage)
     msg.exec() 
+    ### End TODO
 
 
 def loadCSV(path: str):
@@ -46,15 +50,20 @@ def loadCSV(path: str):
      - less than 6 columns are read
      - more than 10 columns are read
     """
-    df = pd.read_csv(path, skiprows=1)
-    #df = pd.read_csv(trawfile) #### To be fixed
+    df = pd.read_csv(path, skiprows=1) #### TODO : Fix the error when reading HOBO file
+    
     # Check the number of columns
     if df.shape[1] < 6 or df.shape[1] > 10 :  # Idx + Date + Temp x4
         # Try with another separator
-        df = pd.read_csv(path, sep='\t', skiprows=1)
-    # Re-Check the number of columns
+        df = pd.read_csv(path, sep='\t', skiprows=1) #### TODO : Fix the error when reading HOBO file
+        
+    # Re-Check the number of columns and raise Loading Error exception if error
+    # https://stackoverflow.com/questions/2052390/manually-raising-throwing-an-exception-in-python
+    ### TODO
     if df.shape[1] < 6 or df.shape[1] > 10 :  # Idx + Date + Temp x4
-        raise LoadingError(trawfile, "Wrong number of columns in temperature file. Is it a CSV file?")
+        raise LoadingError(path, "Wrong number of columns in temperature file. Is it a CSV file?")      
+    ### End TODO
+
     return df
 
 
@@ -71,21 +80,27 @@ def cleanupTemp(df: pd.DataFrame):
     # New column names
     val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
     all_cols = ["Idx", "Date"] + val_cols
+    ### TODO
+    #
+    # WARNING: To work in place, you must not replace df using "df = df.dropna"
+    #          Otherwise, you must return df from the function and store the result in the call instruction
+    #
     # Rename the 6 first columns
     for i in range(0, len(all_cols)) :
         df.columns.values[i] = all_cols[i]
-    # Remove lines having at least one missing value
+    # Remove lines having at least one missing value [among temperatures!]
+    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.dropna.html
     df.dropna(subset=val_cols,inplace=True)
-    # Remove last columns
+    # Remove last columns [that contains missing values]
     df.dropna(axis=1,inplace=True)
     # Remove first column
     df.drop(["Idx"],axis=1,inplace=True)
-
+    ### End TODO
 
 def convertDates(df: pd.DataFrame):
     """
     Convert dates from a list of strings by testing several different input formats
-    Try all date formats already encountered in data points
+    Try all date formats already encountered in HOBO files
     If none of them is OK, try the generic way (None)
     If the generic way doesn't work, this method fails
     (in that case, you should add the new format to the list)
@@ -103,24 +118,25 @@ def convertDates(df: pd.DataFrame):
                "%d/%m/%Y %H:%M",    "%d/%m/%Y %I:%M %p",
                None)
     times = df[df.columns[0]]
+    # Try different date format
     for f in formats:
         try:
             # Convert strings to datetime objects
             new_times = pd.to_datetime(times, format=f)
+            # Check that new_times are well converted (ordered). If not Raise a ValueError.
+            ### TODO
             # Convert datetime series to numpy array of integers (timestamps)
             new_ts = new_times.values.astype(np.int64)
             # If times are not ordered, this is not the appropriate format
             test = np.sort(new_ts) - new_ts
             if np.sum(abs(test)) != 0 :
-                #print("Order is not the same")
                 raise ValueError()
+            ### End TODO
             # Else, the conversion is a success
-            #print("Found format ", f)
             df[df.columns[0]] = new_times
             return
         
         except ValueError:
-            #print("Format ", f, " not valid")
             continue
     
     # None of the known format are valid
@@ -130,7 +146,7 @@ def convertDates(df: pd.DataFrame):
 class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
     """
     Dialog class that inherits from BOTH :
-     - the QtDesigner generated_class: UI_TemeperatureViewer 
+     - the QtDesigner generated_class: UI_TemperatureViewer 
      - the UI base_class (here QDialog)
     This offers the possibility to access directly the graphical controls variables (i.e. self.editFile)
     """
@@ -144,19 +160,23 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
-        # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFile'
-        self.pushButtonBrowseTemp.clicked.connect(self.browseFile)
+        # Add a "Browse button" in the GUI and connect it to the method 'browseFile'
+        ### TODO
+        self.pushButtonBrowse.clicked.connect(self.browseFile)
+        ### End TODO
         
         # Remove existing SQL database file (if so)
-        self.sql = "molonari_temp.sqlite"
-        if os.path.exists(self.sql):
-            os.remove(self.sql)
+        self.sqlfile = "molonari_temp.sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
 
         # Connect to the SQL database and display a critical message in case of failure
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sql)
-        if not self.con.open():
+        ### TODO
+        self.con = QSqlDatabase.addDatabase("QSQLITE") # Store the connection in class member
+        self.con.setDatabaseName(self.sqlfile) # Connect to the SQL file
+        if not self.con.open(): # Open the database
             displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
+        ### End TODO
 
 
     def __del__(self):
@@ -164,7 +184,9 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
         Destructor
         """
         # Close the SQL connection
-        self.con.close() ####
+        ### TODO
+        self.con.close()
+        ### End TODO
 
 
     def readCSV(self):
@@ -172,7 +194,9 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
         Read the provided CSV file and load it into a Pandas dataframe
         """
         # Retrieve the CSV file path from lineEditTempFile
+        ### TODO
         trawfile = self.lineEditTempFile.text()
+        ### End TODO
         if trawfile:
             try :
                 # Load the CSV file
@@ -185,10 +209,11 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
                 convertDates(dftemp)
                 
                 return dftemp
-                
+
             except Exception as e :
                 displayCriticalMessage(f"{str(e)}", "Please choose a different file")
     
+        # If failure, return an empty dataframe
         return pd.DataFrame()
     
     
@@ -196,22 +221,25 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
         """
         Write the given Pandas dataframe into the SQL database
         """
-        # Remove the previous measures table
-        dropTableQuery = QSqlQuery(self.con)
+        # Remove the previous measures table (if so)
+        dropTableQuery = QSqlQuery() #### Current opened connection is not mandatory
+        ### TODO
         dropTableQuery.exec(
             """       
             DROP TABLE measures
             """
         )
+        ### End TODO
         dropTableQuery.finish()
         
         # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.con)
+        ### TODO
+        createTableQuery = QSqlQuery(self.con) #### But it's better to indicate the current connection in query constructors
         createTableQuery.exec(
             """
             CREATE TABLE measures (
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                date TIMESTAMP NOT NULL,
+                date DATETIME NOT NULL,
                 t1 FLOAT NOT NULL,
                 t2 FLOAT NOT NULL,
                 t3 FLOAT NOT NULL,
@@ -219,9 +247,15 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
             )
             """
         )
-        createTableQuery.finish()
+        createTableQuery.finish() #### Do not forget to finish your queries (close the transaction and free memory)
+        ### End TODO
 
-        # Construct the dynamic insert SQL request
+        # Construct the dynamic insert SQL request and execute it
+        ### TODO
+        
+        # For large dataset, initialize a transaction to speedup the insertion
+        self.con.transaction()
+        
         insertDataQuery = QSqlQuery(self.con)
         insertDataQuery.prepare(
             """
@@ -236,13 +270,18 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
             """
         )
         for ind in df.index:
-            insertDataQuery.addBindValue(str(df['Date'][ind]))
-            insertDataQuery.addBindValue(str(df['Temp1'][ind]))
-            insertDataQuery.addBindValue(str(df['Temp2'][ind]))
-            insertDataQuery.addBindValue(str(df['Temp3'][ind]))
-            insertDataQuery.addBindValue(str(df['Temp4'][ind]))
+            insertDataQuery.addBindValue(str(df['Date'][ind]))  #### Convert to standard python type (String)
+            insertDataQuery.addBindValue(float(df['Temp1'][ind]))
+            insertDataQuery.addBindValue(float(df['Temp2'][ind]))
+            insertDataQuery.addBindValue(float(df['Temp3'][ind]))
+            insertDataQuery.addBindValue(float(df['Temp4'][ind]))
             insertDataQuery.exec()
         insertDataQuery.finish()
+
+        # Commit the transaction
+        self.con.commit()
+        
+        ### End TODO
 
 
     def readSQL(self):
@@ -251,8 +290,9 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
         """
         print("Tables in the SQL Database:", self.con.tables())
 
-        # Read the database and print its content
+        # Read the database and print its content using SELECT
         selectDataQuery = QSqlQuery(self.con)
+        ### TODO
         selectDataQuery.exec("SELECT date, t1, t2, t3, t4 FROM measures")
         date, t1, t2, t3, t4 = range(5)
         while selectDataQuery.next() :
@@ -261,16 +301,27 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
                         selectDataQuery.value(t2),
                         selectDataQuery.value(t3),
                         selectDataQuery.value(t4))
+        ### End TODO
         selectDataQuery.finish()
         
-        # Load the table directly in a QSqlTableModel
-        model = QSqlTableModel()
-        model.setTable("measures") 
-        model.select()
+        # Re-Load the table directly in a QSqlTableModel
+        ### TODO
+        self.model = QSqlTableModel(self, self.con)
+        self.model.setTable("measures") 
+        self.model.select()
+        ### End TODO
+        
         # Set the model to the GUI table view
-        self.tableView.setModel(model)
+        ### TODO
+        self.tableView.reset()
+        self.tableView.setModel(self.model)
+        self.tableView.resizeColumnsToContents()
+        ### End TODO
+        
         # Prevent from editing the table
+        ### TODO
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
+        ### End TODO
 
         
     def browseFile(self):
@@ -281,10 +332,17 @@ class TemperatureViewer(From_tp_ihm_sql[0], From_tp_ihm_sql[1]):
         - Write the Pandas dataframe into a SQL database
         - Reload the SQL database into a model and display it in the table view
         """
+        # Open a "File Dialog" window and retrieve the path
+        ### TODO
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Temperature Measures File")[0]
+        ### End TODO
+        
         if filePath:
+            # Update the lineEditTempFile
+            ### TODO
             self.lineEditTempFile.setText(filePath)
-            
+            ### End TODO
+        
             # Read the CSV file
             df = self.readCSV()
             
