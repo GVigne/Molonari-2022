@@ -9,8 +9,6 @@ from subwindow import SubWindow
 from dialogstudy import DialogStudy
 from dialogfindstudy import DialogFindStudy
 from dialogimportpoint import DialogImportPoint
-from dialogopenpoint import DialogOpenPoint
-from dialogremovepoint import DialogRemovePoint
 from dialogaboutus import DialogAboutUs
 from queuethread import *
 from usefulfonctions import *
