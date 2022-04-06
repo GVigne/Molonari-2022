@@ -13,59 +13,58 @@ From_DialogCleanPoints = uic.loadUiType(os.path.join(os.path.dirname(__file__),"
 
 class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
-    def __init__(self):
+    def __init__(self, button):
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
         super(MplCanvasTimeScatter, self).__init__(self.fig)
         self.df_selected = pd.DataFrame(columns=["date","value"]) 
+        self.r = pd.DataFrame(columns=["date","value"]) 
+        self.undoButton = button
         
-    def refresh(self, times, values, color):
-        print("Types: ")
-        # print(type(times))
-        # print(type(values))
-        # print(type(times.iloc[-1]))
-        # print(type(values.iloc[-1]))
-        self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=5)
+    def refresh(self, times: pd.Series, values: pd.Series, color):
+        if color=="blue":
+            p = 5
+        else:
+            p = 0
+
+        self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=p)
         self.format_axes()
         self.fig.canvas.draw()
     
     def click_connect(self):
         def onpick(event):
-            print("Enters the envent")
+            
             ind = event.ind
             datax,datay = event.artist.get_data()
-            print("len datax: ",datax.shape)
             datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
             if len(ind) > 1:              
                 msx, msy = event.mouseevent.xdata, event.mouseevent.ydata
                 dist = np.sqrt((np.array(datax_)-msx)**2+(np.array(datay_)-msy)**2)
                 
                 ind = [ind[np.argmin(dist)]]
-                x = datax[ind]
-                y = datay[ind]
-            else:
-                x = datax_
-                y = datay_
-            
-            # print("Types in event: ")
-            # print(type(datax))
-            # print(type(datay))
-            # print(type(datax[-1]))
-            # print(type(datay[-1]))
+                x = datax[ind][0]
+                y = datay[ind][0]
 
+            else:
+                x = datax_[0]
+                y = datay_[0]
+            
             datax = np.delete(datax,ind)
             datay = np.delete(datay,ind)
+
             datax = pd.Series(mdates.num2date(datax))
+            datay = pd.Series(datay)
+
             x = mdates.num2date(x)
             
-            # print(type(datax))
-            # print(type(datax.iloc[-1]))
-            
-            
+            self.r = pd.DataFrame([[x,y]],columns=["date","value"])
+            self.df_selected = pd.concat([self.df_selected,self.r])
+
 
             self.clear()
             self.refresh(datax,datay,'blue')
-            self.refresh(self.selected_x,self.selected_y,"red")  
+            self.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+            self.undoButton.setEnabled(True)  
 
 
         self.fig.canvas.mpl_connect("pick_event", onpick)
@@ -79,6 +78,32 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
+    
+    def undo(self):
+        # self.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+        artist = list(self.axes.lines)[0]
+        x = self.df_selected.iloc[-1,0]
+        y = self.df_selected.iloc[-1,1]
+
+        datax, datay = artist.get_data() 
+        datax = pd.Series(mdates.num2date(datax))
+        datax = np.append(datax,x)
+        
+        datay = np.append(datay,y)
+        self.df_selected = self.df_selected[:-1]
+
+        self.clear()
+        self.refresh(datax,datay,'blue')
+        self.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+        return self.df_selected.shape[0]
+    
+    def reset(self, times: pd.Series, values: pd.Series, color):
+
+        self.df_selected = pd.DataFrame(columns=["date","value"]) 
+        self.r = pd.DataFrame(columns=["date","value"])
+        self.refresh(times, values, color)
+
+
 
 class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
     
@@ -90,20 +115,27 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
         self.setupUi(self)
         self.pushButtonReset.clicked.connect(self.resetSelection)
         self.pushButtonUndo.clicked.connect(self.undoSelection)
+        self.pushButtonUndo.setEnabled(False)
         
     def undoSelection(self):
-        print("Undo please!!")
+        # self.mplSelectCurve.clear()
+        numSelected = self.mplSelectCurve.undo()
+        if numSelected == 0:
+            self.pushButtonUndo.setEnabled(False)
     
-    def resetSelection(Self):
-        print("Reset all!!")
-    
-    def plot(self,combobox,df):
-        print("entra al plot")
-        self.mplPrevisualizeCurve = MplCanvasTimeScatter()
-        self.mplPrevisualizeCurve.click_connect()
-        id = combobox.currentIndex()
-
-        self.mplPrevisualizeCurve.clear()
-        self.mplPrevisualizeCurve.refresh(df["date"], df[list(df.columns)[id+1]],"blue")
+    def resetSelection(self):
+        self.mplSelectCurve.clear()
+        self.mplSelectCurve.reset(self.df_original["date"], self.df_original[self.id],"blue")
+        self.pushButtonUndo.setEnabled(False)
         
-        self.widgetScatter.addWidget(self.mplPrevisualizeCurve)
+    def plot(self,combobox,df):
+        self.df_original = df
+        
+        self.mplSelectCurve = MplCanvasTimeScatter(self.pushButtonUndo)
+        self.mplSelectCurve.click_connect()
+        self.id = combobox.currentText()
+
+        self.mplSelectCurve.clear()
+        self.mplSelectCurve.refresh(self.df_original["date"], self.df_original[self.id],"blue")
+        
+        self.widgetScatter.addWidget(self.mplSelectCurve)

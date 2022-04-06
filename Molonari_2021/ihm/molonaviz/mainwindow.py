@@ -16,7 +16,6 @@ from queuethread import *
 from usefulfonctions import *
 from errors import *
 
-
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
 
 class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
@@ -77,8 +76,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.treeViewDataPoints.doubleClicked.connect(self.openPointfromTree)
 
-        self.pushButtonClear.clicked.connect(self.clearText)
-
+        self.pushButtonClear.clicked.connect(self.clearText)     
+        
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
         # self.setGeometry(screenSize)
@@ -236,32 +235,41 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             pointname = dlg.getPointName()
-            print(f"Opening {pointname} ...") 
             point = self.pointModel.findItems(pointname)[0].data(QtCore.Qt.UserRole)
             self.openPointView(point)
-            print(" ==> done")
 
     def openPointfromTree(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
-        print(f"Opening {point.getName()} ...")
         self.openPointView(point)
-        print(" ==> done")
 
     def openPointView(self, point: Point):
-        subWin = SubWindow(point, self.currentStudy)
-        subWin.setPointWidget()
+        print(f"Opening {point.getName()} ...")
 
-        if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView:
-            self.mdi.addSubWindow(subWin)
-            subWin.show()
-            self.mdi.tileSubWindows()
+        if point.getName() not in [openedSubwindow.getName() for openedSubwindow in self.mdi.subWindowList()]:
+            subWin = SubWindow(point, self.currentStudy)
+            subWin.setPointWidget()
 
-        elif self.mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
-            self.switchToSubWindowView()
-            self.mdi.addSubWindow(subWin)
-            subWin.show()
-            self.mdi.tileSubWindows()
-            self.switchToTabbedView()
+            if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView and not self.actionSwitch_To_Cascade_View.isEnabled():
+                self.mdi.addSubWindow(subWin)
+                subWin.show()
+                self.mdi.cascadeSubWindows()
+
+            elif self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView and not self.actionSwitch_To_SubWindow_View.isEnabled():
+                self.mdi.addSubWindow(subWin)
+                subWin.show()
+                self.mdi.tileSubWindows()
+
+            elif self.mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
+                self.switchToSubWindowView()
+                self.mdi.addSubWindow(subWin)
+                subWin.show()
+                self.mdi.tileSubWindows()
+                self.switchToTabbedView()
+
+            print(" ==> done")
+
+        else:
+            print(f"{point.getName()} is already open")
         
     def removePoint(self):
         dlg = DialogRemovePoint()
