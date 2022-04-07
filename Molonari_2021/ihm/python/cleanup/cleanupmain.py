@@ -810,7 +810,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     def selectPoints(self):
         dig = DialogCleanPoints()
         dig.plot(self.comboBoxRawVar, self.df_loaded)
-        dig.exec()
+        res = dig.exec()
+
+        if res == QtWidgets.QDialog.Accepted:
+            self.df_selected = dig.mplSelectCurve.df_selected
+            print(self.df_selected)
         
 
     def refresh(self):
