@@ -291,13 +291,6 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="3">
-           <widget class="QRadioButton" name="radioButtonZScore">
-            <property name="text">
-             <string>Z-score</string>
-            </property>
-           </widget>
-          </item>
           <item row="12" column="3">
            <widget class="QPushButton" name="pushButtonSelectPoints">
             <property name="text">
@@ -309,13 +302,6 @@
            <widget class="QLineEdit" name="lineEditRawZHFile">
             <property name="autoFillBackground">
              <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="3">
-           <widget class="QRadioButton" name="radioButtonNone">
-            <property name="text">
-             <string>None</string>
             </property>
            </widget>
           </item>
@@ -332,13 +318,6 @@
           <item row="4" column="0" rowspan="16" colspan="3">
            <layout class="QVBoxLayout" name="widgetRawData"/>
           </item>
-          <item row="6" column="3">
-           <widget class="QRadioButton" name="radioButtonIQR">
-            <property name="text">
-             <string>IQR</string>
-            </property>
-           </widget>
-          </item>
           <item row="13" column="3">
            <widget class="QPushButton" name="pushButtonEditCode">
             <property name="text">
@@ -349,7 +328,7 @@
           <item row="17" column="3">
            <widget class="QPushButton" name="pushButtonPrevisualize">
             <property name="text">
-             <string>Previsualize</string>
+             <string>Apply</string>
             </property>
            </widget>
           </item>
@@ -363,13 +342,6 @@
             </property>
             <property name="text">
              <string>Select raw ZH: </string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3">
-           <widget class="QLabel" name="labelMethod">
-            <property name="text">
-             <string>Method:</string>
             </property>
            </widget>
           </item>
@@ -401,6 +373,55 @@
            <widget class="QPushButton" name="pushButtonBrowseCalibration">
             <property name="text">
              <string>Browse</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QCheckBox" name="checkBoxChanges">
+            <property name="text">
+             <string>Show changes</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="3">
+           <widget class="QRadioButton" name="radioButtonNone">
+            <property name="text">
+             <string>None</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="3">
+           <widget class="QRadioButton" name="radioButtonIQR">
+            <property name="text">
+             <string>IQR</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QRadioButton" name="radioButtonZScore">
+            <property name="text">
+             <string>Z-score</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="3">
+           <widget class="QLabel" name="labelMethod">
+            <property name="text">
+             <string>Method:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="18" column="3">
+           <widget class="QPushButton" name="pushButtonResetVar">
+            <property name="text">
+             <string>Reset variable</string>
+            </property>
+           </widget>
+          </item>
+          <item row="19" column="3">
+           <widget class="QPushButton" name="pushButtonResetAll">
+            <property name="text">
+             <string>Reset all</string>
             </property>
            </widget>
           </item>

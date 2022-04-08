@@ -127,12 +127,12 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
         self.mplSelectCurve.reset(self.df_original["date"], self.df_original[self.id],"blue")
         self.pushButtonUndo.setEnabled(False)
         
-    def plot(self,combobox,df):
+    def plot(self,varName,df):
         self.df_original = df
         
         self.mplSelectCurve = MplCanvasTimeScatter(self.pushButtonUndo)
         self.mplSelectCurve.click_connect()
-        self.id = combobox.currentText()
+        self.id = varName
 
         self.mplSelectCurve.clear()
         self.mplSelectCurve.refresh(self.df_original["date"], self.df_original[self.id],"blue")

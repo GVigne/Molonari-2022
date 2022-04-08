@@ -50,7 +50,7 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         self.axes = self.fig.add_subplot(111)
         super(MplCanvasTimeCompare, self).__init__(self.fig)
 
-    def refresh(self, df_or, df_cleaned,id):
+    def refresh_compare(self, df_or, df_cleaned,id):
         suffix = '_cleaned'
         df_compare = df_or.join(df_cleaned.set_index("date"),on="date",rsuffix=suffix)
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
@@ -66,6 +66,13 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         df_compare['date'] = mdates.date2num(df_compare['date'])
         df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
         df_compare[df_compare['outliers'] == True].plot.scatter(x='date',y=id,c = 'r',s = 3,ax = self.axes)
+        self.format_axes()
+        self.fig.canvas.draw()
+
+    def refresh(self,df_cleaned,id):
+        df = df_cleaned.copy()
+        df['date'] = mdates.date2num(df['date'].copy())
+        df.plot(x='date',y=id,ax = self.axes)
         self.format_axes()
         self.fig.canvas.draw()
 
@@ -307,7 +314,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
         self.pushButtonPrevisualize.clicked.connect(self.previsualizeCleaning)
         self.pushButtonSelectPoints.clicked.connect(self.selectPoints)
-        
+
+        self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
+        self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
+        self.pushButtonResetAll.clicked.connect(self.resetCleanAll)
+
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
         if os.path.exists(self.sql):
@@ -334,6 +345,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
         self.getDF()
         self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
+        self.varName = self.comboBoxRawVar.currentText
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         # Create a timer for asynchronous launch of refresh
@@ -807,7 +819,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             if type(self.mplPrevisualizeCurve) == MplCanvasTimeCompare:
                 id = self.comboBoxRawVar.currentText()
                 self.mplPrevisualizeCurve.clear()
-                self.mplPrevisualizeCurve.refresh(self.df_loaded, self.df_cleaned, id)
+
+                if self.checkBoxChanges.isChecked():
+                    self.mplPrevisualizeCurve.refresh_compare(self.df_loaded, self.df_cleaned, id)
+                else:
+                    self.mplPrevisualizeCurve.refresh(self.df_cleaned, id)
                 
 
                 self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
@@ -819,22 +835,13 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        varName = self.comboBoxRawVar.currentText()
-        print("--")
-        print(self.df_cleaned.isna().sum())
 
-        values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else x[varName],axis=1)
+        values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else x[self.varName()],axis=1)
         self.df_cleaned.loc[:,"to_clean"] = values
-
-        print(self.df_cleaned.isna().sum())
+        
 
         self.df_cleaned.dropna(inplace=True)
         self.df_cleaned.drop("to_clean", axis=1,inplace=True)
-        
-        print(self.df_cleaned.isna().sum())
-
-        print(self.df_cleaned)
-        # print(self.df_cleaned.apply(lambda x: np.nan if x['date'] in list(self.df_selected['date']) else x))
 
         self.plotPrevisualizedVar()
 
@@ -863,7 +870,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def selectPoints(self):
         dig = DialogCleanPoints()
-        dig.plot(self.comboBoxRawVar, self.df_loaded)
+        dig.plot(self.varName(), self.df_loaded)
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.df_selected = dig.mplSelectCurve.df_selected
@@ -871,6 +878,19 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         elif res == QtWidgets.QDialog.Rejected:
             self.df_selected = pd.DataFrame(columns=["date","value"]) 
             print(self.df_selected) 
+
+    def resetCleanVar(self):
+        print("--")
+        print(self.df_cleaned)
+        self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
+        print(self.df_cleaned)
+        self.df_selected = pd.DataFrame(columns=["date","value"])
+
+    def resetCleanAll(self):
+        self.df_selected = pd.DataFrame(columns=["date","value"])
+        self.df_cleaned = self.df_loaded.copy().dropna()
+        self.plotPrevisualizedVar()
+
         
 
     def refresh(self):
