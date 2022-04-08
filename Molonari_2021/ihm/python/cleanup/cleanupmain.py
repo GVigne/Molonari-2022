@@ -44,6 +44,38 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         # TODO : Still string to date conversion needed!
         self.axes.plot(mdates.date2num(times), values)
 
+class MplCanvasTimeCompare(FigureCanvasQTAgg):
+    def __init__(self):
+        self.fig = Figure()
+        self.axes = self.fig.add_subplot(111)
+        super(MplCanvasTimeCompare, self).__init__(self.fig)
+
+    def refresh(self, df_or, df_cleaned,id):
+        suffix = '_cleaned'
+        df_compare = df_or.join(df_cleaned.set_index("date"),on="date",rsuffix=suffix)
+        df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
+        df_compare['outliers'][np.isnan(df_compare['outliers'])] = True
+        df_compare['outliers'][df_compare['outliers'] != True] = False
+        # first = df1["dates"].iloc[0]
+        # last = df1["dates"].iloc[-1]
+        df_compare['date'] = mdates.date2num(df_compare['date'])
+        df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
+        df_compare[df_compare['outliers'] == True].plot.scatter(x='date',y=id,c = 'r',s = 3,ax = self.axes)
+        self.format_axes()
+        self.fig.canvas.draw()
+
+    def format_axes(self):
+        # Beautiful time axis
+        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
+        self.axes.xaxis.set_major_formatter(formatter)
+        self.axes.xaxis.set_major_locator(MaxNLocator(4))
+
+    def clear(self):
+        self.fig.clf()
+        self.axes = self.fig.add_subplot(111)
+
+
+
 class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
     def __init__(self):
@@ -54,7 +86,6 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
     def refresh(self, times, values):
         # TODO : Still string to date conversion needed!
-        print(type(times))
         self.axes.plot(mdates.date2num(times), values,'.',picker=5)
         self.format_axes()
         self.fig.canvas.draw()
@@ -769,10 +800,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     def plotPrevisualizedVar(self):
         "Refresh plot"
         try:
-            if type(self.df_previsualize) == pd.DataFrame:
-                id = self.comboBoxRawVar.currentIndex()
+            if type(self.mplPrevisualizeCurve) == MplCanvasTimeCompare:
+                print("Enters refresh")
+                id = self.comboBoxRawVar.currentText()
                 self.mplPrevisualizeCurve.clear()
-                self.mplPrevisualizeCurve.refresh(self.df_previsualize["date"], self.df_previsualize[list(self.df_previsualize.columns)[id+1]])
+                self.mplPrevisualizeCurve.refresh(self.df_loaded, self.df_cleaned, id)
                 
 
                 self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
@@ -784,8 +816,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        self.mplPrevisualizeCurve = MplCanvasTimeScatter()
-        self.mplPrevisualizeCurve.click_connect()
         self.plotPrevisualizedVar()
 
     def getDF(self):
@@ -804,17 +834,22 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
         df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
-        # df = df_Pressure.join(df_ZH.set_index("date"), on="date")
-        self.df_loaded= df_Pressure.merge(df_ZH, on="date")
+        self.df_loaded = df_Pressure.join(df_ZH.set_index("date"), on="date")
+        self.df_cleaned = self.df_loaded.dropna()
+        # self.df_loaded= df_Pressure.merge(df_ZH, on="date")
+
+        self.mplPrevisualizeCurve = MplCanvasTimeCompare()
 
     def selectPoints(self):
         dig = DialogCleanPoints()
         dig.plot(self.comboBoxRawVar, self.df_loaded)
         res = dig.exec()
-
         if res == QtWidgets.QDialog.Accepted:
             self.df_selected = dig.mplSelectCurve.df_selected
             print(self.df_selected)
+        elif res == QtWidgets.QDialog.Rejected:
+            self.df_selected = pd.DataFrame(columns=["date","value"]) 
+            print(self.df_selected) 
         
 
     def refresh(self):

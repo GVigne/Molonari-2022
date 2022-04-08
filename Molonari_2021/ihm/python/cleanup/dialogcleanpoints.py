@@ -136,6 +136,7 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
         self.id = combobox.currentText()
 
         self.mplSelectCurve.clear()
+        print(self.df_original[self.id].tail())
         self.mplSelectCurve.refresh(self.df_original["date"], self.df_original[self.id],"blue")
         
         self.widgetScatter.addWidget(self.mplSelectCurve)
