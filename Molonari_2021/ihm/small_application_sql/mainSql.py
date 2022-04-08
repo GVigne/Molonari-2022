@@ -11,18 +11,20 @@ from PyQt5.QtWidgets import (
 )
 import pandas as pd
 from PyQt5 import uic
+from StudyDb import StudyDb
+from LaboDb import LaboDb
 
 from tp_ihm_sql import loadCSV, convertDates
 from creationTables import createTableMeasures
 from insertionTables import writeProcessedMeasuresSql, writeRawPressuresSql, writeRawTemperaturesSql
 
-version_ui = uic.loadUiType(os.path.join(os.path.dirname(__file__),"creationinput.ui"))
+version_ui = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainSql.ui"))
 
 
 def dropTableMeasures(connection):
     dropTableQuery = QSqlQuery(connection)
     dropTableQuery.exec_(
-        """       
+        """
         DROP TABLE measures_temp
         """
     )
@@ -67,7 +69,11 @@ class DataBase(version_ui[0], version_ui[1]):
             self.model.setTable("measures_press")
         elif self.comboBox.currentText() == "Processed measures":
             self.model.setTable("processed_measures")
-        
+        elif self.comboBox.currentText() == "Labo":
+            self.model.setTable("Labo")
+        elif self.comboBox.currentText() == "Study":
+            self.model.setTable("Study")
+            
         self.model.select()
         
         # Set the model to the GUI table view
@@ -97,6 +103,12 @@ class DataBase(version_ui[0], version_ui[1]):
             df_raw_press = df_raw_press.iloc[:, 1:]
             
             # Dump the measures to SQL database
+            labo = LaboDb(self.con)
+            labo.insert()
+            
+            study = StudyDb(self.con)
+            study.insert()
+            
             writeRawTemperaturesSql(self.con, df_raw_temp)
             writeRawPressuresSql(self.con, df_raw_press)
             writeProcessedMeasuresSql(self.con, df_processed_measures)

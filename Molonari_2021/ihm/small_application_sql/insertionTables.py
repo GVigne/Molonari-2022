@@ -36,6 +36,8 @@ def writeRawTemperaturesSql(con, dftemp):
     con.commit()
 
 def writeRawPressuresSql(con, dfpress):
+    con.transaction()
+    
     insertPressuresQuery = QSqlQuery(con)
     insertPressuresQuery.prepare(
         """
@@ -61,6 +63,8 @@ def writeRawPressuresSql(con, dfpress):
         
         insertPressuresQuery.exec_()
     insertPressuresQuery.finish()
+    
+    con.commit()
 
 
 def writeProcessedMeasuresSql(con, df):
