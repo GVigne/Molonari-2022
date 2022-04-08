@@ -97,7 +97,7 @@ def createTableMeasures(connection):
     
     createTablesQuery.exec_(
         """
-        CREATE TABLE measures_temp (
+        CREATE TABLE measures_press (
             id          INTEGER UNIQUE
                                 PRIMARY KEY AUTOINCREMENT,
             date        DATETIME    NOT NULL

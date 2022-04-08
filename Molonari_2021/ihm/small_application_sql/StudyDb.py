@@ -4,7 +4,7 @@ class StudyDb():
     def __init__(self, con) -> None:
         self.con = con
     
-    def insert(self, studies):
+    def insert(self):
         self.con.transaction()
         
         insertQuery = QSqlQuery(self.con)

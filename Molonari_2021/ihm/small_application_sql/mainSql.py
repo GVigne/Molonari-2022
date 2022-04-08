@@ -28,6 +28,11 @@ def dropTableMeasures(connection):
         DROP TABLE measures_temp
         """
     )
+    dropTableQuery.exec_(
+        """
+        DROP TABLE measures_press
+        """
+    )
     dropTableQuery.finish()
 
 
