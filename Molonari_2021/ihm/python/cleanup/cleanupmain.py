@@ -54,10 +54,15 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         suffix = '_cleaned'
         df_compare = df_or.join(df_cleaned.set_index("date"),on="date",rsuffix=suffix)
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
-        df_compare['outliers'][np.isnan(df_compare['outliers'])] = True
-        df_compare['outliers'][df_compare['outliers'] != True] = False
+
+        df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
+        df_compare.loc[df_compare['outliers'] != True, 'outliers'] = False
+
+        # df_compare['outliers'][np.isnan(df_compare['outliers'])] = True
+        # df_compare['outliers'][df_compare['outliers'] != True] = False
         # first = df1["dates"].iloc[0]
         # last = df1["dates"].iloc[-1]
+
         df_compare['date'] = mdates.date2num(df_compare['date'])
         df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
         df_compare[df_compare['outliers'] == True].plot.scatter(x='date',y=id,c = 'r',s = 3,ax = self.axes)
@@ -92,7 +97,6 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
     
     def click_connect(self):
         def onpick(event):
-            print("Enters the envent")
             ind = event.ind
             datax,datay = event.artist.get_data()
             datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
@@ -801,7 +805,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         "Refresh plot"
         try:
             if type(self.mplPrevisualizeCurve) == MplCanvasTimeCompare:
-                print("Enters refresh")
                 id = self.comboBoxRawVar.currentText()
                 self.mplPrevisualizeCurve.clear()
                 self.mplPrevisualizeCurve.refresh(self.df_loaded, self.df_cleaned, id)
@@ -816,6 +819,23 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
+        varName = self.comboBoxRawVar.currentText()
+        print("--")
+        print(self.df_cleaned.isna().sum())
+
+        values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else x[varName],axis=1)
+        self.df_cleaned.loc[:,"to_clean"] = values
+
+        print(self.df_cleaned.isna().sum())
+
+        self.df_cleaned.dropna(inplace=True)
+        self.df_cleaned.drop("to_clean", axis=1,inplace=True)
+        
+        print(self.df_cleaned.isna().sum())
+
+        print(self.df_cleaned)
+        # print(self.df_cleaned.apply(lambda x: np.nan if x['date'] in list(self.df_selected['date']) else x))
+
         self.plotPrevisualizedVar()
 
     def getDF(self):
@@ -835,7 +855,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
         self.df_loaded = df_Pressure.join(df_ZH.set_index("date"), on="date")
-        self.df_cleaned = self.df_loaded.dropna()
+        self.df_cleaned = self.df_loaded.copy().dropna()
+        self.df_selected = pd.DataFrame(columns=["date","value"])
         # self.df_loaded= df_Pressure.merge(df_ZH, on="date")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()

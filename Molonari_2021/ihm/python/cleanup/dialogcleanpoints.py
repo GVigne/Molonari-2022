@@ -23,10 +23,9 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         
     def refresh(self, times: pd.Series, values: pd.Series, color):
         if color=="blue":
-            p = 5
+            p = 4
         else:
             p = 0
-
         self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=p)
         self.format_axes()
         self.fig.canvas.draw()
@@ -136,7 +135,6 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
         self.id = combobox.currentText()
 
         self.mplSelectCurve.clear()
-        print(self.df_original[self.id].tail())
         self.mplSelectCurve.refresh(self.df_original["date"], self.df_original[self.id],"blue")
         
         self.widgetScatter.addWidget(self.mplSelectCurve)
