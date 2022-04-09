@@ -11,7 +11,7 @@ class PressureSensorDb():
         
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
-        """
+        """ 
         INSERT INTO pressure_sensor (
             Name,
             Datalogger,

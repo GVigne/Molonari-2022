@@ -127,6 +127,9 @@ class DataBase(version_ui[0], version_ui[1]):
             labo = LaboDb(self.con)
             labo.insert()
             
+            thermometerDb = ThermometerDb(self.con)
+            thermometerDb.insertThermometersFromStudy(current_study)
+            
             studyDb = StudyDb(self.con)
             studyDb.insert(current_study)
             
@@ -135,9 +138,6 @@ class DataBase(version_ui[0], version_ui[1]):
             
             shaftDb = ShaftDb(self.con)
             shaftDb.insertShaftsromStudy(current_study)
-            
-            thermometerDb = ThermometerDb(self.con)
-            thermometerDb.insertThermometersFromStudy(current_study)
             
             writeRawTemperaturesSql(self.con, df_raw_temp)
             writeRawPressuresSql(self.con, df_raw_press)

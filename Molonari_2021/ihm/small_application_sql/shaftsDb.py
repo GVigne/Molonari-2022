@@ -1,4 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
+from ThermometerDb import ThermometerDb
 
 class ShaftDb():
     def __init__(self, con) -> None:
@@ -26,13 +27,15 @@ class ShaftDb():
         )
         
         for shaft in shafts:
-            # thermo_model = 
+            thermo_name = shaft.getThermometer()
+            thermo_model = ThermometerDb(self.con).getIdByname(thermo_name)
+            
             insertQuery.addBindValue(shaft.name)
             insertQuery.addBindValue(shaft.depths[0])
             insertQuery.addBindValue(shaft.depths[1])
             insertQuery.addBindValue(shaft.depths[2])
             insertQuery.addBindValue(shaft.depths[3])
-            insertQuery.addBindValue("1")
+            insertQuery.addBindValue(str(thermo_model))
             insertQuery.addBindValue("1")
             
             insertQuery.exec_()
