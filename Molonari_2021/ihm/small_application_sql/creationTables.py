@@ -68,15 +68,15 @@ def createTableMeasures(connection):
     
     createTablesQuery.exec_(
         """
-        CREATE TABLE [Pressure sensor] (
+        CREATE TABLE pressure_sensor (
             id           INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Name         VARCHAR  NOT NULL,
-            Datalogger   VARCHAR  NOT NULL,
-            Calibration  DATETIME NOT NULL,
-            Intercept    REAL     NOT NULL,
-            [Du/Dh]      REAL     NOT NULL,
-            [Du/Dt]      REAL     NOT NULL,
-            Precision    REAL     NOT NULL,
+            Name         VARCHAR ,
+            Datalogger   VARCHAR ,
+            Calibration  DATETIME,
+            Intercept    REAL,
+            [Du/Dh]      REAL,
+            [Du/Dt]      REAL,
+            Precision    REAL,
             Thermo_model INTEGER  REFERENCES Thermometer (id),
             Labo         INTEGER  REFERENCES Labo (id)
         );

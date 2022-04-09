@@ -118,7 +118,18 @@ class Study(object):
         for file in files:
             psensor = PressureSensor()
             psensor.loadPressureSensor(file, sensorModel)
-        
+            
+    def getPressureSensorsDb(self):
+        sdir = os.path.join(self.sensorDir, "pressure_sensors", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        pressure_sensors = []
+        for file in files:
+            psensor = PressureSensor()
+            psensor.setPressureSensorFromFile(file)
+            pressure_sensors.append(psensor)
+        return pressure_sensors
+    
     def loadShafts(self, sensorModel: QtGui.QStandardItemModel):
         sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
         files = glob.glob(sdir)
@@ -126,7 +137,18 @@ class Study(object):
         for file in files:
             shaft = Shaft()
             shaft.loadShaft(file, sensorModel)  
-
+            
+    def getShaftsDb(self):
+        sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        shafts = []
+        for file in files:
+            shaft = Shaft()
+            shaft.setShaftFromFile(file)
+            shafts.append(shaft)
+        return shafts
+            
     def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
         #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
         sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")

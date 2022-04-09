@@ -55,6 +55,16 @@
       </item>
       <item>
        <property name="text">
+        <string>Shaft</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Pressure Sensor</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>Study</string>
        </property>
       </item>

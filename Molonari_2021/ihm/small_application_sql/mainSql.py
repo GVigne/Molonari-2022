@@ -13,10 +13,15 @@ import pandas as pd
 from PyQt5 import uic
 from StudyDb import StudyDb
 from LaboDb import LaboDb
+from shaftsDb import ShaftDb
 
 from tp_ihm_sql import loadCSV, convertDates
 from creationTables import createTableMeasures
 from insertionTables import writeProcessedMeasuresSql, writeRawPressuresSql, writeRawTemperaturesSql
+from pressureSensorDb import PressureSensorDb
+sys.path.insert(0, 'C:/Users/33689/OneDrive/Documents/2A/Molonari/Molonari-2022/Molonari_2021/ihm/molonaviz')
+from study import Study
+
 
 version_ui = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainSql.ui"))
 
@@ -78,7 +83,10 @@ class DataBase(version_ui[0], version_ui[1]):
             self.model.setTable("Labo")
         elif self.comboBox.currentText() == "Study":
             self.model.setTable("Study")
-            
+        elif self.comboBox.currentText() == "Pressure Sensor":
+            self.model.setTable("pressure_sensor")
+        elif self.comboBox.currentText() == "Shaft":
+            self.model.setTable("Shaft")
         self.model.select()
         
         # Set the model to the GUI table view
@@ -94,7 +102,12 @@ class DataBase(version_ui[0], version_ui[1]):
     # Open a "File Dialog" window and retrieve the path
         StudyFolderPath = QFileDialog.getExistingDirectory(self, "Select Study Root Directory")
         
+        
+        
         if StudyFolderPath:
+            current_study = Study(rootDir=StudyFolderPath)
+            current_study.loadStudyFromText()
+            
             # Update the lineEditTempFile
             self.lineEditTempFile.setText(StudyFolderPath)
         
@@ -111,8 +124,14 @@ class DataBase(version_ui[0], version_ui[1]):
             labo = LaboDb(self.con)
             labo.insert()
             
-            study = StudyDb(self.con)
-            study.insert()
+            studyDb = StudyDb(self.con)
+            studyDb.insert(current_study)
+            
+            pressureSensorDb = PressureSensorDb(self.con)
+            pressureSensorDb.insertSensorsFromStudy(current_study)
+            
+            shaftDb = ShaftDb(self.con)
+            shaftDb.insertShaftsromStudy(current_study)
             
             writeRawTemperaturesSql(self.con, df_raw_temp)
             writeRawPressuresSql(self.con, df_raw_press)
