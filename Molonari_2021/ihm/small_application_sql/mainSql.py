@@ -13,6 +13,7 @@ import pandas as pd
 from PyQt5 import uic
 from StudyDb import StudyDb
 from LaboDb import LaboDb
+from ThermometerDb import ThermometerDb
 from shaftsDb import ShaftDb
 
 from tp_ihm_sql import loadCSV, convertDates
@@ -87,6 +88,8 @@ class DataBase(version_ui[0], version_ui[1]):
             self.model.setTable("pressure_sensor")
         elif self.comboBox.currentText() == "Shaft":
             self.model.setTable("Shaft")
+        elif self.comboBox.currentText() == "Thermometer":
+            self.model.setTable("Thermometer")
         self.model.select()
         
         # Set the model to the GUI table view
@@ -132,6 +135,9 @@ class DataBase(version_ui[0], version_ui[1]):
             
             shaftDb = ShaftDb(self.con)
             shaftDb.insertShaftsromStudy(current_study)
+            
+            thermometerDb = ThermometerDb(self.con)
+            thermometerDb.insertThermometersFromStudy(current_study)
             
             writeRawTemperaturesSql(self.con, df_raw_temp)
             writeRawPressuresSql(self.con, df_raw_press)

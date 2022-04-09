@@ -29,7 +29,7 @@ def createTableMeasures(connection):
             Name      VARCHAR NOT NULL,
             Manu_name VARCHAR NOT NULL,
             Manu_ref  VARCHAR NOT NULL,
-            Precision REAL    NOT NULL
+            Error REAL    NOT NULL
         );
         """
     )

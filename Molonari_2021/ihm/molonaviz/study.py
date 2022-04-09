@@ -158,6 +158,17 @@ class Study(object):
             thermometer = Thermometer()
             thermometer.loadThermometer(file, sensorModel)  
 
+    def getThermometersDb(self):
+        sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        thermometers = []
+        for file in files:
+            thermometer = Thermometer()
+            thermometer.setThermometerFromFile(file)
+            thermometers.append(thermometer)
+        return thermometers
+
     def loadPoints(self, pointModel: QtGui.QStandardItemModel):
         rdir = self.rootDir
         dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file

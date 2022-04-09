@@ -55,6 +55,11 @@
       </item>
       <item>
        <property name="text">
+        <string>Thermometer</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>Shaft</string>
        </property>
       </item>

@@ -26,6 +26,7 @@ class ShaftDb():
         )
         
         for shaft in shafts:
+            # thermo_model = 
             insertQuery.addBindValue(shaft.name)
             insertQuery.addBindValue(shaft.depths[0])
             insertQuery.addBindValue(shaft.depths[1])
