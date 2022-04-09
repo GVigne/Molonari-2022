@@ -136,7 +136,7 @@ class DataBase(version_ui[0], version_ui[1]):
             pressureSensorDb = PressureSensorDb(self.con)
             pressureSensorDb.insertSensorsFromStudy(current_study)
             
-            shaftDb = ShaftDb(self.con)
+            shaftDb = ShaftDb(self.con, self.model)
             shaftDb.insertShaftsromStudy(current_study)
             
             writeRawTemperaturesSql(self.con, df_raw_temp)
