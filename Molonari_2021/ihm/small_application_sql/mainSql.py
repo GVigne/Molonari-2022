@@ -17,15 +17,12 @@ from thermometerDb import ThermometerDb
 from samplingPointDb import SamplingPointDb
 from shaftsDb import ShaftDb
 
-from tp_ihm_sql import loadCSV, convertDates
-from creationTables import createTableMeasures
-from insertionTables import writeProcessedMeasuresSql, writeRawPressuresSql, writeRawTemperaturesSql
 from pressureSensorDb import PressureSensorDb
 from rawMeasuresTempDb import RawMeasuresTempDb
 from rawMeasuresPressDb import RawMeasuresPressDb
 from shaftsDb import ShaftDb
 from cleanedMeasuresDb import CleanedMeasuresDb
-sys.path.insert(0, 'C:/Users/33689/OneDrive/Documents/2A/Molonari/Molonari-2022/Molonari_2021/ihm/molonaviz')
+sys.path.insert(0, '../molonaviz')
 from study import Study
 
 
@@ -120,12 +117,6 @@ class DataBase(version_ui[0], version_ui[1]):
             
             # Update the lineEditTempFile
             self.lineEditTempFile.setText(StudyFolderPath)
-        
-            # Read the CSV file
-            df_processed_temp = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_temperatures.csv")
-            df_processed_press = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_pressures.csv")
-            df_processed_measures = df_processed_temp.merge(df_processed_press)
-            
             
             # Dump the measures to SQL database
             laboDb = LaboDb(self.con)
@@ -163,10 +154,6 @@ class DataBase(version_ui[0], version_ui[1]):
             cleanedMeasuresDb = CleanedMeasuresDb(self.con)
             cleanedMeasuresDb.create()
             cleanedMeasuresDb.insert(current_study)
-            
-            # writeRawTemperaturesSql(self.con, df_raw_temp)
-            # writeRawPressuresSql(self.con, df_raw_press)
-            # writeProcessedMeasuresSql(self.con, df_processed_measures)
             
             # Read the SQL and update the views
             self.displaySQL()
