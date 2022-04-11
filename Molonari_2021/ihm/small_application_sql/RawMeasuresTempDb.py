@@ -7,9 +7,9 @@ class RawMeasuresTempDb():
     def create(self):
         dropQuery = QSqlQuery()
         
-        dropQuery.exec(
+        dropQuery.exec_(
             """       
-            DROP TABLE measures_temp
+            DROP TABLE RawMeasuresTemp
             """
         )
     
@@ -19,16 +19,14 @@ class RawMeasuresTempDb():
         
         createQuery.exec_(
         """
-        CREATE TABLE measures_temp (
-            id          INTEGER UNIQUE
-                                PRIMARY KEY AUTOINCREMENT,
-            Date        DATETIME    NOT NULL
-                                UNIQUE,
-            Temp1          REAL,
-            Temp2          REAL,
-            Temp3          REAL,
-            Temp4          REAL,
-            PointKey    INTEGER REFERENCES SamplingPoint (id),
+        CREATE TABLE RawMeasuresTemp (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            Date        DATETIME,
+            Temp1       REAL,
+            Temp2       REAL,
+            Temp3       REAL,
+            Temp4       REAL,
+            PointKey    INTEGER REFERENCES SamplingPoint (id)
         );
         """
         )
@@ -41,15 +39,16 @@ class RawMeasuresTempDb():
         points = study.getPointsDb()
         
         insertQuery = QSqlQuery(self.con)
+        
         insertQuery.prepare(
         """ 
-        INSERT INTO measures_temp (
+        INSERT INTO RawMeasuresTemp (
             Date,
             Temp1,
             Temp2,
             Temp3,
             Temp4,
-            Point_key
+            PointKey
         )
         VALUES (?, ?, ?, ?, ?, ?)
         """
@@ -68,7 +67,9 @@ class RawMeasuresTempDb():
                 insertQuery.addBindValue(str(1))
                 
                 insertQuery.exec_()
+        
         insertQuery.finish()
+        
         self.con.commit()
         
     def select(self):

@@ -83,7 +83,7 @@ class DataBase(version_ui[0], version_ui[1]):
         elif self.comboBox.currentText() == "Raw pressures":
             self.model.setTable("RawMeasuresPress")
         elif self.comboBox.currentText() == "Processed measures":
-            self.model.setTable("processed_measures")
+            self.model.setTable("CleanedMeasures")
         elif self.comboBox.currentText() == "Labo":
             self.model.setTable("Labo")
         elif self.comboBox.currentText() == "Study":
@@ -152,7 +152,7 @@ class DataBase(version_ui[0], version_ui[1]):
             
             samplingPointDb = SamplingPointDb(self.con)
             samplingPointDb.create()
-            # samplingPointDb.insertSamplingPointsromStudy(current_study)
+            samplingPointDb.insert(current_study)
             
             rawMeasuresTempDb = RawMeasuresTempDb(self.con)
             rawMeasuresTempDb.create()

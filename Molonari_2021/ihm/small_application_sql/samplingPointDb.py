@@ -29,11 +29,11 @@ class SamplingPointDb():
             Longitude       REAL,
             Latitude        REAL,
             Implentation    DATETIME,
-            LastTransfert  DATETIME,
-            DeltaH         REAL,
-            RiverBed       REAL,
+            LastTransfert   DATETIME,
+            DeltaH          REAL,
+            RiverBed        REAL,
             Shaft           INTEGER REFERENCES Shaft (id),
-            PressureSensor INTEGER REFERENCES pressure_sensor (id),
+            PressureSensor  INTEGER REFERENCES PressureSensor (id),
             Study           INTEGER REFERENCES Study (id)
         );
         """
@@ -42,34 +42,55 @@ class SamplingPointDb():
         
             
     def insert(self, study):
-        """self.con.transaction()
+        self.con.transaction()
         
         points = study.getPointsDb()
         
+        insertQuery = QSqlQuery(self.con)
+        
+        insertQuery.prepare(
+            """
+            INSERT INTO SamplingPoint (
+                Name,
+                Notice,
+                Longitude,
+                Latitude,
+                Implentation,
+                LastTransfert,
+                DeltaH,
+                RiverBed,
+                Shaft,
+                PressureSensor,
+                Study
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+        )
+        
         for point in points:
             shaft = point.getShaft()
-            shaft_id = ShaftDb(self.con, self.model).getIdByname(shaft)
+            shaft_id = ShaftDb(self.con).getIdByname(shaft)
             
             psensor = point.getPressureSensor()
             psensor_id = PressureSensorDb(self.con).getIdByname(psensor)
             
-            r = self.model.record()
-            r.setValue("Name", point.oldName)
-            r.setValue("Notice", "notice")
-            r.setValue("Longitude", 0)
-            r.setValue("Latitude", 0)
-            r.setValue("Implentation", "06/27/16 12:00:00 PM")
-            r.setValue("Last_transfert", "06/27/16 12:00:00 PM")
-            r.setValue("Delta_h", point.deltaH)
-            r.setValue("River_bed", point.rivBed)
-            r.setValue("Shaft", shaft_id)
-            r.setValue("Pressure_sensor", psensor_id)
-            r.setValue("Study", 1)
+            insertQuery.addBindValue(point.oldName)
+            insertQuery.addBindValue("notice")
+            insertQuery.addBindValue(str(0))
+            insertQuery.addBindValue(str(0))
+            insertQuery.addBindValue("06/27/16 12:00:00 PM")
+            insertQuery.addBindValue("06/27/16 12:00:00 PM")
+            insertQuery.addBindValue(point.deltaH)
+            insertQuery.addBindValue(point.rivBed)
+            insertQuery.addBindValue(shaft_id)
+            insertQuery.addBindValue(psensor_id)
+            insertQuery.addBindValue("1")
             
-            self.model.setTable("Sampling_point")
-            self.model.insertRecord(-1, r)
+            insertQuery.exec_()
             
-        self.con.commit()"""
+        insertQuery.finish()
+            
+        self.con.commit()
         
     def select(self):
         pass

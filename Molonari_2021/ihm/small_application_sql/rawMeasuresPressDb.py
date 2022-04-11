@@ -7,7 +7,7 @@ class RawMeasuresPressDb():
     def create(self):
         dropQuery = QSqlQuery()
         
-        dropQuery.exec(
+        dropQuery.exec_(
             """       
             DROP TABLE RawMeasuresPress
             """
@@ -24,9 +24,9 @@ class RawMeasuresPressDb():
                                 PRIMARY KEY AUTOINCREMENT,
             Date        DATETIME    NOT NULL
                                 UNIQUE,
-            TempBed          REAL,
-            Pressure          REAL,
-            PointKkey   INTEGER,
+            TempBed     REAL,
+            Pressure    REAL,
+            PointKey   INTEGER
         );
         """
         )
@@ -45,7 +45,7 @@ class RawMeasuresPressDb():
             Date,
             TempBed,
             Pressure,
-            PointKey,
+            PointKey
         )
         VALUES (?, ?, ?, ?)
         """
