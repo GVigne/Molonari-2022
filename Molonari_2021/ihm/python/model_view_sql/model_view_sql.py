@@ -46,7 +46,7 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         #https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
         # TODO : how to guarantee that dates in the model are stored as datetime (and not strings)?
         times = [self.model.data(self.model.index(r,1)) for r in range(self.model.rowCount())]
-        temperatures = [self.model.data(self.model.index(r,id+2)) for r in range(self.model.rowCount())]
+        temperatures = [self.model.data(self.model.index(r,2)) for r in range(self.model.rowCount())]
 
         # TODO : Still string to date conversion needed!
         self.axes.plot(mdates.date2num(times), temperatures)
@@ -185,7 +185,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         
         # TODO : to be removed
         self.lineEditTempFile.setText("/home/fors/Projets/molonari/Molonari-2022/Molonari_2021/studies/study_2022/Point034/processed_data/processed_temperatures.csv")
-        
+        self.timer.start(200) # ms
         
     def __del__(self):
         """
@@ -215,7 +215,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 displayCriticalMessage(f"{str(e)}", "Please choose a different temperatures file")
                 return pd.DataFrame(), pd.DataFrame()
             
-        return dfdepth, dftemp
+        return dftemp
     
     
     def writeSQL(self, df: pd.DataFrame):
@@ -256,12 +256,13 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             VALUES (?, ?, ?, ?, ?)
             """
         )
+        date, t1, t2, t3, t4 = range(5)
         for ind in df.index:
-            insertDataQuery.addBindValue(str(df['Date'][ind]))  #### Convert to standard python type (String)
-            insertDataQuery.addBindValue(float(df['Temp1'][ind]))
-            insertDataQuery.addBindValue(float(df['Temp2'][ind]))
-            insertDataQuery.addBindValue(float(df['Temp3'][ind]))
-            insertDataQuery.addBindValue(float(df['Temp4'][ind]))
+            insertDataQuery.addBindValue(str(df.iloc[ind,date]))  #### Convert to standard python type (String)
+            insertDataQuery.addBindValue(float(df.iloc[ind,t1]))
+            insertDataQuery.addBindValue(float(df.iloc[ind,t2]))
+            insertDataQuery.addBindValue(float(df.iloc[ind,t3]))
+            insertDataQuery.addBindValue(float(df.iloc[ind,t4]))
             insertDataQuery.exec()
         insertDataQuery.finish()
 
@@ -304,10 +305,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.timer.stop()
         try:
             # Read the CSV file
-            dfdepth, df = self.readCSV()
+            dftemp = self.readCSV()
             
             # Dump the measures to SQL database
-            self.writeSQL(dfdepth, df)
+            self.writeSQL(dftemp)
             
             # Read the SQL and update the table/image
             self.readSQL()
@@ -316,8 +317,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             
         except Exception as e:
             displayCriticalMessage("Error", f"{str(e)}")
-            
-        self.labelStatus.setText("")        
 
 
 if __name__ == '__main__':
