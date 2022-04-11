@@ -1,6 +1,6 @@
 from PyQt5.QtSql import QSqlQuery
 
-class ParametersDistributionDb():
+class QuantileDb():
     def __init__(self, con) -> None:
         self.con = con
     
@@ -9,7 +9,7 @@ class ParametersDistributionDb():
         
         dropQuery.exec(
             """       
-            DROP TABLE ParametersDistribution
+            DROP TABLE Quantile
             """
         )
     
@@ -19,15 +19,10 @@ class ParametersDistributionDb():
         
         createQuery.exec_(
         """
-        CREATE TABLE ParametersDistribution (
-            id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            -log10K         REAL,
-            LambdaS         REAL,
-            N               REAL,
-            Layer           INTEGER REFERENCES Layer (id),
-            PointKey        INTEGER REFERENCES Point (id),
+        CREATE TABLE Quantile (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            Quantile    REAL NOT NULL
         );
-
         """
         )
         createQuery.finish()
@@ -35,4 +30,4 @@ class ParametersDistributionDb():
     
     def insert(self):
         pass
-        
+    

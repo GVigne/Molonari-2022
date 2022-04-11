@@ -1,6 +1,6 @@
 from PyQt5.QtSql import QSqlQuery
 
-class ParametersDistributionDb():
+class DateDb():
     def __init__(self, con) -> None:
         self.con = con
     
@@ -9,7 +9,7 @@ class ParametersDistributionDb():
         
         dropQuery.exec(
             """       
-            DROP TABLE ParametersDistribution
+            DROP TABLE Date
             """
         )
     
@@ -19,13 +19,9 @@ class ParametersDistributionDb():
         
         createQuery.exec_(
         """
-        CREATE TABLE ParametersDistribution (
-            id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            -log10K         REAL,
-            LambdaS         REAL,
-            N               REAL,
-            Layer           INTEGER REFERENCES Layer (id),
-            PointKey        INTEGER REFERENCES Point (id),
+        CREATE TABLE Date (
+            id             INTEGER  PRIMARY KEY AUTOINCREMENT,
+            Date           DATETIME,
         );
 
         """
