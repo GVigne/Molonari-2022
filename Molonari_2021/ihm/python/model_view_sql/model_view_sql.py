@@ -25,6 +25,19 @@ from matplotlib.ticker import MaxNLocator
 #  - base_class: PyQt5.QtWidgets.QDialog (parent class of the UI)
 From_sqlgridview = uic.loadUiType(os.path.join(os.path.dirname(__file__),"model_view_sql.ui"))
 
+# Inherits from QSqlTableModel (admit that DateTime column is the 2nd)
+class TimeCurveModel(QSqlTableModel): # TODO : add here indices for columns to be displayed
+    # Create a user-defined signal to be emitted each time select method is called
+    tableFilled = QtCore.Signal()
+    
+    def __init__(self, parent, database):
+        super(TimeCurveModel, self).__init__(parent, database)
+
+    # Override select method to emit the tableFilled signal
+    def select(self):
+        super(TimeCurveModel, self).select()
+        self.tableFilled.emit()
+        
 
 class MplCanvasTimeCurve(FigureCanvasQTAgg):
 
@@ -38,18 +51,21 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
 
+    # Set the model and connect tableFilled signal to refresh slot
     def setModel(self, model):
         self.model = model
-        model.dataChanged.connect(self.refresh)
+        model.tableFilled.connect(self.refresh)
         
+    # Display variable (3rd column) as function of time and redraw the view
+    # TODO : display several columns
     def refresh(self):
+        
         #https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
-        # TODO : how to guarantee that dates in the model are stored as datetime (and not strings)?
         times = [self.model.data(self.model.index(r,1)) for r in range(self.model.rowCount())]
         temperatures = [self.model.data(self.model.index(r,2)) for r in range(self.model.rowCount())]
 
-        # TODO : Still string to date conversion needed!
         self.axes.plot(mdates.date2num(times), temperatures)
+        self.fig.canvas.draw()
 
 
         
@@ -172,7 +188,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
 
         # Create data model and associate to corresponding viewers
-        self.modelTemp = QSqlTableModel(self, self.con)
+        self.modelTemp = TimeCurveModel(self, self.con)
         self.tableView.setModel(self.modelTemp)
         self.mplTempCurve.setModel(self.modelTemp)
 
@@ -281,7 +297,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.modelTemp.select()
         print("Rows in the measures table:", self.modelTemp.rowCount())
         print("Columns in the measures table:", self.modelTemp.columnCount())
-                
+
                 
     def browseFileTemp(self):
         """
