@@ -86,7 +86,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>3</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabInfos">
       <attribute name="title">
@@ -174,26 +174,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabTemperature">
-      <attribute name="title">
-       <string>Temperature</string>
-      </attribute>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QTableView" name="tableViewTemp"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabPressure">
-      <attribute name="title">
-       <string>Pressure</string>
-      </attribute>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QTableView" name="tableViewPress"/>
        </item>
       </layout>
      </widget>

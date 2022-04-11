@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery
 import pandas as pd
+from sympy import true
 from pandasmodel import PandasModel
 from dialogcleanup import DialogCleanup
 from dialogcompute import DialogCompute
@@ -79,30 +80,28 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def setPressureAndTemperatureModels(self):
         # Set the Temperature and Pressure models
         self.currentdata = "processed"
-
-        self.TemperatureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_temperatures.csv"
-        self.PressureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_pressures.csv"
-
         if self.checkBoxRaw_Data.isChecked():
-            self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
-        else:
-            self.dfpress = readCSVWithDates(self.PressureDir)
-        # self.currentPressureModel = PandasModel(self.dfpress)
-        select_query = f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.Temp_bed, RawMeasuresPress.Pressure
-                        FROM RawMeasuresTemp, RawMeasuresPress
-                        WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
-                            AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.name = "{self.point.name}")
-                           """
-        self.currentPressureModel = QSqlQueryModel()
-        self.currentPressureModel.setQuery(select_query)
-        self.tableViewDataArray.setModel(self.currentPressureModel)
+            self.currentdata = "raw"
 
-        if self.checkBoxRaw_Data.isChecked():
-            self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
-        else:
-            self.dftemp = readCSVWithDates(self.TemperatureDir)
-        self.currentTemperatureModel = PandasModel(self.dftemp)
-        self.tableViewTemp.setModel(self.currentTemperatureModel)
+        # self.TemperatureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_temperatures.csv"
+        # self.PressureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_pressures.csv"
+
+        # if self.checkBoxRaw_Data.isChecked():
+        #     self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
+        # else:
+        #     self.dfpress = readCSVWithDates(self.PressureDir)
+        # if self.checkBoxRaw_Data.isChecked():
+        #     self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
+        # else:
+        #     self.dftemp = readCSVWithDates(self.TemperatureDir)
+
+        select_query = self.build_queries(full_query=True)
+        self.currentDataModel = QSqlQueryModel()
+        self.currentDataModel.setQuery(select_query)
+        self.tableViewDataArray.setModel(self.currentDataModel)
+
+        # self.currentTemperatureModel = PandasModel(self.dftemp)
+        # self.tableViewTemp.setModel(self.currentTemperatureModel)
 
 
     def setWidgetInfos(self):
@@ -116,29 +115,35 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
     
     def checkbox(self):
-
+        """
+        Change the type of data displayed (raw or processed) when the checkbox changes state.
+        """
         if self.checkBoxRaw_Data.isChecked():
             self.currentdata = "raw"
         else :
             self.currentdata = "processed"
 
-        self.TemperatureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_temperatures.csv"
-        self.PressureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_pressures.csv"
+        select_query = self.build_queries(full_query=True) #Query changes according to self.currentdata
+        self.currentDataModel = QSqlQueryModel()
+        self.currentDataModel.setQuery(select_query)
+        self.tableViewDataArray.setModel(self.currentDataModel)
 
-        if self.currentdata == "processed":
-            self.dftemp = readCSVWithDates(self.TemperatureDir)
-            self.dfpress = readCSVWithDates(self.PressureDir)
-            self.currentTemperatureModel.setData(self.dftemp)
-            self.currentPressureModel.setData(self.dfpress)
+        # if self.currentdata == "processed"
+        #     self.dftemp = readCSVWithDates(self.TemperatureDir)
+        #     self.dfpress = readCSVWithDates(self.PressureDir)
+        #     self.currentTemperatureModel.setData(self.dftemp)
+        #     self.currentPressureModel.setData(self.dfpress)
         
-        elif self.currentdata == "raw":
-            self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
-            self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
-            self.currentTemperatureModel.setData(self.dftemp)
-            self.currentPressureModel.setData(self.dfpress)  
+        # elif self.currentdata == "raw":
+        #     self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
+        #     self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
+        #     self.currentTemperatureModel.setData(self.dftemp)
+        #     self.currentPressureModel.setData(self.dfpress)  
 
 
     def reset(self):
+        #This needs to be redone from scratch to be compatible with the SQL database
+        return
         dlg = DialogReset()
         res = dlg.exec_()
         if res == QtWidgets.QDialog.Accepted:
@@ -179,6 +184,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
 
     def cleanup(self):
+        #This needs to be redone from scratch to be compatible with the SQL database
+        return
         if self.currentdata == "raw":
             print("Please clean-up your processed data. Click again on the raw data box")
         else:
@@ -554,8 +561,44 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
     def label_update(self):
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
+    
+    def build_queries(self, full_query=False, field=""):
+        """
+        RawMeasuresTemp et RawMeasuresPress
+        CleanedMeasures
+        Build and return ONE AND ONLY ONE of the following queries:
+        -if full_query is True, then extract the Date, Pressure and all Temperatures (this is for the Data part)
+        -if field is not "", then extract the Date and the corresponding field (this is for the Plot part). The field must be Temp1, Temp2, Temp3, Temp4, TempBed or Pressure
+        Theses queries take into account the actual value of self.currentdata to make to correct request (to either RawMeasuresTemp or CleanedMeasures)
 
-
+        This function was made so that all SQL queries are in the same place and not scattered throughout the code.
+        """
+        if self.currentdata == "raw":
+            if full_query:
+                return f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Pressure
+                            FROM RawMeasuresTemp, RawMeasuresPress
+                            WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
+                                AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            """
+            elif field =="Temp1" or field =="Temp2" or field =="Temp3" or field =="Temp4":
+                return f"""SELECT RawMeasuresTemp.Date,RawMeasuresTemp.{field} FROM RawMeasuresTemp
+                        WHERE RawMeasuresTemp.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        """
+            elif field =="TempBed" or field =="Pressure":
+                return f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.{field} FROM RawMeasuresPress
+                        WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        """
+        elif self.currentdata == "processed":
+            #self.currentdata is "processed"
+            if full_query:
+                return f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                        FROM CleanedMeasures
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
+                            """
+            elif field =="Temp1" or field =="Temp2" or field =="Temp3" or field =="Temp4" or field =="TempBed" or field =="Pressure":
+                return f"""SELECT CleanedMeasures.Date,CleanedMeasures.{field} FROM CleanedMeasures
+                        WHERE CleanedMeasures.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        """
 
 """ 
 if __name__ == '__main__':
