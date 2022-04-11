@@ -1,6 +1,7 @@
 import sys, os
 import numpy as np
 import pandas as pd
+from scipy import stats
 # Import PyQt sub-modules
 from PyQt5 import QtWidgets, QtCore, uic
 # Import PyQt5.QtSql classes 
@@ -35,7 +36,6 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         super(MplCanvasTimeCompare, self).__init__(self.fig)
 
     def refresh_compare(self, df_or, df_cleaned,id):
-        print(df_cleaned)
         suffix = '_cleaned'
         varCleaned = df_cleaned.dropna()[["date",id]]
         df_compare = df_or[["date",id]].join(varCleaned.set_index("date"),on="date",rsuffix=suffix)
@@ -51,7 +51,6 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         self.fig.canvas.draw()
 
     def refresh(self,df_cleaned,id):
-        print(df_cleaned)
         df = df_cleaned.copy().dropna()
         df['date'] = mdates.date2num(df['date'].copy())
         df.plot(x='date',y=id,ax = self.axes)       
@@ -304,6 +303,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.varName = self.comboBoxRawVar.currentText
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
+
+        self.cleanedVars = []
         
         # TODO : to be removed
         # self.lineEditDepthFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/depths.csv")
@@ -743,9 +744,30 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         #     df.columns.values[i] = cols[i]
         df.columns = cols
         return df
+    
+    def iqr(self,df_in, col_name):
+
+        q1 = df_in[col_name].quantile(0.25)
+        q3 = df_in[col_name].quantile(0.75)
+        iqr = q3-q1 #Interquartile range
+        fence_low  = q1-1.5*iqr
+        fence_high = q3+1.5*iqr
+        df_out = df_in.copy()
+        df_out[col_name] = df_in[col_name].loc[(df_in[col_name] > fence_low) & (df_in[col_name] < fence_high)]
+        return df_out
+
+    def remove_outlier_z(self, df_in, col_name):
+        df_out = df_in.copy()
+        var = df_in[col_name].copy().dropna()
+        df_out[col_name]= var.loc[(np.abs(stats.zscore(var)) < 3)]
+        return df_out
 
     def plotPrevisualizedVar(self):
         "Refresh plot"
+        if self.varName() in self.cleanedVars:
+            self.pushButtonPrevisualize.setEnabled(False)
+        else:
+            self.pushButtonPrevisualize.setEnabled(True)
         try:
             if type(self.mplPrevisualizeCurve) == MplCanvasTimeCompare:
                 id = self.comboBoxRawVar.currentText()
@@ -766,10 +788,17 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-
+        if self.radioButtonZScore.isChecked():
+            self.df_cleaned = self.remove_outlier_z(self.df_cleaned,self.varName())
+        elif self.radioButtonIQR.isChecked():
+            self.df_cleaned = self.iqr(self.df_cleaned,self.varName())
+        else:
+            pass
         values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else x[self.varName()],axis=1)
         self.df_cleaned.loc[:,self.varName()] = values
-        print(self.df_cleaned)
+
+        self.cleanedVars.append(self.varName())
+        print(self.cleanedVars)
 
         # self.df_cleaned.dropna(inplace=True)
         # self.df_cleaned.drop("to_clean", axis=1,inplace=True)
@@ -811,13 +840,13 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             print(self.df_selected) 
 
     def resetCleanVar(self):
-        print(self.df_cleaned)
+        self.cleanedVars.remove(self.varName())
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
-        print(self.df_cleaned)
         self.df_selected = pd.DataFrame(columns=["date","value"])
         self.plotPrevisualizedVar()
 
     def resetCleanAll(self):
+        self.cleanedVars = []
         self.df_selected = pd.DataFrame(columns=["date","value"])
         self.df_cleaned = self.df_loaded.copy().dropna()
         self.plotPrevisualizedVar()
