@@ -4,6 +4,30 @@ class LaboDb():
     def __init__(self, con) -> None:
         self.con = con
     
+    def create(self):
+        dropQuery = QSqlQuery()
+        
+        dropQuery.exec(
+            """       
+            DROP TABLE Labo
+            """
+        )
+    
+        dropQuery.finish()
+        
+        createQuery = QSqlQuery(self.con)
+        
+        createQuery.exec_(
+        """
+        CREATE TABLE Labo (
+            id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name VARCHAR NOT NULL
+        );
+        """
+        )
+        createQuery.finish()
+        
+    
     def insert(self):
         self.con.transaction()
         

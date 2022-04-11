@@ -2,14 +2,41 @@ from PyQt5.QtSql import QSqlQuery
 from ThermometerDb import ThermometerDb
 
 class ShaftDb():
-    def __init__(self, con, model) -> None:    
+    def __init__(self, con) -> None:    
         self.con = con
-        self.model = model
         
-        self.model.setTable("Shaft")
+    def create(self):
+        dropQuery = QSqlQuery()
+        
+        dropQuery.exec(
+            """       
+            DROP TABLE Shaft
+            """
+        )
+    
+        dropQuery.finish()
+        
+        createQuery = QSqlQuery(self.con)
+        
+        createQuery.exec_(
+        """
+        CREATE TABLE Shaft (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name         VARCHAR NOT NULL,
+            Depth1       REAL    NOT NULL,
+            Depth2       REAL    NOT NULL,
+            Depth3       REAL    NOT NULL,
+            Depth4       REAL    NOT NULL,
+            Thermo_model INTEGER REFERENCES Thermometer (id),
+            Labo         INTEGER REFERENCES Labo (id)
+        );
+        """
+        )
+        createQuery.finish()
+        
     
     def insertShaftsromStudy(self, study):
-        self.con.transaction()
+        """self.con.transaction()
         
         shafts = study.getShaftsDb()
         
@@ -28,8 +55,11 @@ class ShaftDb():
             
             self.model.insertRecord(-1, r)
             
-        self.con.commit()
-        
+        self.con.commit()"""
+    
+    def select(self):
+        pass
+    
     def getIdByname(self, name):
         selectQuery = QSqlQuery(self.con)
         selectQuery.prepare("SELECT id FROM Shaft where Name = :name")

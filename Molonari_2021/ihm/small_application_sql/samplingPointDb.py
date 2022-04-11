@@ -4,14 +4,46 @@ from pressureSensorDb import PressureSensorDb
 from shaftsDb import ShaftDb
 
 class SamplingPointDb():
-    def __init__(self, con, model) -> None:    
+    def __init__(self, con, table_name) -> None:    
         self.con = con
-        self.model = model
+        self.table = table_name
         
-        self.model.setTable("Sampling_point")
+    def create(self):
+        dropQuery = QSqlQuery()
+        
+        dropQuery.exec(
+            """       
+            DROP TABLE SamplingPoint
+            """
+        )
     
+        dropQuery.finish()
+        
+        createQuery = QSqlQuery(self.con)
+        
+        createQuery.exec_(
+        """
+        CREATE TABLE SamplingPoint (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name            VARCHAR,
+            Notice          VARCHAR,
+            Longitude       REAL,
+            Latitude        REAL,
+            Implentation    DATETIME,
+            LastTransfert  DATETIME,
+            DeltaH         REAL,
+            RiverBed       REAL,
+            Shaft           INTEGER REFERENCES Shaft (id),
+            PressureSensor INTEGER REFERENCES pressure_sensor (id),
+            Study           INTEGER REFERENCES Study (id)
+        );
+        """
+        )
+        createQuery.finish()
+        
+            
     def insertSamplingPointsromStudy(self, study):
-        self.con.transaction()
+        """self.con.transaction()
         
         points = study.getPointsDb()
         
@@ -38,11 +70,14 @@ class SamplingPointDb():
             self.model.setTable("Sampling_point")
             self.model.insertRecord(-1, r)
             
-        self.con.commit()
+        self.con.commit()"""
         
+    def select(self):
+        pass
+    
     def getIdByname(self, name):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.prepare("SELECT id FROM Sampling_point where Name = :name")
+        selectQuery.prepare("SELECT id FROM SamplingPoint where Name = :name")
         selectQuery.bindValue(":name", name)
         selectQuery.exec_()
         

@@ -146,7 +146,7 @@ class DataBase(version_ui[0], version_ui[1]):
             samplingPointDb = SamplingPointDb(self.con, self.model)
             samplingPointDb.insertSamplingPointsromStudy(current_study)
             
-            rawMeasuresTempDb = RawMeasuresTempDb(self.con, self.model)
+            rawMeasuresTempDb = RawMeasuresTempDb(self.con)
             rawMeasuresTempDb.insertRawMeasuresTempFromStudy(current_study)
             
             # writeRawTemperaturesSql(self.con, df_raw_temp)

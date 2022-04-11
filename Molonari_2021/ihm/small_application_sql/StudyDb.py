@@ -4,6 +4,31 @@ class StudyDb():
     def __init__(self, con) -> None:
         self.con = con
     
+    def create(self):
+        dropQuery = QSqlQuery()
+        
+        dropQuery.exec(
+            """       
+            DROP TABLE Study
+            """
+        )
+    
+        dropQuery.finish()
+        
+        createQuery = QSqlQuery(self.con)
+        
+        createQuery.exec_(
+        """
+        CREATE TABLE Study (
+            id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name VARCHAR NOT NULL,
+            Labo INTEGER REFERENCES Labo (id)
+        );
+        """
+        )
+        createQuery.finish()
+        
+    
     def insert(self, study):
         self.con.transaction()
         

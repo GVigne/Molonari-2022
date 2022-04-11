@@ -3,6 +3,33 @@ from PyQt5.QtSql import QSqlQuery
 class ThermometerDb():
     def __init__(self, con) -> None:
         self.con = con
+        
+    def create(self):
+        dropQuery = QSqlQuery()
+        
+        dropQuery.exec(
+            """       
+            DROP TABLE Thermometer
+            """
+        )
+    
+        dropQuery.finish()
+        
+        createQuery = QSqlQuery(self.con)
+        
+        createQuery.exec_(
+        """
+        CREATE TABLE Thermometer (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name      VARCHAR NOT NULL,
+            Manu_name VARCHAR NOT NULL,
+            Manu_ref  VARCHAR NOT NULL,
+            Error     REAL    NOT NULL
+        );
+        """
+        )
+        createQuery.finish()
+        
     
     def insertThermometersFromStudy(self, study):
         self.con.transaction()

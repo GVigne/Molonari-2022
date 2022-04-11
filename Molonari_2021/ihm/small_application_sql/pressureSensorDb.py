@@ -4,6 +4,38 @@ class PressureSensorDb():
     def __init__(self, con) -> None:
         self.con = con
     
+    def create(self):
+        dropQuery = QSqlQuery()
+        
+        dropQuery.exec(
+            """       
+            DROP TABLE PressureSensor
+            """
+        )
+    
+        dropQuery.finish()
+        
+        createQuery = QSqlQuery(self.con)
+        
+        createQuery.exec_(
+        """
+        CREATE TABLE PressureSensor (
+            id           INTEGER  PRIMARY KEY AUTOINCREMENT,
+            Name         VARCHAR ,
+            Datalogger   VARCHAR ,
+            Calibration  DATETIME,
+            Intercept    REAL,
+            [Du/Dh]      REAL,
+            [Du/Dt]      REAL,
+            Precision    REAL,
+            Thermo_model INTEGER  REFERENCES Thermometer (id),
+            Labo         INTEGER  REFERENCES Labo (id)
+        );
+        """
+        )
+        createQuery.finish()
+        
+    
     def insertSensorsFromStudy(self, study):
         self.con.transaction()
         
@@ -12,7 +44,7 @@ class PressureSensorDb():
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """ 
-        INSERT INTO pressure_sensor (
+        INSERT INTO PressureSensor (
             Name,
             Datalogger,
             Calibration,
@@ -43,10 +75,13 @@ class PressureSensorDb():
         insertQuery.finish()
         
         self.con.commit()
-        
+    
+    def select(self):
+        pass
+    
     def getIdByname(self, name):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.prepare("SELECT id FROM pressure_sensor where Name = :name")
+        selectQuery.prepare("SELECT id FROM PressureSensor where Name = :name")
         selectQuery.bindValue(":name", name)
         selectQuery.exec_()
         
