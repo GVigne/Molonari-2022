@@ -177,7 +177,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.tabPlot.layout().addWidget(self.mplTempCurve)
 
         # Remove existing SQL database file (if so)
-        self.sql = "molonari_grid_temp.sqlite"
+        self.sql = "molonari_temp.sqlite"
         if os.path.exists(self.sql):
             os.remove(self.sql)
 
