@@ -74,6 +74,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
         self.treeViewDataPoints.doubleClicked.connect(self.openPointTimer)
+        self.treeViewDataPoints.clicked.connect(self.actualizeMenuPoints)
         self.treeViewDataPoints.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.treeViewDataPoints.customContextMenuRequested.connect(self.menuContextTree)
 
@@ -126,6 +127,12 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         menu.addAction(self.actionOpen_Point)
         menu.addAction(self.actionRemove_Point)
 
+        self.actualizeMenuPoints()
+
+        menu.exec_(self.treeViewDataPoints.mapToGlobal(position))
+    
+    def actualizeMenuPoints(self):
+
         if len(self.treeViewDataPoints.selectedIndexes()) != 0:
             if self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole) == None:
                 pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
@@ -142,7 +149,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.actionRemove_Point.setEnabled(False)
             self.actionRemove_Point.setText("Remove Point")
 
-        menu.exec_(self.treeViewDataPoints.mapToGlobal(position))
 
     def createStudy(self):
         dlg = DialogStudy()
@@ -313,10 +319,12 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         msgBox = displayConfirmationMessage(title, message)
         
         if msgBox == QtWidgets.QMessageBox.Ok:
-            pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+            point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
+            if point == None:
+                point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
+            pointname = point.getName()
             pointItem = self.pointModel.findItems(pointname)[0]
             
-            point = pointItem.data(QtCore.Qt.UserRole)
             point.delete() #supprime le dossier du rootDir
 
             pointIndex = self.pointModel.indexFromItem(pointItem)
