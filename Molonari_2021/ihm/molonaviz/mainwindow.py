@@ -38,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.mdi.setTabsClosable(True)
 
         self.currentStudy = None
+        self.currentDlg = None
 
         self.pSensorModel = QtGui.QStandardItemModel()
         self.treeViewPressureSensors.setModel(self.pSensorModel)
@@ -64,7 +65,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionOpen_Study.triggered.connect(self.openStudy)
         self.actionCreate_Study.triggered.connect(self.createStudy)
         self.actionClose_Study.triggered.connect(self.closeStudy)
-        self.actionImport_Point.triggered.connect(self.importPoint)
+        self.actionImport_Point.triggered.connect(self.importPointTimer)
         self.actionOpen_Point.triggered.connect(self.openPointTimer)
         self.actionRemove_Point.triggered.connect(self.removePoint)
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
@@ -86,7 +87,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.timer = QtCore.QTimer(self)
         self.timer.setSingleShot(True)
-        self.timer.timeout.connect(self.openPoint)
 
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -138,6 +138,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
             else:
                 pointname = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole).getName()
+            
             self.actionOpen_Point.setEnabled(True)
             self.actionOpen_Point.setText(f"Open {pointname}")
             self.actionRemove_Point.setEnabled(True)
@@ -262,24 +263,33 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.currentStudy = None
 
-    def importPoint(self):
-        point = Point()
+    def importPointTimer(self):
         dlg = DialogImportPoint()
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             try :
-                name, infofile, prawfile, trawfile, noticefile, configfile  = dlg.getPointInfo()
-                point = self.currentStudy.addPoint(name, infofile, prawfile, trawfile, noticefile, configfile) 
-                point.loadPoint(self.pointModel)
+                self.currentDlg = dlg
+                pointname = dlg.getPointInfo()[0]
+                print(f"Importing {pointname}")
+                self.timer.timeout.connect(self.importPoint)
+                self.timer.start(200)
+
             except Exception as e :
                 print(f"Point import aborted : {str(e)}")
                 displayCriticalMessage('Point import aborted', f"Couldn't import point due to the following error : \n{str(e)}")
-           
+
+    def importPoint(self):
+        name, infofile, prawfile, trawfile, noticefile, configfile  = self.currentDlg.getPointInfo()
+        point = self.currentStudy.addPoint(name, infofile, prawfile, trawfile, noticefile, configfile) 
+        point.loadPoint(self.pointModel)
+        print(" ==> done")
+
     def openPointTimer(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
         if point == None:
             point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
         print(f"Opening {point.getName()} ...")
+        self.timer.timeout.connect(self.openPoint)
         self.timer.start(200)
 
     def openPoint(self):
@@ -338,16 +348,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             
             print(f"{pointname} successfully removed")
 
-            if len(self.treeViewDataPoints.selectedIndexes()) != 0:
-                self.actionOpen_Point.setEnabled(True)
-                self.actionOpen_Point.setText(f"Open {pointname}")
-                self.actionRemove_Point.setEnabled(True)
-                self.actionRemove_Point.setText(f"Remove {pointname}")  
-            else:
-                self.actionRemove_Point.setText(f"Remove Point")
-                self.actionOpen_Point.setText(f"Open Point")
-                self.actionOpen_Point.setEnabled(False)
-                self.actionRemove_Point.setEnabled(False)
+            self.actualizeMenuPoints()
 
         else : 
             #displayInfoMessage("Point removal aborted")
