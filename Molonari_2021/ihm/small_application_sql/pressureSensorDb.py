@@ -21,8 +21,8 @@ class PressureSensorDb():
         """
         CREATE TABLE PressureSensor (
             id           INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Name         VARCHAR ,
-            Datalogger   VARCHAR ,
+            Name         VARCHAR,
+            Datalogger   VARCHAR,
             Calibration  DATETIME,
             Intercept    REAL,
             [Du/Dh]      REAL,
@@ -36,7 +36,7 @@ class PressureSensorDb():
         createQuery.finish()
         
     
-    def insertSensorsFromStudy(self, study):
+    def insert(self, study):
         self.con.transaction()
         
         pressure_sensors = study.getPressureSensorsDb()
@@ -63,10 +63,10 @@ class PressureSensorDb():
             insertQuery.addBindValue(psensor.name)
             insertQuery.addBindValue(psensor.datalogger)
             insertQuery.addBindValue(psensor.calibrationDate)
-            insertQuery.addBindValue(str(psensor.intercept))
-            insertQuery.addBindValue(str(psensor.dudh))
-            insertQuery.addBindValue(str(psensor.dudt))
-            insertQuery.addBindValue(str(psensor.sigma))
+            insertQuery.addBindValue(psensor.intercept)
+            insertQuery.addBindValue(psensor.dudh)
+            insertQuery.addBindValue(psensor.dudt)
+            insertQuery.addBindValue(psensor.sigma)
             insertQuery.addBindValue("1")
             insertQuery.addBindValue("1")
             

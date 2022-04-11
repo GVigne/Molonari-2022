@@ -1,12 +1,11 @@
 from PyQt5.QtSql import QSqlQuery
-from ThermometerDb import ThermometerDb
+from thermometerDb import ThermometerDb
 from pressureSensorDb import PressureSensorDb
 from shaftsDb import ShaftDb
 
 class SamplingPointDb():
-    def __init__(self, con, table_name) -> None:    
+    def __init__(self, con) -> None:    
         self.con = con
-        self.table = table_name
         
     def create(self):
         dropQuery = QSqlQuery()
@@ -42,7 +41,7 @@ class SamplingPointDb():
         createQuery.finish()
         
             
-    def insertSamplingPointsromStudy(self, study):
+    def insert(self, study):
         """self.con.transaction()
         
         points = study.getPointsDb()

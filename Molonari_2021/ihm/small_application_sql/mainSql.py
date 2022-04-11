@@ -11,9 +11,9 @@ from PyQt5.QtWidgets import (
 )
 import pandas as pd
 from PyQt5 import uic
-from StudyDb import StudyDb
-from LaboDb import LaboDb
-from ThermometerDb import ThermometerDb
+from studyDb import StudyDb
+from laboDb import LaboDb
+from thermometerDb import ThermometerDb
 from samplingPointDb import SamplingPointDb
 from shaftsDb import ShaftDb
 
@@ -21,7 +21,9 @@ from tp_ihm_sql import loadCSV, convertDates
 from creationTables import createTableMeasures
 from insertionTables import writeProcessedMeasuresSql, writeRawPressuresSql, writeRawTemperaturesSql
 from pressureSensorDb import PressureSensorDb
-from RawMeasuresTempDb import RawMeasuresTempDb
+from rawMeasuresTempDb import RawMeasuresTempDb
+from rawMeasuresPressDb import RawMeasuresPressDb
+from shaftsDb import ShaftDb
 sys.path.insert(0, 'C:/Users/33689/OneDrive/Documents/2A/Molonari/Molonari-2022/Molonari_2021/ihm/molonaviz')
 from study import Study
 
@@ -65,8 +67,8 @@ class DataBase(version_ui[0], version_ui[1]):
         self.model = QSqlTableModel(self, self.con)
 
         
-        dropTableMeasures(self.con)
-        createTableMeasures(self.con)
+        # dropTableMeasures(self.con)
+        # createTableMeasures(self.con)
         
         
         
@@ -77,9 +79,9 @@ class DataBase(version_ui[0], version_ui[1]):
         
         # Re-Load the table directly in a QSqlTableModel
         if self.comboBox.currentText() == "Raw temperatures":
-            self.model.setTable("measures_temp")
+            self.model.setTable("RawMeasuresTemp")
         elif self.comboBox.currentText() == "Raw pressures":
-            self.model.setTable("measures_press")
+            self.model.setTable("RawMeasuresPress")
         elif self.comboBox.currentText() == "Processed measures":
             self.model.setTable("processed_measures")
         elif self.comboBox.currentText() == "Labo":
@@ -87,13 +89,13 @@ class DataBase(version_ui[0], version_ui[1]):
         elif self.comboBox.currentText() == "Study":
             self.model.setTable("Study")
         elif self.comboBox.currentText() == "Pressure Sensor":
-            self.model.setTable("pressure_sensor")
+            self.model.setTable("PressureSensor")
         elif self.comboBox.currentText() == "Shaft":
             self.model.setTable("Shaft")
         elif self.comboBox.currentText() == "Thermometer":
             self.model.setTable("Thermometer")
         elif self.comboBox.currentText() == "Sampling point":
-            self.model.setTable("Sampling_point")
+            self.model.setTable("SamplingPoint")
         self.model.select()
         
         # Set the model to the GUI table view
@@ -128,30 +130,41 @@ class DataBase(version_ui[0], version_ui[1]):
             df_raw_press = df_raw_press.iloc[:, 1:]
             
             # Dump the measures to SQL database
-            labo = LaboDb(self.con)
-            labo.insert()
+            laboDb = LaboDb(self.con)
+            laboDb.create()
+            laboDb.insert()
             
             thermometerDb = ThermometerDb(self.con)
-            thermometerDb.insertThermometersFromStudy(current_study)
+            thermometerDb.create()
+            thermometerDb.insert(current_study)
             
             studyDb = StudyDb(self.con)
+            studyDb.create()
             studyDb.insert(current_study)
             
             pressureSensorDb = PressureSensorDb(self.con)
-            pressureSensorDb.insertSensorsFromStudy(current_study)
+            pressureSensorDb.create()
+            pressureSensorDb.insert(current_study)
             
-            shaftDb = ShaftDb(self.con, self.model)
-            shaftDb.insertShaftsromStudy(current_study)
+            shaftDb = ShaftDb(self.con)
+            shaftDb.create()
+            shaftDb.insert(current_study)
             
-            samplingPointDb = SamplingPointDb(self.con, self.model)
-            samplingPointDb.insertSamplingPointsromStudy(current_study)
+            samplingPointDb = SamplingPointDb(self.con)
+            samplingPointDb.create()
+            # samplingPointDb.insertSamplingPointsromStudy(current_study)
             
             rawMeasuresTempDb = RawMeasuresTempDb(self.con)
-            rawMeasuresTempDb.insertRawMeasuresTempFromStudy(current_study)
+            rawMeasuresTempDb.create()
+            rawMeasuresTempDb.insert(current_study)
+            
+            rawMeasuresPressDb = RawMeasuresPressDb(self.con)
+            rawMeasuresPressDb.create()
+            rawMeasuresPressDb.insert(current_study)
             
             # writeRawTemperaturesSql(self.con, df_raw_temp)
-            writeRawPressuresSql(self.con, df_raw_press)
-            writeProcessedMeasuresSql(self.con, df_processed_measures)
+            # writeRawPressuresSql(self.con, df_raw_press)
+            # writeProcessedMeasuresSql(self.con, df_processed_measures)
             
             # Read the SQL and update the views
             self.displaySQL()

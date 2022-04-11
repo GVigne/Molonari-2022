@@ -31,7 +31,7 @@ class ThermometerDb():
         createQuery.finish()
         
     
-    def insertThermometersFromStudy(self, study):
+    def insert(self, study):
         self.con.transaction()
         
         thermometers = study.getThermometersDb()

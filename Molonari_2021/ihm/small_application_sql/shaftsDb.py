@@ -1,5 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
-from ThermometerDb import ThermometerDb
+from thermometerDb import ThermometerDb
 
 class ShaftDb():
     def __init__(self, con) -> None:    
@@ -35,27 +35,45 @@ class ShaftDb():
         createQuery.finish()
         
     
-    def insertShaftsromStudy(self, study):
-        """self.con.transaction()
+    def insert(self, study):
+        self.con.transaction()
         
         shafts = study.getShaftsDb()
+        
+        insertQuery = QSqlQuery(self.con)
+        
+        insertQuery.prepare(
+            """
+            INSERT INTO Shaft (
+                Name,
+                Depth1,
+                Depth2,
+                Depth3,
+                Depth4,
+                Thermo_model,
+                Labo
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """
+        )
         
         for shaft in shafts:
             thermo_name = shaft.getThermometer()
             thermo_model = ThermometerDb(self.con).getIdByname(thermo_name)
             
-            r = self.model.record()
-            r.setValue("Name", shaft.name)
-            r.setValue("Depth1", shaft.depths[0])
-            r.setValue("Depth2", shaft.depths[1])
-            r.setValue("Depth3", shaft.depths[2])
-            r.setValue("Depth4", shaft.depths[3])
-            r.setValue("Thermo_model", str(thermo_model))
-            r.setValue("Labo", "1")
+            insertQuery.addBindValue(shaft.name)
+            insertQuery.addBindValue(shaft.depths[0])
+            insertQuery.addBindValue(shaft.depths[1])
+            insertQuery.addBindValue(shaft.depths[2])
+            insertQuery.addBindValue(shaft.depths[3])
+            insertQuery.addBindValue(str(thermo_model))
+            insertQuery.addBindValue(str(1))
             
-            self.model.insertRecord(-1, r)
+            insertQuery.exec_()
             
-        self.con.commit()"""
+        insertQuery.finish()
+            
+        self.con.commit()
     
     def select(self):
         pass

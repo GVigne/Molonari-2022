@@ -1,9 +1,8 @@
 from PyQt5.QtSql import QSqlQuery
 
 class RawMeasuresTempDb():
-    def __init__(self, con, table_name) -> None:    
+    def __init__(self, con) -> None:    
         self.con = con
-        self.table = table_name
             
     def create(self):
         dropQuery = QSqlQuery()
@@ -36,7 +35,7 @@ class RawMeasuresTempDb():
         createQuery.finish()
         
     
-    def insertRawMeasuresTempFromStudy(self, study):
+    def insert(self, study):
         self.con.transaction()
         
         points = study.getPointsDb()
