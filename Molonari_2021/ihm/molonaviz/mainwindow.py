@@ -1,3 +1,4 @@
+from ntpath import join
 import sys, os, shutil
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
@@ -88,7 +89,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         # On ouvre automatiquement une étude
         rtd=os.path.split(os.path.dirname(__file__))
         rtd=os.path.dirname(rtd[0])
-        self.currentStudy = Study(rootDir=rtd + "\\studies\\study_2022")
+        self.currentStudy = Study(rootDir=os.path.join(rtd, "studies", "study_2022"))
         self.openStudy()
     
     def appendText(self,text):
