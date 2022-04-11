@@ -16,6 +16,8 @@ from queuethread import *
 from usefulfonctions import *
 from errors import *
 
+from Database.mainDb import MainDb
+
 
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
 
@@ -77,6 +79,9 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.treeViewDataPoints.doubleClicked.connect(self.openPointfromTree)
 
         self.pushButtonClear.clicked.connect(self.clearText)
+        
+        self.mainDb = MainDb()
+        self.mainDb.createTables()
 
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -169,22 +174,36 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.currentStudy = None
             return None
         try :
+            self.mainDb.laboDb.insert()
+            self.mainDb.studyDb.insert(self.currentStudy) 
+        except Exception :
+            raise LoadingError('study or labo')
+        try :
             self.currentStudy.loadPressureSensors(self.pSensorModel)
+            self.mainDb.pressureSensorDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("pressure sensors")
         try : 
             self.currentStudy.loadShafts(self.shaftModel)
+            self.mainDb.shaftDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("shafts")
         try :
             self.currentStudy.loadThermometers(self.thermometersModel)
+            self.mainDb.thermometerDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("thermometers")
         try :
             self.currentStudy.loadPoints(self.pointModel)
+            self.mainDb.samplingPointDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError('points')
-
+        try :
+            self.mainDb.rawMeasuresTempDb.insert(self.currentStudy)
+            self.mainDb.rawMeasuresPressDb.insert(self.currentStudy)
+            self.mainDb.cleanedMeasuresDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('Measures')
         #le menu point n'est pas actif tant qu'aucune étude n'est ouverte et chargée
         self.menuPoint.setEnabled(True)
         self.actionClose_Study.setEnabled(True)

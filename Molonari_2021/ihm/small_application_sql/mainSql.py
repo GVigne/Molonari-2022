@@ -29,21 +29,6 @@ from study import Study
 version_ui = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainSql.ui"))
 
 
-def dropTableMeasures(connection):
-    dropTableQuery = QSqlQuery(connection)
-    dropTableQuery.exec_(
-        """
-        DROP TABLE measures_temp
-        """
-    )
-    dropTableQuery.exec_(
-        """
-        DROP TABLE measures_press
-        """
-    )
-    dropTableQuery.finish()
-
-
 class DataBase(version_ui[0], version_ui[1]):
     def __init__(self) -> None:
         super(DataBase, self).__init__()
@@ -56,7 +41,6 @@ class DataBase(version_ui[0], version_ui[1]):
         if os.path.exists(self.sqlfile):
             os.remove(self.sqlfile)
         
-        
         self.con = QSqlDatabase.addDatabase("QSQLITE")
         self.con.setDatabaseName(self.sqlfile)
         if not self.con.open():
@@ -64,15 +48,9 @@ class DataBase(version_ui[0], version_ui[1]):
             
         self.model = QSqlTableModel(self, self.con)
 
-        
-        # dropTableMeasures(self.con)
-        # createTableMeasures(self.con)
-        
-        
-        
     def displaySQL(self):
         """
-        Display measures
+        Display all tables from database
         """
         
         # Re-Load the table directly in a QSqlTableModel
