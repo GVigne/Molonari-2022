@@ -97,8 +97,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         # self.setMaximumHeight(self.geometry().height())
         
         #On ouvre automatiquement une étude
-        self.currentStudy = Study(rootDir="../../studies/study_2022")
-        self.openStudy()
+        #self.currentStudy = Study(rootDir="../../studies/study_2022")
+        #self.openStudy()
     
     def appendText(self,text):
         self.textEditApplicationMessages.moveCursor(QtGui.QTextCursor.End)
