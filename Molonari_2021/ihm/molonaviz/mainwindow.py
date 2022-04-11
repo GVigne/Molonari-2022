@@ -127,7 +127,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         menu.addAction(self.actionRemove_Point)
 
         if len(self.treeViewDataPoints.selectedIndexes()) != 0:
-            pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+            if self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole) == None:
+                pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+            else:
+                pointname = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole).getName()
             self.actionOpen_Point.setEnabled(True)
             self.actionOpen_Point.setText(f"Open {pointname}")
             self.actionRemove_Point.setEnabled(True)
@@ -138,7 +141,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.actionOpen_Point.setText("Open Point")
             self.actionRemove_Point.setEnabled(False)
             self.actionRemove_Point.setText("Remove Point")
-
 
         menu.exec_(self.treeViewDataPoints.mapToGlobal(position))
 
@@ -269,11 +271,15 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
            
     def openPointTimer(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
+        if point == None:
+            point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
         print(f"Opening {point.getName()} ...")
         self.timer.start(200)
 
     def openPoint(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
+        if point == None:
+            point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         if point.getName() not in [openedSubwindow.getName() for openedSubwindow in self.mdi.subWindowList()]:
             subWin = SubWindow(point, self.currentStudy)
