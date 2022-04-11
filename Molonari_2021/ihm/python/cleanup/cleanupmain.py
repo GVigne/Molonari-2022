@@ -28,22 +28,6 @@ from dialogcleanpoints import DialogCleanPoints
 From_sqlgridview = uic.loadUiType(os.path.join(os.path.dirname(__file__),"cleanupmain.ui"))
 
 
-class MplCanvasTimeCurve(FigureCanvasQTAgg):
-
-    def __init__(self):
-        self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
-        super(MplCanvasTimeCurve, self).__init__(self.fig)
-        
-        # Beautiful time axis
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-        self.axes.xaxis.set_major_formatter(formatter)
-        self.axes.xaxis.set_major_locator(MaxNLocator(4))
-
-    def refresh(self, times, values):
-        # TODO : Still string to date conversion needed!
-        self.axes.plot(mdates.date2num(times), values)
-
 class MplCanvasTimeCompare(FigureCanvasQTAgg):
     def __init__(self):
         self.fig = Figure()
@@ -51,6 +35,7 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         super(MplCanvasTimeCompare, self).__init__(self.fig)
 
     def refresh_compare(self, df_or, df_cleaned,id):
+        print(df_cleaned)
         suffix = '_cleaned'
         varCleaned = df_cleaned.dropna()[["date",id]]
         df_compare = df_or[["date",id]].join(varCleaned.set_index("date"),on="date",rsuffix=suffix)
@@ -66,7 +51,8 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         self.fig.canvas.draw()
 
     def refresh(self,df_cleaned,id):
-        df = df_cleaned.copy()
+        print(df_cleaned)
+        df = df_cleaned.copy().dropna()
         df['date'] = mdates.date2num(df['date'].copy())
         df.plot(x='date',y=id,ax = self.axes)       
         self.format_axes()
@@ -138,27 +124,6 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
-
-class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
-    
-    def __init__(self):
-        self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
-        super(MplCanvaTimeDepthImage, self).__init__(self.fig)
-        
-        # TODO : test this
-        self.fig.tight_layout(h_pad=2, pad=2)
-        
-        # Beautiful time axis
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-        self.axes.xaxis.set_major_formatter(formatter)
-        self.axes.xaxis.set_major_locator(MaxNLocator(4))
-
-    def refresh(self, times, depths, values):
-        # TODO : Still string to date conversion needed!
-        self.x = mdates.date2num(times)
-        
-        image = self.axes.imshow(values, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], depths[-1], depths[0]])
 
         
 class LoadingError(Exception):
@@ -304,7 +269,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFile*'
         self.pushButtonBrowseTemp.clicked.connect(self.browseFileTemp)
         self.pushButtonBrowseDepth.clicked.connect(self.browseFileDepth)
-        self.pushButtonRefresh.clicked.connect(self.refresh)
 
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
@@ -334,20 +298,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             sys.exit(1)
 
         # Create data models and associate to corresponding viewers
-        self.modelDepth = QSqlQueryModel(self)
-        self.modelTemp = QSqlTableModel(self, self.con)
-        self.comboBoxDepth.setModel(self.modelDepth)
-        self.tableView.setModel(self.modelTemp)
-        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self.getDF()
         self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
         self.varName = self.comboBoxRawVar.currentText
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
-        # Create a timer for asynchronous launch of refresh
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.doRefresh)
         
         # TODO : to be removed
         # self.lineEditDepthFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/depths.csv")
@@ -698,29 +654,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         selectDataQuery.finish()
 
 
-    def readSQL(self):
-        """
-        Read the SQL database and display measures
-        """
-        print("Tables in the SQL Database:", self.con.tables())
-
-        #selectDataQuery = QSqlQuery(self.con)
-        #selectDataQuery.exec("SELECT depth FROM solved_depth")
-        #print("Rows in the solved_depth table:", selectDataQuery.size()) # TODO : why -1 ??
-        #selectDataQuery.finish()
-        
-        # Update depths combo box
-        self.modelDepth.setQuery("SELECT depth FROM solved_depth", self.con) 
-        print("Rows in the solved_depth table:", self.modelDepth.rowCount())
-        
-        # Update temperature table
-        self.modelTemp.setTable("solved_temp") 
-        self.modelTemp.select()
-        print("Rows in the solved_temp table:", self.modelTemp.rowCount())
-        print("Columns in the solved_temp table:", self.modelTemp.columnCount())
-
-    def plotRawSQL(self):
-        
+    def plotRawSQL(self):    
         
         # Load the table directly in a QSqlTableModel
 
@@ -887,85 +821,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.df_selected = pd.DataFrame(columns=["date","value"])
         self.df_cleaned = self.df_loaded.copy().dropna()
         self.plotPrevisualizedVar()
-
-        
-
-    def refresh(self):
-        """
-        Update status message and trigger a timer
-        This permits to display the status message 
-        """
-        self.labelStatus.setText("Please wait while loading your files...")
-        self.timer.start(200) # ms
-        
-    def doRefresh(self):
-        """
-        - Load the CSV files into Pandas dataframes
-        - Write the dataframes into a SQL database
-        - Reload the SQL database into a model and display it as an image and a curve
-        """
-        self.timer.stop()
-        try:
-            # Read the CSV file
-            dfdepth, df = self.readCSV()
-            
-            # Dump the measures to SQL database
-            self.writeSQL(dfdepth, df)
-            
-            # Read the SQL and update the table/image
-            self.readSQL()
-            
-            # Refresh the plots
-            self.refreshImage()
-            self.refreshCurve()
-            
-        except Exception as e:
-            displayCriticalMessage("Error", f"{str(e)}")
-            
-        self.labelStatus.setText("")
-
-
-    def refreshImage(self):
-        """
-        Display the image according
-        """
-        
-        # If not ready, return
-        if self.modelTemp.rowCount() <= 0:
-            return 
-        
-        # https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
-        # TODO : how to guarantee that dates in the model are stored as datetime (and not strings)?
-        times = [self.modelTemp.data(self.modelTemp.index(r,1)) for r in range(self.modelTemp.rowCount())]
-        depths = [self.modelDepth.data(self.modelDepth.index(r,0)) for r in range(self.modelDepth.rowCount())]
-        temperatures = [[self.modelTemp.data(self.modelTemp.index(r,c+2)) for r in range(self.modelTemp.rowCount())] for c in range(0, self.ndepth)]
-
-        self.mplTempImage = MplCanvaTimeDepthImage()
-        self.mplTempImage.refresh(times, depths, temperatures)
-        self.widgetImage.layout().addWidget(self.mplTempImage)
-        
-        
-    def refreshCurve(self):
-        """
-        Display the curve according the selected depth in the combo box
-        """
-        
-        # If not ready, return
-        if self.modelTemp.rowCount() <= 0:
-            return 
-        
-        # Retrieve the current combo box index
-        id = self.comboBoxDepth.currentIndex()
-        
-        #https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
-        # TODO : how to guarantee that dates in the model are stored as datetime (and not strings)?
-        times = [self.modelTemp.data(self.modelTemp.index(r,1)) for r in range(self.modelTemp.rowCount())]
-        temperatures = [self.modelTemp.data(self.modelTemp.index(r,id+2)) for r in range(self.modelTemp.rowCount())]
-
-        self.mplTempCurve = MplCanvasTimeCurve()
-        self.mplTempCurve.refresh(times, temperatures)
-        self.widgetCurve.layout().addWidget(self.mplTempCurve)
-        
 
 
 if __name__ == '__main__':
