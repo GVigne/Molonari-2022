@@ -52,16 +52,12 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
 
     def refresh_compare(self, df_or, df_cleaned,id):
         suffix = '_cleaned'
-        df_compare = df_or.join(df_cleaned.set_index("date"),on="date",rsuffix=suffix)
+        varCleaned = df_cleaned.dropna()[["date",id]]
+        df_compare = df_or[["date",id]].join(varCleaned.set_index("date"),on="date",rsuffix=suffix)
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
 
         df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
         df_compare.loc[df_compare['outliers'] != True, 'outliers'] = False
-
-        # df_compare['outliers'][np.isnan(df_compare['outliers'])] = True
-        # df_compare['outliers'][df_compare['outliers'] != True] = False
-        # first = df1["dates"].iloc[0]
-        # last = df1["dates"].iloc[-1]
 
         df_compare['date'] = mdates.date2num(df_compare['date'])
         df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
@@ -72,8 +68,9 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
     def refresh(self,df_cleaned,id):
         df = df_cleaned.copy()
         df['date'] = mdates.date2num(df['date'].copy())
-        df.plot(x='date',y=id,ax = self.axes)
+        df.plot(x='date',y=id,ax = self.axes)       
         self.format_axes()
+        self.axes.set_ylabel(id)
         self.fig.canvas.draw()
 
     def format_axes(self):
@@ -837,11 +834,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         "Cleans data and shows a previsuaization"
 
         values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else x[self.varName()],axis=1)
-        self.df_cleaned.loc[:,"to_clean"] = values
-        
+        self.df_cleaned.loc[:,self.varName()] = values
+        print(self.df_cleaned)
 
-        self.df_cleaned.dropna(inplace=True)
-        self.df_cleaned.drop("to_clean", axis=1,inplace=True)
+        # self.df_cleaned.dropna(inplace=True)
+        # self.df_cleaned.drop("to_clean", axis=1,inplace=True)
 
         self.plotPrevisualizedVar()
 
@@ -880,11 +877,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             print(self.df_selected) 
 
     def resetCleanVar(self):
-        print("--")
         print(self.df_cleaned)
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
         print(self.df_cleaned)
         self.df_selected = pd.DataFrame(columns=["date","value"])
+        self.plotPrevisualizedVar()
 
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=["date","value"])
