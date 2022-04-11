@@ -265,9 +265,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
-        # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFile*'
-        self.pushButtonBrowseTemp.clicked.connect(self.browseFileTemp)
-        self.pushButtonBrowseDepth.clicked.connect(self.browseFileDepth)
+        # Connect the buttons
 
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
@@ -279,6 +277,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
         self.pushButtonResetAll.clicked.connect(self.resetCleanAll)
 
+
+        self.checkBoxChanges.setChecked(True)
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
         if os.path.exists(self.sql):
@@ -303,14 +303,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.varName = self.comboBoxRawVar.currentText
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
-
         self.cleanedVars = []
-        
-        # TODO : to be removed
-        # self.lineEditDepthFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/depths.csv")
-        # self.lineEditTempFile.setText("/home/fors/Projets/molonari/main/studies/study_2022/Point034/results/direct_model_results/solved_temperatures.csv")
-        # self.refreshImage()
-        # self.refreshCurve()
+
+        self.plotPrevisualizedVar()
+
         
         
     def __del__(self):
@@ -798,7 +794,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.df_cleaned.loc[:,self.varName()] = values
 
         self.cleanedVars.append(self.varName())
-        print(self.cleanedVars)
 
         # self.df_cleaned.dropna(inplace=True)
         # self.df_cleaned.drop("to_clean", axis=1,inplace=True)
