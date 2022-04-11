@@ -54,14 +54,13 @@ def createTableMeasures(connection):
         CREATE TABLE measures_temp (
             id          INTEGER UNIQUE
                                 PRIMARY KEY AUTOINCREMENT,
-            date        DATETIME    NOT NULL
+            Date        DATETIME    NOT NULL
                                 UNIQUE,
-            t1          REAL,
-            t2          REAL,
-            t3          REAL,
-            t4          REAL,
-            point_key   INTEGER,
-            uncertaincy REAL
+            Temp1          REAL,
+            Temp2          REAL,
+            Temp3          REAL,
+            Temp4          REAL,
+            Point_key   INTEGER,
         );
         """
     )
@@ -121,7 +120,7 @@ def createTableMeasures(connection):
             t3            REAL     NOT NULL,
             t4            REAL     NOT NULL,
             pressure      REAL     NOT NULL,
-            point_key     INTEGER REFERENCES [Sampling point] (id),
+            point_key     INTEGER REFERENCES Sampling_point (id),
             uncertainties INTEGER REFERENCES Uncertainties (id)
         );
 
@@ -130,16 +129,18 @@ def createTableMeasures(connection):
     
     createTablesQuery.exec_(
         """
-        CREATE TABLE [Sampling point] (
+        CREATE TABLE Sampling_point (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name            VARCHAR,
+            Notice          VARCHAR,
             Longitude       REAL,
-            latitude        REAL,
+            Latitude        REAL,
             Implentation    DATETIME,
             Last_transfert  DATETIME,
-            Delta_h         REAL    NOT NULL,
-            River_bed       REAL    NOT NULL,
+            Delta_h         REAL,
+            River_bed       REAL,
             Shaft           INTEGER REFERENCES Shaft (id),
-            Pressure_sensor INTEGER REFERENCES [Pressure sensor] (id),
+            Pressure_sensor INTEGER REFERENCES pressure_sensor (id),
             Study           INTEGER REFERENCES Study (id)
         );
         """

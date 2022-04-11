@@ -55,6 +55,11 @@
       </item>
       <item>
        <property name="text">
+        <string>Sampling point</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>Thermometer</string>
        </property>
       </item>

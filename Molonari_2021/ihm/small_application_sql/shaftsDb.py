@@ -13,22 +13,6 @@ class ShaftDb():
         
         shafts = study.getShaftsDb()
         
-        '''insertQuery = QSqlQuery(self.con)
-        insertQuery.prepare(
-        """
-        INSERT INTO Shaft (
-            Name,
-            Depth1,
-            Depth2,
-            Depth3,
-            Depth4,
-            Thermo_model,
-            Labo
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """
-        )
-        '''
         for shaft in shafts:
             thermo_name = shaft.getThermometer()
             thermo_model = ThermometerDb(self.con).getIdByname(thermo_name)
@@ -43,16 +27,14 @@ class ShaftDb():
             r.setValue("Labo", "1")
             
             self.model.insertRecord(-1, r)
-            '''
-            insertQuery.exec_()
-                
-        insertQuery.finish()
-        '''
+            
         self.con.commit()
         
     def getIdByname(self, name):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.exec_(f"SELECT id FROM Shaft where name = {name}")
+        selectQuery.prepare("SELECT id FROM Shaft where Name = :name")
+        selectQuery.bindValue(":name", name)
+        selectQuery.exec_()
         
         selectQuery.next()
         id = int(selectQuery.value(0))

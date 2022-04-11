@@ -14,12 +14,14 @@ from PyQt5 import uic
 from StudyDb import StudyDb
 from LaboDb import LaboDb
 from ThermometerDb import ThermometerDb
+from samplingPointDb import SamplingPointDb
 from shaftsDb import ShaftDb
 
 from tp_ihm_sql import loadCSV, convertDates
 from creationTables import createTableMeasures
 from insertionTables import writeProcessedMeasuresSql, writeRawPressuresSql, writeRawTemperaturesSql
 from pressureSensorDb import PressureSensorDb
+from RawMeasuresTempDb import RawMeasuresTempDb
 sys.path.insert(0, 'C:/Users/33689/OneDrive/Documents/2A/Molonari/Molonari-2022/Molonari_2021/ihm/molonaviz')
 from study import Study
 
@@ -90,6 +92,8 @@ class DataBase(version_ui[0], version_ui[1]):
             self.model.setTable("Shaft")
         elif self.comboBox.currentText() == "Thermometer":
             self.model.setTable("Thermometer")
+        elif self.comboBox.currentText() == "Sampling point":
+            self.model.setTable("Sampling_point")
         self.model.select()
         
         # Set the model to the GUI table view
@@ -139,7 +143,13 @@ class DataBase(version_ui[0], version_ui[1]):
             shaftDb = ShaftDb(self.con, self.model)
             shaftDb.insertShaftsromStudy(current_study)
             
-            writeRawTemperaturesSql(self.con, df_raw_temp)
+            samplingPointDb = SamplingPointDb(self.con, self.model)
+            samplingPointDb.insertSamplingPointsromStudy(current_study)
+            
+            rawMeasuresTempDb = RawMeasuresTempDb(self.con, self.model)
+            rawMeasuresTempDb.insertRawMeasuresTempFromStudy(current_study)
+            
+            # writeRawTemperaturesSql(self.con, df_raw_temp)
             writeRawPressuresSql(self.con, df_raw_press)
             writeProcessedMeasuresSql(self.con, df_processed_measures)
             

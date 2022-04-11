@@ -180,6 +180,21 @@ class Study(object):
             point = Point(name, pointDir)
             point.loadPointFromDir()
             point.loadPoint(pointModel)
+            
+    def getPointsDb(self):
+        rdir = self.rootDir
+        dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file
+        dirs = list(filter(('.DS_Store').__ne__, dirs))
+        #permet de ne pas prendre en compte les fichiers '.DS_Store'
+        
+        points = []
+        for mydir in dirs:
+            pointDir = os.path.join(self.rootDir, mydir)
+            name = os.path.basename(pointDir)
+            point = Point(name, pointDir)
+            point.loadPointFromDir()
+            points.append(point)
+        return points
 
 
         

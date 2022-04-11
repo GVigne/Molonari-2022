@@ -44,7 +44,7 @@ class Point(object):
         infocsv = os.path.join(self.pointDir, "info_data", "info.csv")
         
         df = pd.read_csv(infocsv, header=None, index_col=0)
-        #self.oldName = df.iloc[0].at[1] 
+        self.oldName = df.iloc[0].at[1] 
         self.psensor = df.iloc[1].at[1]
         self.shaft = df.iloc[2].at[1]
         self.rivBed = float(df.iloc[5].at[1].replace(',','.'))

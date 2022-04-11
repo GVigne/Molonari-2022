@@ -46,7 +46,9 @@ class PressureSensorDb():
         
     def getIdByname(self, name):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.exec_(f"SELECT id FROM pressure_sensor where name = {name}")
+        selectQuery.prepare("SELECT id FROM pressure_sensor where Name = :name")
+        selectQuery.bindValue(":name", name)
+        selectQuery.exec_()
         
         selectQuery.next()
         id = int(selectQuery.value(0))
