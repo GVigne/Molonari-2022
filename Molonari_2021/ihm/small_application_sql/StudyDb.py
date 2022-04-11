@@ -53,7 +53,9 @@ class StudyDb():
         
     def getIdByname(self, name):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.exec_(f"SELECT id FROM Study where name = {name}")
+        selectQuery.prepare("SELECT id FROM Study where Name = :name")
+        selectQuery.bindValue(":name", name)
+        selectQuery.exec_()
         
         selectQuery.next()
         id = int(selectQuery.value(0))

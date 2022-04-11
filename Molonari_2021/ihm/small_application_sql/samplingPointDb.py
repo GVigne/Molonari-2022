@@ -1,4 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
+from studyDb import StudyDb
 from thermometerDb import ThermometerDb
 from pressureSensorDb import PressureSensorDb
 from shaftsDb import ShaftDb
@@ -34,7 +35,9 @@ class SamplingPointDb():
             RiverBed        REAL,
             Shaft           INTEGER REFERENCES Shaft (id),
             PressureSensor  INTEGER REFERENCES PressureSensor (id),
-            Study           INTEGER REFERENCES Study (id)
+            Study           INTEGER REFERENCES Study (id),
+            Scheme          BLOB,
+            CleanupScript   VARCHAR
         );
         """
         )
@@ -61,11 +64,15 @@ class SamplingPointDb():
                 RiverBed,
                 Shaft,
                 PressureSensor,
-                Study
+                Study,
+                Scheme,
+                CleanupScript
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
         )
+        
+        study_id = StudyDb(self.con).getIdByname(study.name)
         
         for point in points:
             shaft = point.getShaft()
@@ -84,7 +91,9 @@ class SamplingPointDb():
             insertQuery.addBindValue(point.rivBed)
             insertQuery.addBindValue(shaft_id)
             insertQuery.addBindValue(psensor_id)
+            insertQuery.addBindValue(str(study_id))
             insertQuery.addBindValue("1")
+            insertQuery.addBindValue("CleanupScript")
             
             insertQuery.exec_()
             

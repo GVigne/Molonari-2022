@@ -1,4 +1,6 @@
 from PyQt5.QtSql import QSqlQuery
+from samplingPointDb import SamplingPointDb
+
 
 class RawMeasuresTempDb():
     def __init__(self, con) -> None:    
@@ -55,6 +57,8 @@ class RawMeasuresTempDb():
         )
         
         for point in points:
+            pointKey = SamplingPointDb(self.con).getIdByname(point.name)
+            
             dftemp = point.dftemp
             
             col = dftemp.columns
@@ -64,7 +68,7 @@ class RawMeasuresTempDb():
                 insertQuery.addBindValue(str(dftemp[col[2]][ind]))
                 insertQuery.addBindValue(str(dftemp[col[3]][ind]))
                 insertQuery.addBindValue(str(dftemp[col[4]][ind]))
-                insertQuery.addBindValue(str(1))
+                insertQuery.addBindValue(str(pointKey))
                 
                 insertQuery.exec_()
         

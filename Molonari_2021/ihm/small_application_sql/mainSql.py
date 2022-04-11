@@ -24,6 +24,7 @@ from pressureSensorDb import PressureSensorDb
 from rawMeasuresTempDb import RawMeasuresTempDb
 from rawMeasuresPressDb import RawMeasuresPressDb
 from shaftsDb import ShaftDb
+from cleanedMeasuresDb import CleanedMeasuresDb
 sys.path.insert(0, 'C:/Users/33689/OneDrive/Documents/2A/Molonari/Molonari-2022/Molonari_2021/ihm/molonaviz')
 from study import Study
 
@@ -124,10 +125,7 @@ class DataBase(version_ui[0], version_ui[1]):
             df_processed_temp = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_temperatures.csv")
             df_processed_press = pd.read_csv(StudyFolderPath + "/Point034/processed_data/processed_pressures.csv")
             df_processed_measures = df_processed_temp.merge(df_processed_press)
-            df_raw_temp = pd.read_csv(StudyFolderPath + "/Point034/raw_data/raw_temperatures.csv", skiprows=1)
-            df_raw_temp = df_raw_temp.iloc[:, 1:]
-            df_raw_press = pd.read_csv(StudyFolderPath + "/Point034/raw_data/raw_pressures.csv", skiprows=1)
-            df_raw_press = df_raw_press.iloc[:, 1:]
+            
             
             # Dump the measures to SQL database
             laboDb = LaboDb(self.con)
@@ -161,6 +159,10 @@ class DataBase(version_ui[0], version_ui[1]):
             rawMeasuresPressDb = RawMeasuresPressDb(self.con)
             rawMeasuresPressDb.create()
             rawMeasuresPressDb.insert(current_study)
+            
+            cleanedMeasuresDb = CleanedMeasuresDb(self.con)
+            cleanedMeasuresDb.create()
+            cleanedMeasuresDb.insert(current_study)
             
             # writeRawTemperaturesSql(self.con, df_raw_temp)
             # writeRawPressuresSql(self.con, df_raw_press)

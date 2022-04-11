@@ -1,4 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
+from samplingPointDb import SamplingPointDb
 
 class RawMeasuresPressDb():
     def __init__(self, con, ) -> None:    
@@ -52,6 +53,8 @@ class RawMeasuresPressDb():
         )
         
         for point in points:
+            pointKey = SamplingPointDb(self.con).getIdByname(point.name)
+            
             dfpress = point.dfpress
             
             col = dfpress.columns
@@ -59,7 +62,7 @@ class RawMeasuresPressDb():
                 insertQuery.addBindValue(str(dfpress[col[0]][ind]))
                 insertQuery.addBindValue(str(dfpress[col[1]][ind]))
                 insertQuery.addBindValue(str(dfpress[col[2]][ind]))
-                insertQuery.addBindValue(str(1))
+                insertQuery.addBindValue(str(pointKey))
                 
                 insertQuery.exec_()
         insertQuery.finish()
