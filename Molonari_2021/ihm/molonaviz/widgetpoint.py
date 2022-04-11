@@ -36,8 +36,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.directdepthsdir = self.directmodelDir + "/depths.csv"
         self.MCMCdepthsdir = self.MCMCDir + "/depths.csv"
 
-        self.directmodeliscomputed = len(os.listdir(self.directmodelDir) ) > 1
-        self.MCMCiscomputed = len(os.listdir(self.MCMCDir)) > 1
+        self.directmodeliscomputed = 1#len(os.listdir(self.directmodelDir) ) > 1
+        self.MCMCiscomputed = 1# len(os.listdir(self.MCMCDir)) > 1
 
         self.computeEngine = Compute(self.point)
 
@@ -51,6 +51,13 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.pushButtonRefreshBins.clicked.connect(self.refreshbins)
         self.horizontalSliderBins.valueChanged.connect(self.label_update)
         self.tabWidget.setCurrentIndex(3)
+
+        #TO REMOVE
+        self.point.name = "P034"
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName("../../../../Test_Molonari/ViewTable.sqlite")
+        self.con.open()
+        
 
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
@@ -347,7 +354,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         #This is ugly, it should be changed!
         pressure_array = []
         while select_pressure.next():
-            pressure_array.append([np.datetime64(select_pressure.value(0)),select_pressure.value(1)]) #Date, Pressure
+            pressure_array.append([select_pressure.value(0),select_pressure.value(1)]) #Date, Pressure
         pressure_array = np.array(pressure_array)
 
         self.graphpress = MplCanvas(pressure_array, "pressure")
@@ -363,7 +370,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         #This is ugly, it should be changed!
         temp_array = []
         while select_temp.next():
-            temp_array.append([np.datetime64(select_temp.value(0)),select_temp.value(1),select_temp.value(2),select_temp.value(3),select_temp.value(4),select_temp.value(5)]) #Date, Temp1,Temp2,Temp3,Temp4,TempBed
+            temp_array.append([select_temp.value(0),select_temp.value(1),select_temp.value(2),select_temp.value(3),select_temp.value(4),select_temp.value(5)]) #Date, Temp1,Temp2,Temp3,Temp4,TempBed
         temp_array = np.array(temp_array)
 
         self.graphtemp = MplCanvas(temp_array, "temperature")
@@ -586,40 +593,47 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         This function was made so that all SQL queries are in the same place and not scattered throughout the code.
         """
+        
         if self.currentdata == "raw":
             if full_query:
-                return f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Pressure
+                return QSqlQuery(f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Pressure
                             FROM RawMeasuresTemp, RawMeasuresPress
                             WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
                                 AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                             """
+                )
             elif field =="Temp":
-                return f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed
+                return QSqlQuery(f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed
                             FROM RawMeasuresTemp, RawMeasuresPress
                             WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
                                 AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                             """
+                )
             elif field =="Pressure":
-                return f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.Pressure FROM RawMeasuresPress
+                return QSqlQuery(f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.Pressure FROM RawMeasuresPress
                         WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                         """
+                )
         elif self.currentdata == "processed":
             #Display cleaned measures
             if full_query:
-                return f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
                             """
+                )
             elif field =="Temp":
-                return f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
                             """
+                )
             elif field =="Pressure":
-                f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
+                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
                             """
+                )
 
 """ 
 if __name__ == '__main__':
@@ -628,3 +642,10 @@ if __name__ == '__main__':
     mainWin.show()
     sys.exit(app.exec_())
 """
+ 
+p = Point()
+s = Study()
+app = QtWidgets.QApplication(sys.argv)
+mainWin = WidgetPoint(p,s)
+mainWin.show()
+sys.exit(app.exec_())

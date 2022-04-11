@@ -38,12 +38,18 @@ class MplCanvas(FigureCanvasQTAgg):
             self.setParapluies()
 
     def setTime(self):
-        self.x = mdates.date2num(self.pdf[:,0])
+        self.x = self.format(self.pdf[:,0])
         formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
         plt.setp(self.axes.get_xticklabels(), rotation = 15)
-        #self.axes.set_xlabel("Dates") Inutile
+    
+    def format(self,dates2convert):
+        """
+        Given a 1D array of strings representing dates, return the array converted to the matplotlib date format.
+        Here, we suppose that the dates are in format YYYY:mm:dd:hh:mm:ss
+        """
+        return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])
 
     def setCurves(self):
         if self.datatype == "temperature":
