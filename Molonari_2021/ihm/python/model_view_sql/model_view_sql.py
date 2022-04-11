@@ -295,7 +295,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # Update temperature table (and automatically update views)
         self.modelTemp.setTable("measures") 
         self.modelTemp.select()
-        print("Rows in the measures table:", self.modelTemp.rowCount())
+        print("Rows in the measures table:", self.modelTemp.rowCount()) # TODO : why only 256 rows ?
         print("Columns in the measures table:", self.modelTemp.columnCount())
 
                 
@@ -316,7 +316,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         - Load the CSV files into Pandas dataframes
         - Write the dataframes into a SQL database
-        - Reload the SQL database into a model and display it as an image and a curve
+        - Reload the SQL database into a model (views are automatically notified)
         """
         self.timer.stop()
         try:
@@ -328,8 +328,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             
             # Read the SQL and update the table/image
             self.readSQL()
-            
-            # Auto refresh ?
             
         except Exception as e:
             displayCriticalMessage("Error", f"{str(e)}")
