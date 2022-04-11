@@ -21,29 +21,56 @@ from matplotlib.ticker import MaxNLocator
 # and construct an object which inherits from the global parent class (PyQt5.QtWidgets.QDialog)
 # See https://doc.qt.io/qtforpython-5/PySide2/QtUiTools/ls.loadUiType.html
 # This function returns a pair of "types" : (generated_class, base_class) :
-#  - generated_class: Ui_TemperatureViewer (contains all graphical controls/views defined with QtDesigner
+#  - generated_class: Ui_TemperatureViewer (contains all graphical controls/views defined with QtDesigner)
 #  - base_class: PyQt5.QtWidgets.QDialog (parent class of the UI)
 From_sqlgridview = uic.loadUiType(os.path.join(os.path.dirname(__file__),"model_view_sql.ui"))
 
-# Inherits from QSqlTableModel (admit that DateTime column is the 2nd)
-class TimeCurveModel(QSqlTableModel): # TODO : add here indices for columns to be displayed
+# Inherits from QSqlQueryModel (assume that Date/Time column is the 2nd one - ID is the first)
+class TimeCurveModel(QSqlQueryModel): # TODO : add here indices for columns to be displayed
+    
     # Create a user-defined signal to be emitted each time select method is called
+    # Do not put that in the constructor (otherwise, signal doesn't work)
     tableFilled = QtCore.Signal()
     
-    def __init__(self, parent, database):
-        super(TimeCurveModel, self).__init__(parent, database)
-
+    def __init__(self, parent, database, tableName):
+        # Call parent constructor
+        super(TimeCurveModel, self).__init__(parent)
+        
+        # Store attributes
+        self.database = database
+        self.tableName = tableName
+        self.queryStr = f"SELECT * from {tableName}"
+        
     # Override select method to emit the tableFilled signal
     def select(self):
-        super(TimeCurveModel, self).select()
+        # Clear the model
+        self.clear()
+
+        # Execute the query
+        self.setQuery(self.queryStr, self.database)
+                
+        #https://forum.qt.io/topic/108841/editing-data-in-table-view-row-grater-than-256-qsqltablemodel
+        while self.canFetchMore() :
+            self.fetchMore()
+
+        # Emit the signal
+        self.tableFilled.emit()
+
+    # Clear the model
+    def clear(self):
+        # Call parent select method
+        super(TimeCurveModel, self).clear()
+        
+        # Emit the signal
         self.tableFilled.emit()
         
-
+        
+# Inherits from FigureCanvasQTAgg
 class MplCanvasTimeCurve(FigureCanvasQTAgg):
 
     def __init__(self):
         self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
+        self.axes = self.fig.add_subplot(111) # Single plot
         super(MplCanvasTimeCurve, self).__init__(self.fig)
         
         # Beautiful time axis
@@ -51,19 +78,24 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
 
-    # Set the model and connect tableFilled signal to refresh slot
+
+    # Set the model and connect its tableFilled signal to refresh slot
     def setModel(self, model):
         self.model = model
         model.tableFilled.connect(self.refresh)
-        
-    # Display variable (3rd column) as function of time and redraw the view
-    # TODO : display several columns
+
+
+    # Display the variable (3rd column) as a function of time and redraw the view
+    # TODO : display several columns according indices provided in the constructor
     def refresh(self):
         
         #https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
+        # Extract the values from the model
         times = [self.model.data(self.model.index(r,1)) for r in range(self.model.rowCount())]
         temperatures = [self.model.data(self.model.index(r,2)) for r in range(self.model.rowCount())]
-
+        
+        # Clear, display and refresh the plot
+        self.axes.clear()
         self.axes.plot(mdates.date2num(times), temperatures)
         self.fig.canvas.draw()
 
@@ -169,7 +201,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
-        # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFile*'
+        # Connect the "Browse button" 'pushButtonBrowseTemp' to the method 'browseFileTemp*'
         self.pushButtonBrowseTemp.clicked.connect(self.browseFileTemp)
         
         # Create the plot view
@@ -187,12 +219,14 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         if not self.con.open():
             displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
 
-        # Create data model and associate to corresponding viewers
-        self.modelTemp = TimeCurveModel(self, self.con)
+        # Create data model
+        self.modelTemp = TimeCurveModel(self, self.con, "measures")
+        
+        # Set the model to observer views
         self.tableView.setModel(self.modelTemp)
         self.mplTempCurve.setModel(self.modelTemp)
 
-        # Lock the table
+        # Prevent the table from edition
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         # Create a timer for asynchronous launch of refresh
@@ -200,7 +234,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.timer.timeout.connect(self.doRefresh)
         
         # TODO : to be removed
-        self.lineEditTempFile.setText("/home/fors/Projets/molonari/Molonari-2022/Molonari_2021/studies/study_2022/Point034/processed_data/processed_temperatures.csv")
+        self.lineEditTempFile.setText(os.path.join(os.path.dirname(__file__),"processed_temperatures_34.csv"))
         self.timer.start(200) # ms
         
     def __del__(self):
@@ -213,10 +247,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def readCSV(self):
         """
-        Read the provided CSV files (depths values and gridded temperatures)
-        and load it into a Pandas dataframes
+        Read the provided CSV files (cleaned (processed) temperatures)
+        and load it into a Pandas dataframe
         """
-        # Retrieve the CSV file paths from lineEditDepthFile and lineEditTempFile
+        # Retrieve the CSV file paths from lineEditTempFile
         tempfile = self.lineEditTempFile.text()
         if tempfile:
            
@@ -229,7 +263,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 
             except Exception as e :
                 displayCriticalMessage(f"{str(e)}", "Please choose a different temperatures file")
-                return pd.DataFrame(), pd.DataFrame()
+                return pd.DataFrame()
             
         return dftemp
     
@@ -238,8 +272,23 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         Write the given Pandas dataframe into the SQL database
         """
-        # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.con) #### But it's better to indicate the current connection in query constructors
+        
+        # Remove the previous measures table
+        
+        self.con.transaction()
+        dropTableQuery = QSqlQuery(self.con)
+        dropTableQuery.exec(
+            """       
+            DROP TABLE measures
+            """
+        )
+        dropTableQuery.finish()
+        self.con.commit()
+
+        # Create the table for storing the temperature cleaned measures (id, date, temp*4)
+        
+        self.con.transaction()
+        createTableQuery = QSqlQuery(self.con)
         createTableQuery.exec(
             """
             CREATE TABLE measures (
@@ -252,13 +301,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             )
             """
         )
-        createTableQuery.finish() #### Do not forget to finish your queries (close the transaction and free memory)
-
+        createTableQuery.finish()
+        self.con.commit()
+        
         # Construct the dynamic insert SQL request and execute it
         
-        # For large dataset, initialize a transaction to speedup the insertion
         self.con.transaction()
-        
         insertDataQuery = QSqlQuery(self.con)
         insertDataQuery.prepare(
             """
@@ -281,9 +329,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             insertDataQuery.addBindValue(float(df.iloc[ind,t4]))
             insertDataQuery.exec()
         insertDataQuery.finish()
-
-        # Commit the transaction
         self.con.commit()
+
         
 
     def readSQL(self):
@@ -292,10 +339,9 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         print("Tables in the SQL Database:", self.con.tables())
         
-        # Update temperature table (and automatically update views)
-        self.modelTemp.setTable("measures") 
+        # Reset and update temperature table model (and automatically update views)
         self.modelTemp.select()
-        print("Rows in the measures table:", self.modelTemp.rowCount()) # TODO : why only 256 rows ?
+        print("Rows in the measures table:", self.modelTemp.rowCount())
         print("Columns in the measures table:", self.modelTemp.columnCount())
 
                 
@@ -308,8 +354,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         if filePath:
             self.lineEditTempFile.setText(filePath)
             
-        # Update status message and trigger a timer 
-        self.timer.start(200) # ms
+            # Update status message and trigger a timer 
+            self.timer.start(200) # ms
 
         
     def doRefresh(self):
