@@ -341,17 +341,32 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             print("Please run the MCMC first")
 
     def setDataPlots(self):
+        #Pressure :
+        select_pressure = self.build_queries(field ="Pressure")
+        select_pressure.exec()
+        #This is ugly, it should be changed!
+        pressure_array = []
+        while select_pressure.next():
+            pressure_array.append([np.datetime64(select_pressure.value(0)),select_pressure.value(1)]) #Date, Pressure
+        pressure_array = np.array(pressure_array)
 
-        #La pression :
-        self.graphpress = MplCanvas(self.dfpress, "pressure")
+        self.graphpress = MplCanvas(pressure_array, "pressure")
         self.toolbarPress = NavigationToolbar(self.graphpress, self)
         vbox = QtWidgets.QVBoxLayout()
         self.groupBoxPress.setLayout(vbox)
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
 
-        #Les températures :
-        self.graphtemp = MplCanvas(self.dftemp, "temperature", dfpressure=self.dfpress)
+        #Temperatures :
+        select_temp = self.build_queries(field ="Temp")
+        select_temp.exec()
+        #This is ugly, it should be changed!
+        temp_array = []
+        while select_temp.next():
+            temp_array.append([np.datetime64(select_temp.value(0)),select_temp.value(1),select_temp.value(2),select_temp.value(3),select_temp.value(4),select_temp.value(5)]) #Date, Temp1,Temp2,Temp3,Temp4,TempBed
+        temp_array = np.array(temp_array)
+
+        self.graphtemp = MplCanvas(temp_array, "temperature") #No need for dfpressure=self.dfpress
         self.toolbarTemp = NavigationToolbar(self.graphtemp, self)
         vbox2 = QtWidgets.QVBoxLayout()
         self.groupBoxTemp.setLayout(vbox2)
@@ -564,11 +579,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
     def build_queries(self, full_query=False, field=""):
         """
-        RawMeasuresTemp et RawMeasuresPress
-        CleanedMeasures
         Build and return ONE AND ONLY ONE of the following queries:
         -if full_query is True, then extract the Date, Pressure and all Temperatures (this is for the Data part)
-        -if field is not "", then extract the Date and the corresponding field (this is for the Plot part). The field must be Temp1, Temp2, Temp3, Temp4, TempBed or Pressure
+        -if field is not "", then it MUST be either "Temp" or "Pressure". Extract the Date and the corresponding field (this is for the Plot part): either all the temperatures or just the pressure.
         Theses queries take into account the actual value of self.currentdata to make to correct request (to either RawMeasuresTemp or CleanedMeasures)
 
         This function was made so that all SQL queries are in the same place and not scattered throughout the code.
@@ -580,25 +593,33 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                             WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
                                 AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                             """
-            elif field =="Temp1" or field =="Temp2" or field =="Temp3" or field =="Temp4":
-                return f"""SELECT RawMeasuresTemp.Date,RawMeasuresTemp.{field} FROM RawMeasuresTemp
-                        WHERE RawMeasuresTemp.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        """
-            elif field =="TempBed" or field =="Pressure":
-                return f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.{field} FROM RawMeasuresPress
+            elif field =="Temp":
+                return f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed
+                            FROM RawMeasuresTemp, RawMeasuresPress
+                            WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
+                                AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            """
+            elif field =="Pressure":
+                return f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.Pressure FROM RawMeasuresPress
                         WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                         """
         elif self.currentdata == "processed":
-            #self.currentdata is "processed"
+            #Display cleaned measures
             if full_query:
                 return f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
                             """
-            elif field =="Temp1" or field =="Temp2" or field =="Temp3" or field =="Temp4" or field =="TempBed" or field =="Pressure":
-                return f"""SELECT CleanedMeasures.Date,CleanedMeasures.{field} FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        """
+            elif field =="Temp":
+                return f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                        FROM CleanedMeasures
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
+                            """
+            elif field =="Pressure":
+                f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
+                        FROM CleanedMeasures
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
+                            """
 
 """ 
 if __name__ == '__main__':

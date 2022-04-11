@@ -24,7 +24,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes = self.fig.add_subplot(111)
         super(MplCanvas, self).__init__(self.fig)
         self.fig.tight_layout(h_pad=5, pad=5)
-        self.pdf = pdf
+        self.pdf = pdf #This is no longer a data frame: it should just be "data"
         self.datatype = datatype
         self.depths = depths
         self.dfpressure = dfpressure
@@ -39,7 +39,7 @@ class MplCanvas(FigureCanvasQTAgg):
             self.setParapluies()
 
     def setTime(self):
-        self.x = mdates.date2num(self.pdf[self.pdf.columns[0]])
+        self.x = mdates.date2num(self.pdf[:,0])
         formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
         self.axes.xaxis.set_major_formatter(formatter)
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
@@ -50,10 +50,10 @@ class MplCanvas(FigureCanvasQTAgg):
         if self.datatype == "temperature":
             #On a 4 colonnes de températures
             for i in range(1,5):
-                data = self.pdf[self.pdf.columns[i]].values.tolist()
+                data = self.pdf[:,i]
                 self.axes.plot(self.x, data, label=f"Capteur n°{i}")
             #On rajoute la température du capteur de pression
-            last_temp = self.dfpressure[self.dfpressure.columns[2]].values.tolist()
+            last_temp = self.pdf[:,5]
             self.axes.plot(self.x, last_temp, label = "Capteur de pression")
             self.axes.legend(loc='best')
             self.axes.set_ylabel("Températures (K)")
@@ -78,7 +78,7 @@ class MplCanvas(FigureCanvasQTAgg):
                 self.axes.set_ylabel("Températures (K)")
 
         else : 
-            data = self.pdf[self.pdf.columns[1]].values.tolist()
+            data = self.pdf[:,1]
             self.axes.plot(self.x, data)
             if self.datatype == "pressure":
                 self.axes.set_ylabel("Pression différentielle (m)")
