@@ -9,12 +9,11 @@ from subwindow import SubWindow
 from dialogstudy import DialogStudy
 from dialogfindstudy import DialogFindStudy
 from dialogimportpoint import DialogImportPoint
-from dialogopenpoint import DialogOpenPoint
-from dialogremovepoint import DialogRemovePoint
 from dialogaboutus import DialogAboutUs
 from queuethread import *
 from usefulfonctions import *
 from errors import *
+
 
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
 
@@ -66,7 +65,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionCreate_Study.triggered.connect(self.createStudy)
         self.actionClose_Study.triggered.connect(self.closeStudy)
         self.actionImport_Point.triggered.connect(self.importPoint)
-        self.actionOpen_Point.triggered.connect(self.openPoint)
+        self.actionOpen_Point.triggered.connect(self.openPointTimer)
         self.actionRemove_Point.triggered.connect(self.removePoint)
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
@@ -74,17 +73,30 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
-        self.treeViewDataPoints.doubleClicked.connect(self.openPointfromTree)
+        self.treeViewDataPoints.doubleClicked.connect(self.openPointTimer)
+        self.treeViewDataPoints.clicked.connect(self.enablingContextMenu)
+        self.treeViewDataPoints.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.treeViewDataPoints.addAction(self.actionImport_Point)
+        self.treeViewDataPoints.addAction(self.actionOpen_Point)
+        self.treeViewDataPoints.addAction(self.actionRemove_Point)
 
-        self.pushButtonClear.clicked.connect(self.clearText)     
-        
+        self.actionRemove_Point.setEnabled(False)
+        self.actionImport_Point.setEnabled(False)
+        self.actionOpen_Point.setEnabled(False)
+
+        self.pushButtonClear.clicked.connect(self.clearText)
+
+        self.timer = QtCore.QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.openPoint)
+
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
         # self.setGeometry(screenSize)
         # self.setMaximumWidth(self.geometry().width())
         # self.setMaximumHeight(self.geometry().height())
         
-        # On ouvre automatiquement une étude
+        #On ouvre automatiquement une étude
         #self.currentStudy = Study(rootDir="../../studies/study_2022")
         #self.openStudy()
     
@@ -188,6 +200,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         #le menu point n'est pas actif tant qu'aucune étude n'est ouverte et chargée
         self.menuPoint.setEnabled(True)
         self.actionClose_Study.setEnabled(True)
+        self.treeViewDataPoints.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.actionOpen_Point.setEnabled(False)
+        self.actionRemove_Point.setEnabled(False)
+        self.actionImport_Point.setEnabled(True)
 
         #on n'autorise pas l'ouverture ou la création d'une étude s'il y a déjà une étude ouverte
         self.actionOpen_Study.setEnabled(False) 
@@ -210,11 +226,23 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.menuPoint.setEnabled(False)
         self.actionClose_Study.setEnabled(False)
+        self.actionImport_Point
         self.actionOpen_Study.setEnabled(True) 
         self.actionCreate_Study.setEnabled(True)
+        self.actionImport_Point.setEnabled(False)
+        self.actionRemove_Point.setText(f"Remove Point")
+        self.actionRemove_Point.setEnabled(False)
+        self.actionOpen_Point.setText(f"Open Point")
+        self.actionOpen_Point.setEnabled(False)
 
         self.currentStudy = None
 
+    def enablingContextMenu(self):
+        pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+        self.actionOpen_Point.setEnabled(True)
+        self.actionOpen_Point.setText(f"Open {pointname}")
+        self.actionRemove_Point.setEnabled(True)
+        self.actionRemove_Point.setText(f"Remove {pointname}")
 
     def importPoint(self):
         point = Point()
@@ -229,21 +257,14 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 print(f"Point import aborted : {str(e)}")
                 displayCriticalMessage('Point import aborted', f"Couldn't import point due to the following error : \n{str(e)}")
            
+    def openPointTimer(self):
+        if len(self.treeViewDataPoints.selectedIndexes()) != 0:
+            point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
+            print(f"Opening {point.getName()} ...")
+            self.timer.start(200)
+
     def openPoint(self):
-        dlg = DialogOpenPoint()
-        dlg.setPointsList(self.pointModel)
-        res = dlg.exec()
-        if res == QtWidgets.QDialog.Accepted:
-            pointname = dlg.getPointName()
-            point = self.pointModel.findItems(pointname)[0].data(QtCore.Qt.UserRole)
-            self.openPointView(point)
-
-    def openPointfromTree(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
-        self.openPointView(point)
-
-    def openPointView(self, point: Point):
-        print(f"Opening {point.getName()} ...")
 
         if point.getName() not in [openedSubwindow.getName() for openedSubwindow in self.mdi.subWindowList()]:
             subWin = SubWindow(point, self.currentStudy)
@@ -272,18 +293,13 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             print(f"{point.getName()} is already open")
         
     def removePoint(self):
-        dlg = DialogRemovePoint()
-        dlg.setPointsList(self.pointModel)
-        res = dlg.exec()
-        
-        if res == QtWidgets.QDialog.Accepted:
-            
+        if len(self.treeViewDataPoints.selectedIndexes()) != 0: 
             title = "Warning ! You are about to delete a point"
             message = "All point data will be deleted. Are you sure you want to proceed ?"
             msgBox = displayConfirmationMessage(title, message)
             
             if msgBox == QtWidgets.QMessageBox.Ok:
-                pointName = dlg.getPointToDelete()
+                pointName = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
                 pointItem = self.pointModel.findItems(pointName)[0]
                 
                 point = pointItem.data(QtCore.Qt.UserRole)
@@ -299,6 +315,14 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                         subWin.close()
                 
                 print(f"{pointName} successfully removed")
+                if len(self.treeViewDataPoints.selectedIndexes()) != 0: 
+                    self.enablingContextMenu()
+                else:
+                    self.actionRemove_Point.setText(f"Remove Point")
+                    self.actionOpen_Point.setText(f"Open Point")
+                    self.actionOpen_Point.setEnabled(False)
+                    self.actionRemove_Point.setEnabled(False)
+
             else : 
                 #displayInfoMessage("Point removal aborted")
                 print("Point removal aborted")
