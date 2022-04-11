@@ -292,7 +292,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         print("Tables in the SQL Database:", self.con.tables())
         
-        # Update temperature table
+        # Update temperature table (and automatically update views)
         self.modelTemp.setTable("measures") 
         self.modelTemp.select()
         print("Rows in the measures table:", self.modelTemp.rowCount())
