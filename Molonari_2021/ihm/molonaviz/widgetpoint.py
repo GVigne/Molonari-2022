@@ -2,6 +2,7 @@ import sys
 import os
 from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery
 import pandas as pd
 from pandasmodel import PandasModel
 from dialogcleanup import DialogCleanup
@@ -86,9 +87,15 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
         else:
             self.dfpress = readCSVWithDates(self.PressureDir)
-        self.currentPressureModel = PandasModel(self.dfpress)
-        self.tableViewPress.setModel(self.currentPressureModel)
-        #self.tableViewPress.resizeColumnsToContents()
+        # self.currentPressureModel = PandasModel(self.dfpress)
+        select_query = f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.Temp_bed, RawMeasuresPress.Pressure
+                        FROM RawMeasuresTemp, RawMeasuresPress
+                        WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
+                            AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.name = "{self.point.name}")
+                           """
+        self.currentPressureModel = QSqlQueryModel()
+        self.currentPressureModel.setQuery(select_query)
+        self.tableViewDataArray.setModel(self.currentPressureModel)
 
         if self.checkBoxRaw_Data.isChecked():
             self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
@@ -96,7 +103,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.dftemp = readCSVWithDates(self.TemperatureDir)
         self.currentTemperatureModel = PandasModel(self.dftemp)
         self.tableViewTemp.setModel(self.currentTemperatureModel)
-        #self.tableViewTemp.resizeColumnsToContents()
 
 
     def setWidgetInfos(self):
@@ -124,16 +130,12 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.dfpress = readCSVWithDates(self.PressureDir)
             self.currentTemperatureModel.setData(self.dftemp)
             self.currentPressureModel.setData(self.dfpress)
-            #self.tableViewTemp.resizeColumnsToContents()
-            #self.tableViewPress.resizeColumnsToContents()
         
         elif self.currentdata == "raw":
             self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
             self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
             self.currentTemperatureModel.setData(self.dftemp)
             self.currentPressureModel.setData(self.dfpress)  
-            #self.tableViewTemp.resizeColumnsToContents()
-            #self.tableViewPress.resizeColumnsToContents()
 
 
     def reset(self):
@@ -152,8 +154,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 self.dftemp = readCSVWithDates(self.TemperatureDir)   
             self.currentTemperatureModel.setData(self.dftemp)
             self.currentPressureModel.setData(self.dfpress)
-            #self.tableViewTemp.resizeColumnsToContents()
-            #self.tableViewPress.resizeColumnsToContents()
             self.graphpress.update_(self.dfpress)
             self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
 
@@ -194,8 +194,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                     #On actualise les modèles
                     self.currentTemperatureModel.setData(self.dftemp)
                     self.currentPressureModel.setData(self.dfpress)
-                    #self.tableViewTemp.resizeColumnsToContents()
-                    #self.tableViewPress.resizeColumnsToContents()
                     self.graphpress.update_(self.dfpress)
                     self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
                     print("Plots successfully updated")

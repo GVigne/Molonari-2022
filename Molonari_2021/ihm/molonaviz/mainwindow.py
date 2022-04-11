@@ -15,6 +15,7 @@ from dialogaboutus import DialogAboutUs
 from queuethread import *
 from usefulfonctions import *
 from errors import *
+from PyQt5.QtSql import QSqlDatabase
 
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
 
@@ -76,7 +77,11 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.treeViewDataPoints.doubleClicked.connect(self.openPointfromTree)
 
-        self.pushButtonClear.clicked.connect(self.clearText)     
+        self.pushButtonClear.clicked.connect(self.clearText)    
+
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName("ViewTable.sqlite")
+        self.con.open() 
         
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
