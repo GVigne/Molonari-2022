@@ -48,10 +48,12 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.pushButtonRefresh.clicked.connect(self.refresh)
         self.pushButtonRefreshBins.clicked.connect(self.refreshbins)
         self.horizontalSliderBins.valueChanged.connect(self.label_update)
-        
+        self.tabWidget.setCurrentIndex(3)
+
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
         self.setResultsPlots()
+        
 
 
     def setInfoTab(self):
