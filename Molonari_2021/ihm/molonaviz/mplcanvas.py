@@ -19,7 +19,7 @@ from matplotlib.ticker import MaxNLocator
 
 class MplCanvas(FigureCanvasQTAgg):
 
-    def __init__(self, pdf, datatype, depths=None, dfpressure=None, parent=None, width=5, height=5, dpi=100):
+    def __init__(self, pdf, datatype, depths=None, parent=None, width=5, height=5, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
         super(MplCanvas, self).__init__(self.fig)
@@ -27,7 +27,6 @@ class MplCanvas(FigureCanvasQTAgg):
         self.pdf = pdf #This is no longer a data frame: it should just be "data"
         self.datatype = datatype
         self.depths = depths
-        self.dfpressure = dfpressure
         self.list_Curves = ["pressure", "temperature", "water flow", "temperature interface", "temperature with quantiles", "water flow with quantiles"]
         if self.datatype in self.list_Curves:
             self.setTime()
@@ -116,11 +115,10 @@ class MplCanvas(FigureCanvasQTAgg):
             print('Not enough values in files')
         self.axes.legend(loc='best', fontsize='xx-small')
 
-    def update_(self, new_pdf, depths=None, dfpressure=None):
+    def update_(self, new_pdf, depths=None):
         self.axes.clear()
         self.pdf = new_pdf
         self.depths = depths
-        self.dfpressure = dfpressure
         if self.datatype in self.list_Curves :
             #print("hello curve")
             self.setTime()

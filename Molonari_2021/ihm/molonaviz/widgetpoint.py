@@ -366,7 +366,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             temp_array.append([np.datetime64(select_temp.value(0)),select_temp.value(1),select_temp.value(2),select_temp.value(3),select_temp.value(4),select_temp.value(5)]) #Date, Temp1,Temp2,Temp3,Temp4,TempBed
         temp_array = np.array(temp_array)
 
-        self.graphtemp = MplCanvas(temp_array, "temperature") #No need for dfpressure=self.dfpress
+        self.graphtemp = MplCanvas(temp_array, "temperature")
         self.toolbarTemp = NavigationToolbar(self.graphtemp, self)
         vbox2 = QtWidgets.QVBoxLayout()
         self.groupBoxTemp.setLayout(vbox2)
