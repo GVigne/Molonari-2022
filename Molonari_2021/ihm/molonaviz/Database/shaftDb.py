@@ -1,5 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
-from thermometerDb import ThermometerDb
+from .thermometerDb import ThermometerDb
 
 class ShaftDb():
     def __init__(self, con) -> None:    

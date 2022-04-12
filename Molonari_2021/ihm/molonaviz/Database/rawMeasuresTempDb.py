@@ -1,5 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
-from samplingPointDb import SamplingPointDb
+from .samplingPointDb import SamplingPointDb
 
 
 class RawMeasuresTempDb():

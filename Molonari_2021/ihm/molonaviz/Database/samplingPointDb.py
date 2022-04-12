@@ -1,8 +1,8 @@
 from PyQt5.QtSql import QSqlQuery
-from studyDb import StudyDb
-from thermometerDb import ThermometerDb
-from pressureSensorDb import PressureSensorDb
-from shaftsDb import ShaftDb
+from .studyDb import StudyDb
+from .thermometerDb import ThermometerDb
+from .pressureSensorDb import PressureSensorDb
+from .shaftDb import ShaftDb
 
 class SamplingPointDb():
     def __init__(self, con) -> None:    

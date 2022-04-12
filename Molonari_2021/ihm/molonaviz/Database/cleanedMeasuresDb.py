@@ -1,6 +1,6 @@
 from PyQt5.QtSql import QSqlQuery
 import pandas as pd
-from samplingPointDb import SamplingPointDb
+from .samplingPointDb import SamplingPointDb
 
 class CleanedMeasuresDb():
     def __init__(self, con) -> None:

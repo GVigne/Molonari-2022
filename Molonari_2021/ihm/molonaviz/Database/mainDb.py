@@ -1,26 +1,26 @@
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 import os
 
-from bestParametersDb import BestParametersDb
-from cleanedMeasuresDb import CleanedMeasuresDb
-from dateDb import DateDb
-from depthDb import DepthDb
-from directParametersDb import DirectParametersDb
-from laboDb import LaboDb
-from layerDb import LayerDb
-from parametersDistributionDb import ParametersDistributionDb
-from pointDb import PointDb
-from pressureSensorDb import PressureSensorDb
-from quantileDb import QuantileDb
-from rawMeasuresPressDb import RawMeasuresPressDb
-from rawMeasuresTempDb import RawMeasuresTempDb
-from rmseDb import RMSEDb
-from samplingPointDb import SamplingPointDb
-from shaftDb import ShaftDb
-from studyDb import StudyDb
-from temperatureAndHeatFlowsDb import TemperatureAndHeatFlowsDb
-from thermometerDb import ThermometerDb
-from waterFlowDb import WaterFlowDb
+from .bestParametersDb import BestParametersDb
+from .cleanedMeasuresDb import CleanedMeasuresDb
+from .dateDb import DateDb
+from .depthDb import DepthDb
+from .directParametersDb import DirectParametersDb
+from .laboDb import LaboDb
+from .layerDb import LayerDb
+from .parametersDistributionDb import ParametersDistributionDb
+from .pointDb import PointDb
+from .pressureSensorDb import PressureSensorDb
+from .quantileDb import QuantileDb
+from .rawMeasuresPressDb import RawMeasuresPressDb
+from .rawMeasuresTempDb import RawMeasuresTempDb
+from .rmseDb import RMSEDb
+from .samplingPointDb import SamplingPointDb
+from .shaftDb import ShaftDb
+from .studyDb import StudyDb
+from .temperatureAndHeatFlowsDb import TemperatureAndHeatFlowsDb
+from .thermometerDb import ThermometerDb
+from .waterFlowDb import WaterFlowDb
 
 
 class MainDb():
