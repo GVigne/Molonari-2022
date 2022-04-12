@@ -24,17 +24,8 @@ from .waterFlowDb import WaterFlowDb
 
 
 class MainDb():
-    def __init__(self) -> None:
-        self.sqlfile = "molonari_slqdb.sqlite"
-        if os.path.exists(self.sqlfile):
-            os.remove(self.sqlfile)
-        
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sqlfile)
-        if not self.con.open():
-            print("Cannot open SQL database")
-            
-        self.model = QSqlTableModel(self, self.con)
+    def __init__(self, con) -> None:
+        self.con = con
         
         
         self.bestParametersDb = BestParametersDb(self.con)

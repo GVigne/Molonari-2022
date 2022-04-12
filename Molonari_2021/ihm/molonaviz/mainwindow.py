@@ -2,6 +2,8 @@ import sys, os, shutil
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from queue import Queue
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+
 
 from study import Study
 from point import Point
@@ -80,7 +82,20 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.pushButtonClear.clicked.connect(self.clearText)
         
-        self.mainDb = MainDb()
+        # Creation of the Database, its connection and the model
+        self.sqlfile = "molonari_slqdb.sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
+        
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName(self.sqlfile)
+        if not self.con.open():
+            print("Cannot open SQL database")
+            
+        self.model = QSqlTableModel(self, self.con)
+        
+        # Creation of the SQL tables
+        self.mainDb = MainDb(self.con)
         self.mainDb.createTables()
 
         #On adapte la taille de la fenêtre principale à l'écran
@@ -179,6 +194,11 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         except Exception :
             raise LoadingError('study or labo')
         try :
+            self.currentStudy.loadThermometers(self.thermometersModel)
+            self.mainDb.thermometerDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("thermometers")
+        try :
             self.currentStudy.loadPressureSensors(self.pSensorModel)
             self.mainDb.pressureSensorDb.insert(self.currentStudy)
         except Exception :
@@ -188,11 +208,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.mainDb.shaftDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("shafts")
-        try :
-            self.currentStudy.loadThermometers(self.thermometersModel)
-            self.mainDb.thermometerDb.insert(self.currentStudy)
-        except Exception :
-            raise LoadingError("thermometers")
         try :
             self.currentStudy.loadPoints(self.pointModel)
             self.mainDb.samplingPointDb.insert(self.currentStudy)
