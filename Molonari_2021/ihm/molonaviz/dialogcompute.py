@@ -19,6 +19,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         self.setDefaultValues()
         
+        self.pushButtonMCMC.setEnabled(True)
+        
         # spinBoxNCellsDirect
         self.spinBoxNCellsDirect.setRange(0, 200)
         self.spinBoxNCellsDirect.setSingleStep(10)
@@ -146,8 +148,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     # So need to modify the codes in change_showdb when we have the result of Group calcul
 
     def inputMCMC(self):
-        
-        self.pushButtonMCMC.setEnabled(True)
 
         self.spinBoxNCellsDirect.setEnabled(False)
             
