@@ -71,6 +71,10 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         row = self.spinBoxNLayersDirect.value() 
         # col always = 5 
         # the default number of rows = 3
+        
+        self.tableWidget.setRowCount(10)
+        self.tableWidget.setColumnCount(5)
+        
         for i in range(row):
     
             self.tableWidget.setItem(i, 1, QTableWidgetItem("1e-5"))
@@ -81,6 +85,12 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 0, QTableWidgetItem("21"))
         self.tableWidget.setItem(1, 0, QTableWidgetItem("31"))
         self.tableWidget.setItem(2, 0, QTableWidgetItem("46"))
+        
+        for k in range(10):
+                if k > row - 1:
+                    self.tableWidget.hideRow(k)
+                else:
+                    self.tableWidget.showRow(k)
     
     # Change the number of rows according to spinBoxNLayersDirect    
     def change_showdb(self): 
@@ -88,7 +98,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             row = int(self.spinBoxNLayersDirect.value())
             # col = 5
                 
-            self.tableWidget.setRowCount(row)
+            self.tableWidget.setRowCount(10)
             self.tableWidget.setColumnCount(5)
             
             for i in range(row):
@@ -101,6 +111,13 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             for j in range (row):
                 val = int(6+(40/row)*(j+1))
                 self.tableWidget.setItem(j, 0, QTableWidgetItem(str(val)))
+                
+            for k in range(10):
+                if k > row - 1:
+                    self.tableWidget.hideRow(k)
+                else:
+                    self.tableWidget.showRow(k)
+
        
     def setDefaultValues(self):
         
