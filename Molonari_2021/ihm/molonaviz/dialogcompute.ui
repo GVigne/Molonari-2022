@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Compute</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -163,15 +163,51 @@
        <string>Layer1</string>
       </property>
      </row>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
+     <row>
+      <property name="text">
+       <string>Layer2</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer3</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer4</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer5</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer6</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer7</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer8</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer9</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer10</string>
+      </property>
+     </row>
      <column>
       <property name="text">
        <string>Depth_bottom (cm)</string>
@@ -197,14 +233,6 @@
        <string>Solid Volumetric Thermal Capacity (J/m^3/K)</string>
       </property>
      </column>
-     <item row="0" column="0">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="textAlignment">
-       <set>AlignCenter</set>
-      </property>
-     </item>
     </widget>
    </item>
    <item>
