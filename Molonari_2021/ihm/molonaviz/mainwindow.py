@@ -85,8 +85,13 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.pushButtonClear.clicked.connect(self.clearText)
 
-        self.timer = QtCore.QTimer(self)
-        self.timer.setSingleShot(True)
+        self.openingTimer = QtCore.QTimer(self)
+        self.openingTimer.setSingleShot(True)
+        self.openingTimer.timeout.connect(self.openPoint)
+
+        self.importingTimer = QtCore.QTimer(self)
+        self.importingTimer.setSingleShot(True)
+        self.importingTimer.timeout.connect(self.importPoint)
 
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -95,8 +100,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         # self.setMaximumHeight(self.geometry().height())
         
         #On ouvre automatiquement une étude
-        self.currentStudy = Study(rootDir="../../studies/study_2022")
-        self.openStudy()
+        #self.currentStudy = Study(rootDir="../../studies/study_2022")
+        #self.openStudy()
     
     def appendText(self,text):
         self.textEditApplicationMessages.moveCursor(QtGui.QTextCursor.End)
@@ -267,30 +272,28 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         dlg = DialogImportPoint()
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
-            try :
-                self.currentDlg = dlg
-                pointname = dlg.getPointInfo()[0]
-                print(f"Importing {pointname}")
-                self.timer.timeout.connect(self.importPoint)
-                self.timer.start(200)
-
-            except Exception as e :
-                print(f"Point import aborted : {str(e)}")
-                displayCriticalMessage('Point import aborted', f"Couldn't import point due to the following error : \n{str(e)}")
-
+            self.currentDlg = dlg
+            pointname = dlg.getPointInfo()[0]
+            print(f"Importing {pointname}")
+            self.importingTimer.start(200)
+                
     def importPoint(self):
-        name, infofile, prawfile, trawfile, noticefile, configfile  = self.currentDlg.getPointInfo()
-        point = self.currentStudy.addPoint(name, infofile, prawfile, trawfile, noticefile, configfile) 
-        point.loadPoint(self.pointModel)
-        print(" ==> done")
+        try :
+            name, infofile, prawfile, trawfile, noticefile, configfile  = self.currentDlg.getPointInfo()
+            point = self.currentStudy.addPoint(name, infofile, prawfile, trawfile, noticefile, configfile) 
+            point.loadPoint(self.pointModel)
+            print(" ==> done")
+
+        except Exception as e :
+            print(f"Point import aborted : {str(e)}")
+            displayCriticalMessage('Point import aborted', f"Couldn't import point due to the following error : \n{str(e)}")
 
     def openPointTimer(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
         if point == None:
             point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
         print(f"Opening {point.getName()} ...")
-        self.timer.timeout.connect(self.openPoint)
-        self.timer.start(200)
+        self.openingTimer.start(200)
 
     def openPoint(self):
         point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
