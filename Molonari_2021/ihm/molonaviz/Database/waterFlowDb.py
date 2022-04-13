@@ -22,7 +22,7 @@ class WaterFlowDb():
         CREATE TABLE WaterFlow (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
             WaterFlow           REAL,
-            Date                INTEGER REFERENCES Date (id),,
+            Date                INTEGER REFERENCES Date (id),
             PointKey            INTEGER REFERENCES Point (id),
             Quantile            INTEGER REFERENCES Quantile (id)
         );

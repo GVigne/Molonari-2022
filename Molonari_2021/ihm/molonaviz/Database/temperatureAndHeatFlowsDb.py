@@ -21,7 +21,7 @@ class TemperatureAndHeatFlowsDb():
         """
         CREATE TABLE TemperatureAndHeatFlows (
             id              INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Date            INTEGER REFERENCES Date (id),,
+            Date            INTEGER REFERENCES Date (id),
             Depth           INTEGER REFERENCES Depth (id),
             Temperature     REAL,
             AdvectiveFlow   REAL,

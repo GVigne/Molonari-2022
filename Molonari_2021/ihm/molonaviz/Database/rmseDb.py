@@ -21,7 +21,7 @@ class RMSEDb():
         """
         CREATE TABLE RMSE (
             id                  INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Date                INTEGER REFERENCES Date (id),,
+            Date                INTEGER REFERENCES Date (id),
             Depth1              INTEGER REFERENCES Depth (id),
             Depth2              INTEGER REFERENCES Depth (id),
             Depth3              INTEGER REFERENCES Depth (id),
