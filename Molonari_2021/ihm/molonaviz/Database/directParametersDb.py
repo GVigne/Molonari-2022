@@ -21,7 +21,7 @@ class DirectParametersDb():
         """
         CREATE TABLE DirectParameters (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            -log10K         REAL,
+            log10K         REAL,
             LambdaS         REAL,
             NBest           REAL,
             Layer           INTEGER REFERENCES Layer (id),

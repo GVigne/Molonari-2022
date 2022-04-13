@@ -21,7 +21,7 @@ class BestParametersDb():
         """
         CREATE TABLE BestParameters (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            -log10KBest         REAL,
+            log10KBest         REAL,
             LambdaSBest         REAL,
             NBest           REAL,
             Layer           INTEGER REFERENCES Layer (id),
