@@ -3,6 +3,8 @@ import sys, os, shutil
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from queue import Queue
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+
 
 from study import Study
 from point import Point
@@ -14,6 +16,8 @@ from dialogaboutus import DialogAboutUs
 from queuethread import *
 from usefulfonctions import *
 from errors import *
+
+from Database.mainDb import MainDb
 
 
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]
@@ -65,6 +69,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionQuit_MolonaViz.triggered.connect(self.exitApp)
         self.actionAbout_MolonaViz.triggered.connect(self.aboutUs)
         self.actionOpen_Study.triggered.connect(self.openStudy)
+        self.actionConvert_data_in_SQL.triggered.connect(self.convertDataInSQL)
         self.actionCreate_Study.triggered.connect(self.createStudy)
         self.actionClose_Study.triggered.connect(self.closeStudy)
         self.actionImport_Point.triggered.connect(self.importPointTimer)
@@ -86,6 +91,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionOpen_Point.setEnabled(False)
 
         self.pushButtonClear.clicked.connect(self.clearText)
+        
 
         self.openingTimer = QtCore.QTimer(self)
         self.openingTimer.setSingleShot(True)
@@ -222,6 +228,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.currentStudy = None
             return None
         try :
+            self.currentStudy.loadThermometers(self.thermometersModel)
+        except Exception :
+            raise LoadingError("thermometers")
+        try :
             self.currentStudy.loadPressureSensors(self.pSensorModel)
         except Exception :
             raise LoadingError("pressure sensors")
@@ -230,14 +240,9 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         except Exception :
             raise LoadingError("shafts")
         try :
-            self.currentStudy.loadThermometers(self.thermometersModel)
-        except Exception :
-            raise LoadingError("thermometers")
-        try :
             self.currentStudy.loadPoints(self.pointModel)
         except Exception :
             raise LoadingError('points')
-
         #le menu point n'est pas actif tant qu'aucune étude n'est ouverte et chargée
         self.menuPoint.setEnabled(True)
         self.actionClose_Study.setEnabled(True)
@@ -274,6 +279,60 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionOpen_Point.setEnabled(False)
 
         self.currentStudy = None
+
+    def convertDataInSQL(self):
+        # Creation of the Database, its connection and the model
+        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
+        
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName(self.sqlfile)
+        if not self.con.open():
+            print("Cannot open SQL database")
+            
+        self.model = QSqlTableModel(self, self.con)
+        
+        # Creation of the SQL tables
+        self.mainDb = MainDb(self.con)
+        self.mainDb.createTables()
+        
+        try :
+            self.mainDb.laboDb.insert()
+            self.mainDb.studyDb.insert(self.currentStudy) 
+        except Exception :
+            raise LoadingError('SQL, study or labo')
+        try :
+            self.mainDb.thermometerDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, thermometers")
+        try :
+            self.mainDb.pressureSensorDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, pressure sensors")
+        try : 
+            self.mainDb.shaftDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, shafts")
+        try :
+            self.mainDb.samplingPointDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('SQL, points')
+        try :
+            self.mainDb.rawMeasuresTempDb.insert(self.currentStudy)
+            self.mainDb.rawMeasuresPressDb.insert(self.currentStudy)
+            self.mainDb.cleanedMeasuresDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('SQL, Measures')
+        
+        self.actionConvert_data_in_SQL.setEnabled(False)
+        
+    def enablingContextMenu(self):
+        pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
+        self.actionOpen_Point.setEnabled(True)
+        self.actionOpen_Point.setText(f"Open {pointname}")
+        self.actionRemove_Point.setEnabled(True)
+        self.actionRemove_Point.setText(f"Remove {pointname}")
 
     def importPointTimer(self):
         dlg = DialogImportPoint()
