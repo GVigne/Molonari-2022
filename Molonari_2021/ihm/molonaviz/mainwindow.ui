@@ -29,6 +29,7 @@
     </property>
     <addaction name="actionCreate_Study"/>
     <addaction name="actionOpen_Study"/>
+    <addaction name="actionConvert_data_in_SQL"/>
     <addaction name="separator"/>
     <addaction name="actionClose_Study"/>
    </widget>
@@ -352,6 +353,11 @@
   <action name="actionTempToCelsius">
    <property name="text">
     <string>Celsius</string>
+   </property>
+  </action>
+  <action name="actionConvert_data_in_SQL">
+   <property name="text">
+    <string>Convert data in SQL</string>
    </property>
   </action>
  </widget>

@@ -68,6 +68,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionQuit_MolonaViz.triggered.connect(self.exitApp)
         self.actionAbout_MolonaViz.triggered.connect(self.aboutUs)
         self.actionOpen_Study.triggered.connect(self.openStudy)
+        self.actionConvert_data_in_SQL.triggered.connect(self.convertDataInSQL)
         self.actionCreate_Study.triggered.connect(self.createStudy)
         self.actionClose_Study.triggered.connect(self.closeStudy)
         self.actionImport_Point.triggered.connect(self.importPoint)
@@ -82,21 +83,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.pushButtonClear.clicked.connect(self.clearText)
         
-        # Creation of the Database, its connection and the model
-        self.sqlfile = "molonari_slqdb.sqlite"
-        if os.path.exists(self.sqlfile):
-            os.remove(self.sqlfile)
-        
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sqlfile)
-        if not self.con.open():
-            print("Cannot open SQL database")
-            
-        self.model = QSqlTableModel(self, self.con)
-        
-        # Creation of the SQL tables
-        self.mainDb = MainDb(self.con)
-        self.mainDb.createTables()
 
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -189,36 +175,21 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.currentStudy = None
             return None
         try :
-            self.mainDb.laboDb.insert()
-            self.mainDb.studyDb.insert(self.currentStudy) 
-        except Exception :
-            raise LoadingError('study or labo')
-        try :
             self.currentStudy.loadThermometers(self.thermometersModel)
-            self.mainDb.thermometerDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("thermometers")
         try :
             self.currentStudy.loadPressureSensors(self.pSensorModel)
-            self.mainDb.pressureSensorDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("pressure sensors")
         try : 
             self.currentStudy.loadShafts(self.shaftModel)
-            self.mainDb.shaftDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError("shafts")
         try :
             self.currentStudy.loadPoints(self.pointModel)
-            self.mainDb.samplingPointDb.insert(self.currentStudy)
         except Exception :
             raise LoadingError('points')
-        try :
-            self.mainDb.rawMeasuresTempDb.insert(self.currentStudy)
-            self.mainDb.rawMeasuresPressDb.insert(self.currentStudy)
-            self.mainDb.cleanedMeasuresDb.insert(self.currentStudy)
-        except Exception :
-            raise LoadingError('Measures')
         #le menu point n'est pas actif tant qu'aucune étude n'est ouverte et chargée
         self.menuPoint.setEnabled(True)
         self.actionClose_Study.setEnabled(True)
@@ -249,7 +220,53 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.currentStudy = None
 
-
+    def convertDataInSQL(self):
+        # Creation of the Database, its connection and the model
+        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
+        
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName(self.sqlfile)
+        if not self.con.open():
+            print("Cannot open SQL database")
+            
+        self.model = QSqlTableModel(self, self.con)
+        
+        # Creation of the SQL tables
+        self.mainDb = MainDb(self.con)
+        self.mainDb.createTables()
+        
+        try :
+            self.mainDb.laboDb.insert()
+            self.mainDb.studyDb.insert(self.currentStudy) 
+        except Exception :
+            raise LoadingError('SQL, study or labo')
+        try :
+            self.mainDb.thermometerDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, thermometers")
+        try :
+            self.mainDb.pressureSensorDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, pressure sensors")
+        try : 
+            self.mainDb.shaftDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, shafts")
+        try :
+            self.mainDb.samplingPointDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('SQL, points')
+        try :
+            self.mainDb.rawMeasuresTempDb.insert(self.currentStudy)
+            self.mainDb.rawMeasuresPressDb.insert(self.currentStudy)
+            self.mainDb.cleanedMeasuresDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('SQL, Measures')
+        
+        self.actionConvert_data_in_SQL.setEnabled(False)
+        
     def importPoint(self):
         point = Point()
         dlg = DialogImportPoint()
