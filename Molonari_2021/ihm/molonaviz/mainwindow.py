@@ -69,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionQuit_MolonaViz.triggered.connect(self.exitApp)
         self.actionAbout_MolonaViz.triggered.connect(self.aboutUs)
         self.actionOpen_Study.triggered.connect(self.openStudy)
-        self.actionConvert_data_in_SQL.triggered.connect(self.convertDataInSQL)
+        self.actionConvert_data_in_SQL.triggered.connect(self.convertDataInSQLTimer)
         self.actionCreate_Study.triggered.connect(self.createStudy)
         self.actionClose_Study.triggered.connect(self.closeStudy)
         self.actionImport_Point.triggered.connect(self.importPointTimer)
@@ -100,6 +100,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.importingTimer = QtCore.QTimer(self)
         self.importingTimer.setSingleShot(True)
         self.importingTimer.timeout.connect(self.importPoint)
+
+        self.convertingTimer = QtCore.QTimer(self)
+        self.convertingTimer.setSingleShot(True)
+        self.convertingTimer.timeout.connect(self.convertDataInSQL)
 
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -280,6 +284,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.currentStudy = None
 
+    def convertDataInSQLTimer(self):
+        print("Converting data...")
+        self.convertingTimer.start(200)
+    
     def convertDataInSQL(self):
         # Creation of the Database, its connection and the model
         self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
@@ -326,6 +334,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             raise LoadingError('SQL, Measures')
         
         self.actionConvert_data_in_SQL.setEnabled(False)
+        print(" ==> done")
         
     def enablingContextMenu(self):
         pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
