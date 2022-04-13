@@ -182,14 +182,17 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.currentdata == "raw":
             print("Please clean-up your processed data. Click again on the raw data box")
         else:
-            dlg = DialogCleanup()
+            dlg = DialogCleanup(self.pointDir)
             res = dlg.exec_()
+            #print(self.pointDir)
             if res == QtWidgets.QDialog.Accepted:
                 script,scriptpartiel = dlg.getScript()
                 print("Cleaning data...")
 
                 # Save the modified text
-                with open(os.path.join(os.path.dirname(__file__),"saved_text.txt"),'w') as file:
+                # with open(os.path.join(os.path.dirname(__file__),"saved_text.txt"),'w') as file:
+                #     file.write(scriptpartiel)
+                with open(os.path.join(self.pointDir,"saved_text.txt"),'w') as file:
                     file.write(scriptpartiel)
 
                 try :
