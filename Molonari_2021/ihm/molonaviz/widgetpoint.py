@@ -383,87 +383,32 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         Display the results in the corresponding tabs.
         """
-
-        ## Création des layouts
-
-        #Le flux d'eau:
         self.vboxwaterdirect = QtWidgets.QVBoxLayout()
         self.groupBoxWaterDirect.setLayout(self.vboxwaterdirect)
         self.vboxwaterMCMC = QtWidgets.QVBoxLayout()
         self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
         
-        # Le reste directement dans le fichier .ui (permet de voir les 2 méthodes)
         if self.computation_available:
-            #Water Flux
             self.plotWaterFlows()
-            pass
+            self.plotHeatFluxes()
+            self.plotUmbrellas()
+            self.plotTemperatureMap()
+            self.plotTempbyDepth()
+            
+            self.comboBoxDepth.clear()
+            for depth in self.dfdepths.values.tolist():
+                self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
+            #Les paramètres
+            self.setParamsModel()
+            self.plotHistos()
+            #Les meilleurs paramètres
+            self.setBestParamsModel()  
         else:
             self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-
-        if self.directmodeliscomputed:
-
-            self.setDataFrames('DirectModel')
-            #Water Flux
-            self.plotWaterFlowsDirect()
-            #Les flux d'énergie
-            self.plotFriseHeatFluxesDirect(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-            #Temperature heat map
-            self.plotFriseTempDirect()
-            #Umbrellas 
-            #TO DO!!
-            self.plotParapluies(dfsolvedtemp, dfdepths)
-
-            #La température à l'interface
-            self.plotInterfaceTempDirect(self.dfsolvedtemp, self.dfdepths)
-            self.comboBoxDepth.clear()
-            for depth in self.dfdepths.values.tolist():
-                self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
-            #Les paramètres
-            self.setParamsModel(self.dfparams)
-
-        else:
-            self.vboxwaterdirect.addWidget(QtWidgets.QLabel("Direct Model has not been computed yet"))
-            self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("Direct Model has not been computed yet"))
-            self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("Direct Model has not been computed yet"))
-            self.vboxintertempdirect.addWidget(QtWidgets.QLabel("Direct Model has not been computed yet"))
-            self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("Direct Model has not been computed yet"))
-
-        if self.MCMCiscomputed:
-
-            self.setDataFrames('MCMC')
-            #Water flow
-            self.plotWaterFlowsMCMC()
-            #Les flux d'énergie
-            self.plotFriseHeatFluxesMCMC(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-
-            #La frise de température
-            self.plotFriseTempMCMC(self.dfsolvedtemp, self.dfdepths)
-            #Les parapluies
-            self.plotParapluiesMCMC(self.dfsolvedtemp, self.dfdepths)
-
-            #La température à l'interface
-            self.plotInterfaceTempMCMC(self.dfintertemp, self.dfdepths, self.nb_quantiles)
-            self.comboBoxDepth.clear()
-            for depth in self.dfdepths.values.tolist():
-                self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
-
-            #Les histogrammes
-            self.histos(self.dfallparams)
-            #Les meilleurs paramètres
-            self.setBestParamsModel(self.dfbestparams)
-
-        else:
-            self.vboxwaterMCMC.addWidget(QtWidgets.QLabel("MCMC has not been computed yet"))
-            self.vboxfluxesMCMC.addWidget(QtWidgets.QLabel("MCMC has not been computed yet"))
-            self.vboxfrisetempMCMC.addWidget(QtWidgets.QLabel("MCMC has not been computed yet"))
-            self.vboxintertempMCMC.addWidget(QtWidgets.QLabel("MCMC has not been computed yet"))
-            self.vboxhistos.addWidget(QtWidgets.QLabel("MCMC has not been computed yet"))
-            self.vboxsolvedtempMCMC.addWidget(QtWidgets.QLabel("MCMC has not been computed yet"))
-    
         
 
     def setDataFrames(self, mode:str):
@@ -510,11 +455,31 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.toolbarwaterdirect = NavigationToolbar(self.graphwaterdirect, self)
         self.vboxwaterdirect.addWidget(self.graphwaterdirect)
         self.vboxwaterdirect.addWidget(self.toolbarwaterdirect)
-
+    
     def plotWaterFlowsDirect(self):
         return
-        
+
+    def plotHeatFluxes(self):
+        pass
+
+    def plotUmbrellas(self):
+        pass
+
+    def plotTemperatureMap(self):
+        pass
     
+    def plotTempbyDepth(self):
+        pass
+
+    def setParamsModel(self):
+        pass
+    
+    def plotHistos(self):
+        pass
+
+    def setBestParamsModel(self):
+        pass
+        
     def plotWaterFlowsMCMC(self, dfwater):
         select_flows1 = self.build_result_queries(result_type="WaterFlux",quantile=0.5)
         select_flows2 = self.build_result_queries(result_type="WaterFlux",quantile=0.05)
