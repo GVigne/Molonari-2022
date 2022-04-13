@@ -37,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.setCentralWidget(self.mdi)
         self.mdi.setTabsMovable(True)
         self.mdi.setTabsClosable(True)
+        self.mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
 
         self.currentStudy = None
         self.currentDlg = None
