@@ -21,7 +21,7 @@ class DepthDb():
         """
         CREATE TABLE Depth (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Depth         REAL,
+            Depth         REAL
         );
 
         """

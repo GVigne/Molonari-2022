@@ -30,8 +30,7 @@ class RMSEDb():
             Temp3RMSE           REAL,
             RMSET               REAL,
             PointKey            INTEGER REFERENCES Point (id),
-            Quantile            INTEGER REFERENCES Quantile (id),
-            
+            Quantile            INTEGER REFERENCES Quantile (id)
         );
 
         """

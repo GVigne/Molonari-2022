@@ -25,7 +25,7 @@ class ParametersDistributionDb():
             LambdaS         REAL,
             N               REAL,
             Layer           INTEGER REFERENCES Layer (id),
-            PointKey        INTEGER REFERENCES Point (id),
+            PointKey        INTEGER REFERENCES Point (id)
         );
 
         """

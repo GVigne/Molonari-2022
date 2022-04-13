@@ -21,7 +21,7 @@ class DateDb():
         """
         CREATE TABLE Date (
             id             INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Date           DATETIME,
+            Date           DATETIME
         );
 
         """
