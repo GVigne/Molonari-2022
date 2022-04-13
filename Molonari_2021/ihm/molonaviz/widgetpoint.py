@@ -69,7 +69,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             #Installation
         self.labelSchema.setPixmap(QPixmap(self.pointDir + "/info_data" + "/config.png"))
             #Notice
-        file = open(self.pointDir + "/info_data" + "/notice.txt", encoding="ascii", errors="surrogateescape")
+        file = open(self.pointDir + "/info_data" + "/notice.txt", encoding="charmap", errors="surrogateescape")
         notice = file.read()
         self.plainTextEditNotice.setPlainText(notice)
         file.close()
@@ -706,7 +706,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
             """)
 
-""" 
+"""
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint()
