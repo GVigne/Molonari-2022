@@ -158,6 +158,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
     def createStudy(self):
         dlg = DialogStudy()
+        dlg.setWindowModality(QtCore.Qt.ApplicationModal)
         res = dlg.exec_()
         errors = False
         if res == QtWidgets.QDialog.Accepted:
@@ -197,6 +198,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
     def openStudy(self):
         if self.currentStudy == None : #si on ne vient pas de créer une étude
             dlg = DialogFindStudy()
+            dlg.setWindowModality(QtCore.Qt.ApplicationModal)
             res = dlg.exec_()
             if res == QtWidgets.QDialog.Accepted:
                 try :
@@ -270,6 +272,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
     def importPointTimer(self):
         dlg = DialogImportPoint()
+        dlg.setWindowModality(QtCore.Qt.ApplicationModal)
         res = dlg.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.currentDlg = dlg
