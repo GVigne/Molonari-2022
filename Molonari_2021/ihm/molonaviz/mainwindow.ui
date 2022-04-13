@@ -299,13 +299,16 @@
    </property>
   </action>
   <action name="actionSwitch_To_Tabbed_View">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Switch To Tabbed View</string>
    </property>
   </action>
   <action name="actionSwitch_To_SubWindow_View">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Switch To SubWindow View</string>
