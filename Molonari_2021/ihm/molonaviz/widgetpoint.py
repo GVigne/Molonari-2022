@@ -57,13 +57,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.con = QSqlDatabase.addDatabase("QSQLITE")
         self.con.setDatabaseName("../../../../Test_Molonari/ViewTable.sqlite")
         self.con.open()
-        
 
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
         self.setResultsPlots()
-        
-
 
     def setInfoTab(self):
         # Set the "Infos" tab
@@ -102,7 +99,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         # else:
         #     self.dftemp = readCSVWithDates(self.TemperatureDir)
 
-        select_query = self.build_queries(full_query=True)
+        select_query = self.build_data_queries(full_query=True)
         self.currentDataModel = QSqlQueryModel()
         self.currentDataModel.setQuery(select_query)
         self.tableViewDataArray.setModel(self.currentDataModel)
@@ -130,7 +127,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         else :
             self.currentdata = "processed"
 
-        select_query = self.build_queries(full_query=True) #Query changes according to self.currentdata
+        select_query = self.build_data_queries(full_query=True) #Query changes according to self.currentdata
         self.currentDataModel = QSqlQueryModel()
         self.currentDataModel.setQuery(select_query)
         self.tableViewDataArray.setModel(self.currentDataModel)
@@ -349,7 +346,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
     def setDataPlots(self):
         #Pressure :
-        select_pressure = self.build_queries(field ="Pressure")
+        select_pressure = self.build_data_queries(field ="Pressure")
         select_pressure.exec()
         #This is ugly, it should be changed!
         pressure_array = []
@@ -365,7 +362,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.toolbarPress)
 
         #Temperatures :
-        select_temp = self.build_queries(field ="Temp")
+        select_temp = self.build_data_queries(field ="Temp")
         select_temp.exec()
         #This is ugly, it should be changed!
         temp_array = []
@@ -584,7 +581,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def label_update(self):
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
     
-    def build_queries(self, full_query=False, field=""):
+    def build_data_queries(self, full_query=False, field=""):
         """
         Build and return ONE AND ONLY ONE of the following queries:
         -if full_query is True, then extract the Date, Pressure and all Temperatures (this is for the Data part)
@@ -634,6 +631,58 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
                             """
                 )
+    def build_result_queries(self,result_type ="",quantile = 0,option=""):
+        """
+        Build and return ONE AND ONLY ONE query concerning the results.
+        -quantile must be a float, and is either 0 (direct result), 0.05,0.5 or 0.95
+        -option can be a string (which 2D map should be displayed or a date for the umbrellas) or a float (depth required by user)
+        This function was made so that all SQL queries are in the same place and not scattered throughout the code.
+        """
+        #Water Flux
+        if result_type =="WaterFlux":
+            return QSqlQuery(f"""SELECT Date.Date, WaterFlow.WaterFlow FROM WaterFlow
+            JOIN Date
+            ON WaterFlow.Date = Date.id
+                WHERE WaterFlow.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+                AND WaterFlow.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+                """
+            )
+        elif result_type =="2DMap":
+            field_name = ""
+            if option=="Advectif":
+                field_name = "AdvectiveFlow"
+            elif option=="Conductif":
+                field_name = "ConductiveFlow"
+            elif option=="Total":
+                field_name = "TotalFlow"
+            elif option=="Temperature":
+                field_name= "Temperature"
+            return QSqlQuery(f"""SELECT Date.Date, TemperatureAndHeatFlows.{field_name}, TemperatureAndHeatFlows.Depth FROM TemperatureAndHeatFlows
+            JOIN Date
+            ON TemperatureAndHeatFlows.Date = Date.id
+            JOIN Depth
+            ON TemperatureAndHeatFlows.Depth = Depth.id
+                WHERE TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+                AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+                    """
+            )
+        elif result_type =="Umbrella":
+            return QSqlQuery(f"""SELECT TemperatureAndHeatFlows.Temperature, Depth.Depth FROM TemperatureAndHeatFlows
+            JOIN Depth
+            ON TemperatureAndHeatFlows.Depth = Depth.id
+                WHERE TemperatureAndHeatFlows.Date = (SELECT Date.id FROM Date WHERE Date.Date = "{option}") 
+                AND TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+                AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+            """) 
+        elif result_type =="TempPerDepth":
+            return QSqlQuery(f"""
+            SELECT Date.Date, TemperatureAndHeatFlows.Temperature FROM TemperatureAndHeatFlows
+            JOIN Date
+            ON TemperatureAndHeatFlows.Date = Date.id
+                WHERE TemperatureAndHeatFlows.Depth = (SELECT Depth.id from Depth where Depth.Depth = {option})
+                AND TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+                AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+            """)
 
 """ 
 if __name__ == '__main__':
