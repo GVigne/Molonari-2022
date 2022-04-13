@@ -202,7 +202,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 except Exception as e :
                     print(e, "==> Clean-up aborted")
                     displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
-    
+
 
     def compute(self):
         
@@ -213,6 +213,16 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         if res == 10 : #Direct Model
             params, nb_cells = dlg.getInputDirectModel()
+            if params[1]>1 or params[0]<0:
+                try:
+                    raise ValueError
+                except ValueError:
+                    displayCriticalMessage("Error : The permeability value must be between 0 and 1")
+            if params[2]<0 or params[3]<0:
+                try:
+                    raise ValueError
+                except ValueError:
+                    displayCriticalMessage("Error : Negative value of parameters")
             # compute = Compute(self.point)
             # compute.computeDirectModel(params, nb_cells, sensorDir)
             self.computeEngine.computeDirectModel(params, nb_cells, sensorDir)
@@ -262,14 +272,31 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
         if res == 1 : #MCMC
             nb_iter, priors, nb_cells, quantiles = dlg.getInputMCMC()
-            self.nb_quantiles = len(quantiles)
-            with open(self.MCMCDir+"/nb_quantiles", "w") as f:
-                f.write(str(self.nb_quantiles))
-                f.close()
-            # compute = Compute(self.point)
-            # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
-            self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
-            self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
+            try:
+                if len(quantiles)!=3:                                                   #Il vaut mieux qu'il y ait uniquement 3 quantiles, pour que dans la base de données, la table quantile ait une taille fixe
+                    VE = ValueError()
+                    VE.strerror = "Error : Number of quantiles must be 3"
+                    raise VE
+
+                if priors["moinslog10K"][0][0]>priors["moinslog10K"][0][0] or priors["n"][0][0]>priors["n"][0][1] or priors["lambda_s"][0][0]>priors["lambda_s"][0][1] or priors["lambda_s"][0][0]>priors["lambda_s"][0][1]:
+                        VE = ValueError()
+                        VE.strerror = "Error : There is a parameter where max<min \n (For K, max must be lower than min)"
+                        raise VE
+                
+                if quantiles[0]<0 or quantiles[0]>1 or quantiles[1]<0 or quantiles[1]>1 or quantiles[2]<0 or quantiles[2]>1:
+                    VE = ValueError()
+                    VE.strerror = "Error : The quantiles must be between 0 and 1"
+                    raise VE
+                self.nb_quantiles = len(quantiles)
+                with open(self.MCMCDir+"/nb_quantiles", "w") as f:
+                    f.write(str(self.nb_quantiles))
+                    f.close()
+                # compute = Compute(self.point)
+                # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
+                self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
+                self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
+            except ValueError as e:
+                displayCriticalMessage(e.strerror)
 
     def onMCMCFinished(self):
 
