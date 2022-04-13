@@ -39,6 +39,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.directmodeliscomputed = 1#len(os.listdir(self.directmodelDir) ) > 1
         self.MCMCiscomputed = 1# len(os.listdir(self.MCMCDir)) > 1
 
+        self.computation_available = False
+
         self.computeEngine = Compute(self.point)
 
         # Link every button to their function
@@ -377,8 +379,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox2.addWidget(self.graphtemp)
         vbox2.addWidget(self.toolbarTemp)
     
-
     def setResultsPlots(self):
+        """
+        Display the results in the corresponding tabs.
+        """
 
         ## Création des layouts
 
@@ -389,28 +393,35 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
         
         # Le reste directement dans le fichier .ui (permet de voir les 2 méthodes)
+        if self.computation_available:
+            #Water Flux
+            self.plotWaterFlows()
+            pass
+        else:
+            self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
 
         if self.directmodeliscomputed:
 
             self.setDataFrames('DirectModel')
-            
-            #Le flux d'eau
-            self.plotWaterFlowsDirect(self.dfwater)
-
+            #Water Flux
+            self.plotWaterFlowsDirect()
             #Les flux d'énergie
             self.plotFriseHeatFluxesDirect(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-
-            #La frise de température
-            self.plotFriseTempDirect(self.dfsolvedtemp, self.dfdepths)
-            #Les parapluies
-            self.plotParapluies(self.dfsolvedtemp, self.dfdepths)
+            #Temperature heat map
+            self.plotFriseTempDirect()
+            #Umbrellas 
+            #TO DO!!
+            self.plotParapluies(dfsolvedtemp, dfdepths)
 
             #La température à l'interface
             self.plotInterfaceTempDirect(self.dfsolvedtemp, self.dfdepths)
             self.comboBoxDepth.clear()
             for depth in self.dfdepths.values.tolist():
                 self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
-
             #Les paramètres
             self.setParamsModel(self.dfparams)
 
@@ -424,10 +435,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.MCMCiscomputed:
 
             self.setDataFrames('MCMC')
-
-            #Le flux d'eau
-            self.plotWaterFlowsMCMC(self.dfwater)
-
+            #Water flow
+            self.plotWaterFlowsMCMC()
             #Les flux d'énergie
             self.plotFriseHeatFluxesMCMC(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
 
@@ -488,16 +497,37 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 self.nb_quantiles = int(f.read())
                 f.close()
 
+    def plotWaterFlows(self):
+        select_flows = self.build_result_queries(result_type="WaterFlux")
+        select_flows.exec()
+        #This is ugly, it should be changed!
+        flows_array = []
+        while select_flows.next():
+            flows_array.append([select_flows.value(0),select_flows.value(1)]) #Date, Flows
+        flows_array = np.array(flows_array)
 
-
-    def plotWaterFlowsDirect(self, dfwater):
-        self.graphwaterdirect = MplCanvas(dfwater, "water flow")
+        self.graphwaterdirect = MplCanvas(flows_array, "water flow")
         self.toolbarwaterdirect = NavigationToolbar(self.graphwaterdirect, self)
         self.vboxwaterdirect.addWidget(self.graphwaterdirect)
         self.vboxwaterdirect.addWidget(self.toolbarwaterdirect)
+
+    def plotWaterFlowsDirect(self):
+        return
+        
     
     def plotWaterFlowsMCMC(self, dfwater):
-        self.graphwaterMCMC = MplCanvas(dfwater, "water flow with quantiles")
+        select_flows1 = self.build_result_queries(result_type="WaterFlux",quantile=0.5)
+        select_flows2 = self.build_result_queries(result_type="WaterFlux",quantile=0.05)
+        select_flows3 = self.build_result_queries(result_type="WaterFlux",quantile=0.95)
+        select_flows1.exec()
+        select_flows2.exec()
+        select_flows3.exec()
+        #This is ugly, it should be changed!
+        flows_array = []
+        while select_flows1.next():
+            flows_array.append([select_flows1.value(0),select_flows1.value(1),select_flows2.value(1),select_flows3.value(1)]) #Date, Flows with 0.5, Flows with 0.05, Flows with 0.95
+        flows_array = np.array(flows_array)
+        self.graphwaterMCMC = MplCanvas(flows_array, "water flow with quantiles")
         self.toolbarwaterMCMC = NavigationToolbar(self.graphwaterMCMC, self)
         self.vboxwaterMCMC.addWidget(self.graphwaterMCMC)
         self.vboxwaterMCMC.addWidget(self.toolbarwaterMCMC)
@@ -514,14 +544,33 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.vboxfluxesMCMC.addWidget(self.graphfluxesMCMC)
         self.vboxfluxesMCMC.addWidget(self.toolbarfluxesMCMC)      
     
-    def plotFriseTempDirect(self, dfsolvedtemp, dfdepths):
-        self.graphsolvedtempdirect = MplCanvas(dfsolvedtemp, "frise", dfdepths)
+    def plotFriseTempDirect(self):
+        select_temps = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0)
+        select_temps.exec()
+        #This is ugly, it should be changed!
+        temps_array = []
+        while select_temps.next():
+            temps_array.append([select_temps.value(0),select_temps.value(1), select_temps.value(2)]) #Date, Flows, Depths
+        temps_array = np.array(temps_array)
+        self.graphsolvedtempdirect = MplCanvas(temps_array, "frise")
         self.toolbarsolvedtempdirect = NavigationToolbar(self.graphsolvedtempdirect, self)
         self.vboxfrisetempdirect.addWidget(self.graphsolvedtempdirect)
         self.vboxfrisetempdirect.addWidget(self.toolbarsolvedtempdirect)
 
-    def plotFriseTempMCMC(self, dfsolvedtemp, dfdepths):
-        self.graphsolvedtempMCMC = MplCanvas(dfsolvedtemp, "frise", dfdepths)
+    def plotFriseTempMCMC(self):
+        select_temps1 = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0.05)
+        select_temps2 = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0.5)
+        select_temps3 = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0.95)
+        select_temps1.exec()
+        select_temps2.exec()
+        select_temps3.exec()
+        #This is ugly, it should be changed!
+        temps_array = []
+        while select_temps1.next():
+            temps_array.append([select_temps1.value(0),select_temps1.value(1),select_temps2.value(1),select_temps3.value(1), select_temps1.value(2)]) #Date, Flows0.05,Flows 0.5, Flows 0.95, Depths
+        temps_array = np.array(temps_array)
+
+        self.graphsolvedtempMCMC = MplCanvas(temps_array, "frise")
         self.toolbarsolvedtempMCMC = NavigationToolbar(self.graphsolvedtempMCMC, self)
         self.vboxfrisetempMCMC.addWidget(self.graphsolvedtempMCMC)
         self.vboxfrisetempMCMC.addWidget(self.toolbarsolvedtempMCMC)
@@ -545,6 +594,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.vboxhistos.addWidget(self.toolbarhistos)
 
     def plotParapluies(self, dfsolvedtemp, dfdepths):
+        return
+        select_umb = self.build_result_queries(result_type ="Umbrella",quantile=0)
+        select_temps.exec()
+        #This is ugly, it should be changed!
+        temps_array = []
+        while select_temps.next():
+            temps_array.append([select_temps.value(0),select_temps.value(1), select_temps.value(2)]) #Date, Flows, Depths
+        temps_array = np.array(temps_array)
         self.parapluies = MplCanvas(dfsolvedtemp, "parapluies", dfdepths)
         self.toolbarparapluies = NavigationToolbar(self.parapluies, self)
         self.vboxsolvedtempdirect.addWidget(self.parapluies)

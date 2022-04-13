@@ -72,10 +72,10 @@ class MplCanvas(FigureCanvasQTAgg):
             #self.axes.set_ylabel("Températures (K)")
         
         elif self.datatype == "water flow with quantiles" or self.datatype == "temperature with quantiles":
-            quantiles = list(self.pdf.columns)
-            for i in range(1,len(quantiles)):
-                data = self.pdf[self.pdf.columns[i]].values.tolist()
-                self.axes.plot(self.x, data, label=f"{quantiles[i]}")
+            labels = ["Débit d'eau échangé (m/s) - quantile 0.05", "Débit d'eau échangé (m/s) - quantile 0.5","Débit d'eau échangé (m/s) - quantile 0.95"]
+            for i in range(1,4):
+                data = self.pdf[:,i]
+                self.axes.plot(self.x, data, label=labels[i])
             self.axes.legend(loc="best")
             if self.datatype == "water flow with quantiles":
                 self.axes.set_ylabel("Débit d'eau (m/s)")
@@ -96,10 +96,10 @@ class MplCanvas(FigureCanvasQTAgg):
     
     def setFrises(self):
         profils = self.pdf.to_numpy()
-        profils = profils[:,1:].astype(np.float)
+        profils = self.pdf[:,1].astype(np.float64)
         profils = np.transpose(profils) #à vérifier
         #profils = np.flipud(profils) #à vérifier
-        depths = self.depths[self.depths.columns[0]].values.tolist()
+        depths = self.pdf[:,2]
         image = self.axes.imshow(profils, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(depths[-1]), float(depths[0])], data="float")
         self.axes.xaxis_date()
         self.axes.set_ylabel("Profondeur (m)")
