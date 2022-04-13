@@ -41,7 +41,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.setCentralWidget(self.mdi)
         self.mdi.setTabsMovable(True)
         self.mdi.setTabsClosable(True)
-        self.mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
 
         self.currentStudy = None
         self.currentDlg = None
@@ -255,7 +254,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         #on n'autorise pas l'ouverture ou la création d'une étude s'il y a déjà une étude ouverte
         self.actionOpen_Study.setEnabled(False) 
         self.actionCreate_Study.setEnabled(False)
-    
+
     def closeStudy(self):
 
         #On ferme tous les points ouverts
@@ -335,13 +334,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         
         self.actionConvert_data_in_SQL.setEnabled(False)
         print(" ==> done")
-        
-    def enablingContextMenu(self):
-        pointname = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole).getName()
-        self.actionOpen_Point.setEnabled(True)
-        self.actionOpen_Point.setText(f"Open {pointname}")
-        self.actionRemove_Point.setEnabled(True)
-        self.actionRemove_Point.setText(f"Remove {pointname}")
 
     def importPointTimer(self):
         dlg = DialogImportPoint()
