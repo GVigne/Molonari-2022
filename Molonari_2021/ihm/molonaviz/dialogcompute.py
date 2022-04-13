@@ -48,7 +48,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         # Show the default table
         self.showdb()
 
-        self.pushButtonMCMC.clicked.connect(self.getInputMCMC)
+        self.pushButtonMCMC.clicked.connect(self.getInputDirectModel)
 
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
         self.pushButtonRestoreDefault.setToolTip("All parameters will be set to default value")
@@ -147,7 +147,27 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     # directModel changes according to the previous result of Inversion 
     # So need to modify the codes in change_showdb when we have the result of Group calcul
 
+    def getInputDirectModel(self):
+        
+        nb_cells = self.spinBoxNCellsDirect.value()
+        
+        row = int(self.spinBoxNLayersDirect.value())
+        
+        for lineEdit in self.MCMCLineEdits :
+            lineEdit.setReadOnly(True)
+        
+        for i in range (row):
+            
+            moinslog10K = -log10(float(self.tableWidget.item(i, 1).text()))
+            n = float(self.tableWidget.item(i, 2).text())
+            lambda_s = float(self.tableWidget.item(i, 3).text())
+            rhos_cs = float(self.tableWidget.item(i, 4).text())
+            self.done(10)
+            return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
+    
     def inputMCMC(self):
+        
+        self.pushButtonMCMC.clicked.connect(self.getInputMCMC)
 
         self.spinBoxNCellsDirect.setEnabled(False)
             

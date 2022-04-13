@@ -225,12 +225,12 @@
      </column>
      <column>
       <property name="text">
-       <string>Sediment Thermal Conductivity (W/m/K)</string>
+       <string>SediThermCon (W/m/K)</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>Solid Volumetric Thermal Capacity (J/m^3/K)</string>
+       <string>SolVolThermCap (J/m^3/K)</string>
       </property>
      </column>
     </widget>
