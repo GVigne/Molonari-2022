@@ -24,13 +24,8 @@ class SubWindow(QtWidgets.QMdiSubWindow):
     def closeEvent(self, event):
         event.accept()
         mdi = self.mdiArea()
-        if mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView:
-            mdi.removeSubWindow(self)
-            mdi.tileSubWindows()
-        elif mdi.viewMode() == QtWidgets.QMdiArea.TabbedView:
-            mdi.setViewMode(QtWidgets.QMdiArea.SubWindowView)
-            mdi.removeSubWindow(self)
-            mdi.setViewMode(QtWidgets.QMdiArea.TabbedView)
+        mdi.removeSubWindow(self)
+          
 
 
 

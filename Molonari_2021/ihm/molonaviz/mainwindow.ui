@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
-    <height>901</height>
+    <width>1827</width>
+    <height>831</height>
    </rect>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::CustomContextMenu</enum>
   </property>
   <property name="windowTitle">
    <string>MolonaViz</string>
@@ -19,8 +25,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1019</width>
-     <height>26</height>
+     <width>1827</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -50,6 +56,7 @@
     </property>
     <addaction name="actionSwitch_To_Tabbed_View"/>
     <addaction name="actionSwitch_To_SubWindow_View"/>
+    <addaction name="actionSwitch_To_Cascade_View"/>
     <addaction name="separator"/>
     <addaction name="actionData_Points"/>
     <addaction name="actionSensors"/>
@@ -103,6 +110,9 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTreeView" name="treeViewDataPoints">
+       <property name="contextMenuPolicy">
+        <enum>Qt::DefaultContextMenu</enum>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -132,7 +142,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -358,6 +368,11 @@
   <action name="actionConvert_data_in_SQL">
    <property name="text">
     <string>Convert data in SQL</string>
+   </property>
+  </action>
+  <action name="actionSwitch_To_Cascade_View">
+   <property name="text">
+    <string>Switch To Cascade View</string>
    </property>
   </action>
  </widget>
