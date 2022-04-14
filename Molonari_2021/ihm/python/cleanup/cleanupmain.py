@@ -795,9 +795,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
         self.cleanedVars.append(self.varName())
 
-        # self.df_cleaned.dropna(inplace=True)
-        # self.df_cleaned.drop("to_clean", axis=1,inplace=True)
-
         self.plotPrevisualizedVar()
 
     def getDF(self):
@@ -825,14 +822,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def selectPoints(self):
         dig = DialogCleanPoints()
-        dig.plot(self.varName(), self.df_loaded)
+        dig.plot(self.varName(), self.df_loaded, self.df_selected)
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
             self.df_selected = dig.mplSelectCurve.df_selected
-            print(self.df_selected)
-        elif res == QtWidgets.QDialog.Rejected:
-            self.df_selected = pd.DataFrame(columns=["date","value"]) 
-            print(self.df_selected) 
+        print(self.df_selected)
+        self.previsualizeCleaning()
 
     def resetCleanVar(self):
         self.cleanedVars.remove(self.varName())
