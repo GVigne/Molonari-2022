@@ -43,7 +43,7 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
 
         df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
         df_compare.loc[df_compare['outliers'] != True, 'outliers'] = False
-
+        
         df_compare['date'] = mdates.date2num(df_compare['date'])
         df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
         df_compare[df_compare['outliers'] == True].plot.scatter(x='date',y=id,c = 'r',s = 3,ax = self.axes)
@@ -276,6 +276,17 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
         self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
         self.pushButtonResetAll.clicked.connect(self.resetCleanAll)
+
+        # Define the slot function and print the received parameters
+        def slot(object):
+            print("Key was pressed, id is:", self.buttonGroupMethod.id(object))
+
+        # connects the slot function and makes the argument of the band int type
+        self.buttonGroupMethod.setId(self.radioButtonZScore,1)
+        self.buttonGroupMethod.setId(self.radioButtonIQR,2)
+        self.buttonGroupMethod.setId(self.radioButtonNone,3)
+        
+        self.buttonGroupMethod.buttonClicked.connect(slot)
 
 
         self.checkBoxChanges.setChecked(True)

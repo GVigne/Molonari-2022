@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>814</width>
+    <width>815</width>
     <height>602</height>
    </rect>
   </property>
@@ -151,6 +151,9 @@
             <property name="text">
              <string>None</string>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">buttonGroupMethod</string>
+            </attribute>
            </widget>
           </item>
           <item row="7" column="3">
@@ -158,6 +161,9 @@
             <property name="text">
              <string>IQR</string>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">buttonGroupMethod</string>
+            </attribute>
            </widget>
           </item>
           <item row="6" column="3">
@@ -165,6 +171,9 @@
             <property name="text">
              <string>Z-score</string>
             </property>
+            <attribute name="buttonGroup">
+             <string notr="true">buttonGroupMethod</string>
+            </attribute>
            </widget>
           </item>
           <item row="5" column="3">
@@ -242,4 +251,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="buttonGroupMethod"/>
+ </buttongroups>
 </ui>
