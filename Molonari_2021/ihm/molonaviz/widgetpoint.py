@@ -30,17 +30,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         self.point = point
         self.study = study
-        self.pointDir = self.point.getPointDir()
-        self.directmodelDir = self.pointDir + "/results/direct_model_results"
-        self.MCMCDir = self.pointDir + "/results/MCMC_results"
-        self.directdepthsdir = self.directmodelDir + "/depths.csv"
-        self.MCMCdepthsdir = self.MCMCDir + "/depths.csv"
-
-        self.directmodeliscomputed = 1#len(os.listdir(self.directmodelDir) ) > 1
-        self.MCMCiscomputed = 1# len(os.listdir(self.MCMCDir)) > 1
-
-        self.computation_available = False
-
+        
         self.computeEngine = Compute(self.point)
 
         # Link every button to their function
@@ -55,6 +45,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.tabWidget.setCurrentIndex(3)
 
         #TO REMOVE
+        self.pointDir = self.point.getPointDir()
         self.point.name = "P034"
         self.con = QSqlDatabase.addDatabase("QSQLITE")
         self.con.setDatabaseName("../../../../Test_Molonari/ViewTable.sqlite")
@@ -68,6 +59,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         # Set the "Infos" tab
             #Installation
         self.labelSchema.setPixmap(QPixmap(self.pointDir + "/info_data" + "/config.png"))
+        self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
+
+        #This allows the image to take the entire size of the widget, however it will be misshapen
+        # self.labelSchema.setScaledContents(True)
+        # self.labelSchema.setSizePolicy(QtWidgets.QSizePolicy.Ignored,QtWidgets.QSizePolicy.Ignored)
             #Notice
         file = open(self.pointDir + "/info_data" + "/notice.txt", encoding="charmap", errors="surrogateescape")
         notice = file.read()
@@ -89,26 +85,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.checkBoxRaw_Data.isChecked():
             self.currentdata = "raw"
 
-        # self.TemperatureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_temperatures.csv"
-        # self.PressureDir = self.pointDir + "/" + self.currentdata + "_data" + "/" + self.currentdata + "_pressures.csv"
-
-        # if self.checkBoxRaw_Data.isChecked():
-        #     self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
-        # else:
-        #     self.dfpress = readCSVWithDates(self.PressureDir)
-        # if self.checkBoxRaw_Data.isChecked():
-        #     self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
-        # else:
-        #     self.dftemp = readCSVWithDates(self.TemperatureDir)
-
         select_query = self.build_data_queries(full_query=True)
         self.currentDataModel = QSqlQueryModel()
         self.currentDataModel.setQuery(select_query)
         self.tableViewDataArray.setModel(self.currentDataModel)
-
-        # self.currentTemperatureModel = PandasModel(self.dftemp)
-        # self.tableViewTemp.setModel(self.currentTemperatureModel)
-
 
     def setWidgetInfos(self):
         pointName = self.point.getName()
@@ -388,16 +368,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.vboxwaterMCMC = QtWidgets.QVBoxLayout()
         self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
         
-        if self.computation_available:
+        if self.computation_type() is not None:
             self.plotWaterFlows()
             self.plotHeatFluxes()
             self.plotUmbrellas()
             self.plotTemperatureMap()
             self.plotTempbyDepth()
+            self.showDepths()
             
-            self.comboBoxDepth.clear()
-            for depth in self.dfdepths.values.tolist():
-                self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
             #Les paramètres
             self.setParamsModel()
             self.plotHistos()
@@ -480,6 +458,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def setBestParamsModel(self):
         pass
         
+    def showDepths(self):
+        self.comboBoxDepth.clear()
+        for depth in self.dfdepths.values.tolist():
+            self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
+        pass
     def plotWaterFlowsMCMC(self, dfwater):
         select_flows1 = self.build_result_queries(result_type="WaterFlux",quantile=0.5)
         select_flows2 = self.build_result_queries(result_type="WaterFlux",quantile=0.05)
@@ -653,12 +636,41 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
                             """
                 )
-    def build_result_queries(self,result_type ="",quantile = 0,option=""):
+    def computation_type(self):
+        """
+        Return None if no computation was made: else, return False if only the direct model was computed and True if the MCMC was computed.
+        """
+        q = QSqlQuery("SELECT COUNT(*) FROM Quantile")
+        q.exec()
+        q.next()
+        if q.value(0) ==0:
+            return None
+        elif q.value(0) ==1:
+            return False
+        else: 
+            return True
+    def build_result_queries(self,result_type ="",option=""):
+        """
+        Return a list of queries according to the user's wish. The list will either be of length 1 (the model was not computed before), or more than one: in this case, there are as many queries as there are quantiles, and they are ordered in the following way:
+        1) default model
+        2) quantile 0.05
+        3) quantile 0.5
+        4) quantile 0.95
+        """
+        computation_type = self.computation_type()
+        if computation_type is None:
+            return None
+        elif not computation_type:
+            return [self.define_result_queries(result_type=result_type,option=option, quantile=0)]
+        else:
+            #This could be enhanced by going in the database and seeing which quantiles are available. For now, these available quantiles will be hard-coded
+            return [self.define_result_queries(result_type=result_type,option=option, quantile=1) for i in [0,0.05,0.5,0.95]]
+    
+    def define_result_queries(self,result_type ="",option="",quantile = 0):
         """
         Build and return ONE AND ONLY ONE query concerning the results.
         -quantile must be a float, and is either 0 (direct result), 0.05,0.5 or 0.95
         -option can be a string (which 2D map should be displayed or a date for the umbrellas) or a float (depth required by user)
-        This function was made so that all SQL queries are in the same place and not scattered throughout the code.
         """
         #Water Flux
         if result_type =="WaterFlux":
@@ -714,9 +726,9 @@ if __name__ == '__main__':
     sys.exit(app.exec_())
 """
  
-p = Point()
-s = Study()
-app = QtWidgets.QApplication(sys.argv)
-mainWin = WidgetPoint(p,s)
-mainWin.show()
-sys.exit(app.exec_())
+# p = Point()
+# s = Study()
+# app = QtWidgets.QApplication(sys.argv)
+# mainWin = WidgetPoint(p,s)
+# mainWin.show()
+# sys.exit(app.exec_())
