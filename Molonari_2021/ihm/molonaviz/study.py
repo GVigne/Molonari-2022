@@ -14,10 +14,11 @@ class Study(object):
     classdocs : to be written
     '''
 
-    def __init__(self, name: str="", rootDir: str="", sensorDir: str=""):
+    def __init__(self, name: str="", rootDir: str="", sensorDir: str="", tempUnity="Celsius"):
         self.name = name
         self.rootDir = rootDir
         self.sensorDir = sensorDir
+        self.tempUnity = tempUnity
     
     def getName(self):
         return self.name

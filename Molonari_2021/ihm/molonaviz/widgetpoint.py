@@ -94,7 +94,20 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
         else:
             self.dftemp = readCSVWithDates(self.TemperatureDir)
-        self.currentTemperatureModel = PandasModel(self.dftemp)
+            self.dftempK = self.dftemp.copy()
+            self.dftempK.set_axis(['Date Heure, GMT+01:00', 'Temperature 1 (°K)', 'Temperature 2 (°K)', 
+                                   'Temperature 3 (°K)', 'Temperature 4 (°K)'],
+                                  axis=1,
+                                  inplace=True)
+            self.dftempK['Temperature 1 (°K)'] += 273.15
+            self.dftempK['Temperature 2 (°K)'] += 273.15
+            self.dftempK['Temperature 3 (°K)'] += 273.15
+            self.dftempK['Temperature 4 (°K)'] += 273.15
+            
+        if self.study.tempUnity == "Celsius":
+            self.currentTemperatureModel = PandasModel(self.dftemp)
+        else:
+            self.currentTemperatureModel = PandasModel(self.dftempK)            
         self.tableViewTemp.setModel(self.currentTemperatureModel)
         #self.tableViewTemp.resizeColumnsToContents()
 

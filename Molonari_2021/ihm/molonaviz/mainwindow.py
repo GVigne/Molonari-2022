@@ -45,6 +45,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.currentStudy = None
         self.currentDlg = None
+        
+        self.tempUnity = "Celsius"
 
         self.pSensorModel = QtGui.QStandardItemModel()
         self.treeViewPressureSensors.setModel(self.pSensorModel)
@@ -78,6 +80,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
         self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)
+        self.actionTempToKelvin.triggered.connect(self.tempToKelvin)
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
@@ -444,6 +447,10 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_SubWindow_View.setEnabled(True)
         self.actionSwitch_To_Cascade_View.setEnabled(False)
         
+    def tempToKelvin(self):
+        self.tempUnity = "Kelvin"
+        self.currentStudy.tempUnity = "Kelvin"            
+        self.actionTempToKelvin.setEnabled(False)
 
 
 if __name__ == '__main__':
