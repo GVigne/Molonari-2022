@@ -702,6 +702,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         return df_out
 
     def plotPrevisualizedVar(self):
+        self.nosecomollamar()
         "Refresh plot"
         if self.varName() in self.cleanedVars:
             self.pushButtonPrevisualize.setEnabled(False)
@@ -724,6 +725,69 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             print("Entered exception")
             pass
             
+    def getScript(self):
+        # scriptpartiel = self.plainTextEdit.toPlainText()
+        # scriptindente = scriptpartiel.replace("\n", "\n   ")
+        scriptpartiel = "self.test_function()"
+        scriptindente = "self.test_function()"
+        script = "def fonction(self, dft, dfp): \n   " + scriptindente + "\n" + "   return(dft, dfp)"
+        return(script, scriptpartiel)
+
+    def test_function(self):
+        print("funciona el test?")
+        
+    def cleanup(self, script, dft, dfp):
+        scriptDir = "script.py"
+        # sys.path.append(self.pointDir)
+
+        with open(scriptDir, "w") as f:
+            f.write(script)
+            f.close()
+
+        from script import fonction
+
+        os.remove(scriptDir)
+        del sys.modules["script"]
+
+        try :
+            new_dft, new_dfp = fonction(self,dft, dfp)
+
+            #exec(script)
+
+            #On réécrit les csv:
+            # os.remove(self.tprocessedfile)
+            # os.remove(self.pprocessedfile)
+            # new_dft.to_csv(self.tprocessedfile, index=False)
+            # new_dfp.to_csv(self.pprocessedfile, index=False)
+
+            # self.dftemp = readCSVWithDates(self.tprocessedfile)
+            # self.dfpress = readCSVWithDates(self.pprocessedfile)
+
+            return(new_dft+1, new_dfp+1)
+        
+        except Exception as e :
+            raise e
+        
+    def nosecomollamar(self):
+        script,scriptpartiel = self.getScript()
+        print("Cleaning data...")
+
+        try :
+            dftemp, dfpress = self.cleanup(script, 3, 7)
+            print(dftemp)
+            print(dfpress)
+            print("Data successfully cleaned !...")
+
+            # Save the modified text
+            # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
+            #     file.write(scriptpartiel)
+            print("Script successfully saved")
+            
+            
+        except Exception as e :
+            print(e, "==> Clean-up aborted")
+            displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
+            # self.cleanup()
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
