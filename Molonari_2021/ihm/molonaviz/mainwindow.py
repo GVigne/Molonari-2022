@@ -222,38 +222,39 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                     self.openStudy()
             else :
                 return None
-        try :
-            self.currentStudy.loadStudyFromText() #charge le nom de l'étude et son sensorDir
-            self.setWindowTitle(f'MolonaViz – {self.currentStudy.getName()}')
-        except TextFileError as e:
-            infoMessage = f"You might have selected the wrong root directory \n\nIf not, please see the Help section "
-            displayCriticalMessage(str(e), infoMessage)
-            self.currentStudy = None
-            return None
-        try :
-            self.currentStudy.loadThermometers(self.thermometersModel)
-        except Exception :
-            raise LoadingError("thermometers")
-        try :
-            self.currentStudy.loadPressureSensors(self.pSensorModel)
-        except Exception :
-            raise LoadingError("pressure sensors")
-        try : 
-            self.currentStudy.loadShafts(self.shaftModel)
-        except Exception :
-            raise LoadingError("shafts")
-        try :
-            self.currentStudy.loadPoints(self.pointModel)
-        except Exception :
-            raise LoadingError('points')
-        #le menu point n'est pas actif tant qu'aucune étude n'est ouverte et chargée
-        self.menuPoint.setEnabled(True)
-        self.actionClose_Study.setEnabled(True)
-        self.actionImport_Point.setEnabled(True)
+        if self.currentStudy != None :
+            try :
+                self.currentStudy.loadStudyFromText() #charge le nom de l'étude et son sensorDir
+                self.setWindowTitle(f'MolonaViz – {self.currentStudy.getName()}')
+            except TextFileError as e:
+                infoMessage = f"You might have selected the wrong root directory \n\nIf not, please see the Help section "
+                displayCriticalMessage(str(e), infoMessage)
+                self.currentStudy = None
+                return None
+            try :
+                self.currentStudy.loadThermometers(self.thermometersModel)
+            except Exception :
+                raise LoadingError("thermometers")
+            try :
+                self.currentStudy.loadPressureSensors(self.pSensorModel)
+            except Exception :
+                raise LoadingError("pressure sensors")
+            try : 
+                self.currentStudy.loadShafts(self.shaftModel)
+            except Exception :
+                raise LoadingError("shafts")
+            try :
+                self.currentStudy.loadPoints(self.pointModel)
+            except Exception :
+                raise LoadingError('points')
+            #le menu point n'est pas actif tant qu'aucune étude n'est ouverte et chargée
+            self.menuPoint.setEnabled(True)
+            self.actionClose_Study.setEnabled(True)
+            self.actionImport_Point.setEnabled(True)
 
-        #on n'autorise pas l'ouverture ou la création d'une étude s'il y a déjà une étude ouverte
-        self.actionOpen_Study.setEnabled(False) 
-        self.actionCreate_Study.setEnabled(False)
+            #on n'autorise pas l'ouverture ou la création d'une étude s'il y a déjà une étude ouverte
+            self.actionOpen_Study.setEnabled(False) 
+            self.actionCreate_Study.setEnabled(False)
 
     def closeStudy(self):
 
