@@ -36,9 +36,23 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         super(MplCanvasTimeCompare, self).__init__(self.fig)
 
     def refresh_compare(self, df_or, df_cleaned,id):
-        suffix = '_cleaned'
+        suffix_or = "_or"
+        varOr = df_or.dropna()[['date',id]]
+        df_compare_or = df_or[["date",id]].join(varOr.set_index("date"),on="date",rsuffix=suffix_or)
+        df_compare_or['missing'] = df_compare_or[list(df_compare_or.columns)[-1]]
+
+        df_compare_or.loc[np.isnan(df_compare_or['missing']),'missing'] = True
+        df_compare_or.loc[df_compare_or['missing'] != True, 'missing'] = False
+        
+        df_compare_or['date'] = mdates.date2num(df_compare_or['date'])
+        # df_compare_or[df_compare_or['missing'] == False].plot(x='date',y=id,ax = self.axes)
+        df_compare_or[df_compare_or['missing'] == True].plot.scatter(x='date',y=id,c = 'g',s = 3,ax = self.axes)
+        # self.format_axes()
+        # self.fig.canvas.draw()
+        
+        suffix_cl = '_cleaned'
         varCleaned = df_cleaned.dropna()[["date",id]]
-        df_compare = df_or[["date",id]].join(varCleaned.set_index("date"),on="date",rsuffix=suffix)
+        df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl)
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
 
         df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
