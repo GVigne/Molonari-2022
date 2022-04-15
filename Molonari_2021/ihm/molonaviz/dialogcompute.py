@@ -56,6 +56,10 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         # self.labelMoinsLog10KDirect.setToolTip("Please enter -log10K, K being permeability")
         self.labelsigmaK.setToolTip(f"WARNING : sigma applies to -log<sub>10<sub>K")
         
+        self.pushButtonUpdate.setToolTip("Click to update the table after having decided the number of layers")
+        self.pushButtonMCMC.setToolTip("Run MCMC if 'Execute inversion before' checked, otherwise run DirectModel")
+        self.buttonBox.setToolTip("Close the window")
+        
     def spinBoxNCellsDirect_cb(self):
         return self.spinBoxNCellsDirect.value()
 
