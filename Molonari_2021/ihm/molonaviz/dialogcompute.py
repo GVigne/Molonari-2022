@@ -18,9 +18,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.setMouseTracking(True)
         
         self.setDefaultValues()
-        
-        self.pushButtonMCMC.setEnabled(True)
-        
+            
         # spinBoxNCellsDirect
         self.spinBoxNCellsDirect.setRange(0, 200)
         self.spinBoxNCellsDirect.setSingleStep(10)
@@ -33,9 +31,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.spinBoxNLayersDirect.setValue(3)
         # self.spinBoxNLayersDirect.setWrapping(True)
 
-        self.spinBoxNCellsDirect.valueChanged.connect(self.spinBoxNCellsDirect_cb)
-        self.spinBoxNLayersDirect.valueChanged.connect(self.spinBoxNLayersDirect_cb)
-
         self.MCMCLineEdits = [self.lineEditMaxIterMCMC, 
             self.lineEditKMin, self.lineEditKMax, self.lineEditMoinsLog10KSigma,
             self.lineEditPorosityMin, self.lineEditPorosityMax, self.lineEditPorositySigma,
@@ -43,12 +38,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.lineEditThermalCapacityMin, self.lineEditThermalCapacityMax, self.lineEditThermalCapacitySigma]
 
         self.pushButtonUpdate.clicked.connect(self.change_showdb)
-        self.groupBoxMCMC.clicked.connect(self.inputMCMC)
         
         # Show the default table
         self.showdb()
 
-        self.pushButtonMCMC.clicked.connect(self.getInputDirectModel)
+        self.pushButtonRun.clicked.connect(self.run)
 
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
         self.pushButtonRestoreDefault.setToolTip("All parameters will be set to default value")
@@ -57,22 +51,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.labelsigmaK.setToolTip(f"WARNING : sigma applies to -log<sub>10<sub>K")
         
         self.pushButtonUpdate.setToolTip("Click to update the table after having decided the number of layers")
-        self.pushButtonMCMC.setToolTip("Run MCMC if 'Execute inversion before' checked, otherwise run DirectModel")
+        self.pushButtonRun.setToolTip("Run MCMC if 'Execute inversion before' is checked, otherwise run Direct Model")
         self.buttonBox.setToolTip("Close the window")
-        
-    def spinBoxNCellsDirect_cb(self):
-        return self.spinBoxNCellsDirect.value()
 
-    def spinBoxNLayersDirect_cb(self):
-        return self.spinBoxNLayersDirect.value()
         
     # Set the default table
     def showdb(self): 
         
         # spinBoxNCellsDirect
         self.spinBoxNCellsDirect.setValue(100)
-        self.spinBoxNCellsDirect.setEnabled(True)
-        self.spinBoxNLayersDirect.setEnabled(True)
         
         row = self.spinBoxNLayersDirect.value() 
         # col always = 5 
@@ -157,26 +144,14 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         row = int(self.spinBoxNLayersDirect.value())
         
-        for lineEdit in self.MCMCLineEdits :
-            lineEdit.setReadOnly(True)
-        
         for i in range (row):
             
             moinslog10K = -log10(float(self.tableWidget.item(i, 1).text()))
             n = float(self.tableWidget.item(i, 2).text())
             lambda_s = float(self.tableWidget.item(i, 3).text())
             rhos_cs = float(self.tableWidget.item(i, 4).text())
-            self.done(10)
             return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
-    
-    def inputMCMC(self):
-        
-        self.pushButtonMCMC.clicked.connect(self.getInputMCMC)
 
-        self.spinBoxNCellsDirect.setEnabled(False)
-            
-        for lineEdit in self.MCMCLineEdits :
-            lineEdit.setReadOnly(False)     
 
     def getInputMCMC(self):
 
@@ -210,10 +185,14 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
         
-        self.done(1)
         return nb_iter, priors, nb_cells, quantiles
 
-
+    def run(self):
+        if self.groupBoxMCMC.isChecked():
+            self.done(1)
+        else:
+            self.done(10)
+            
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     mainWin = DialogCompute()

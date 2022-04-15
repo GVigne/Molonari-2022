@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from sensors import PressureSensor, Shaft, Thermometer
 from usefulfonctions import *
-# from pyheatmy import *
+from pyheatmy import *
 from errors import *
 
 class Point(object):
