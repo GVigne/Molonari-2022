@@ -448,9 +448,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_Cascade_View.setEnabled(False)
 
     def openUserguide(self):
-        userguidepath=os.path.split(os.path.dirname(__file__))
-        userguidepath=os.path.dirname(userguidepath[0])
-        userguidepath=os.path.join(userguidepath, "resources", "Userguide.pdf")
+        userguidepath=os.path.dirname(__file__)
+        userguidepath=os.path.join(userguidepath, "Docs", "UserguideFR.pdf")
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(userguidepath))
 
 
