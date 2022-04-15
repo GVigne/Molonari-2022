@@ -44,7 +44,7 @@ class Point(object):
         infocsv = os.path.join(self.pointDir, "info_data", "info.csv")
         
         df = pd.read_csv(infocsv, header=None, index_col=0)
-        #self.oldName = df.iloc[0].at[1] 
+        self.oldName = df.iloc[0].at[1] 
         self.psensor = df.iloc[1].at[1]
         self.shaft = df.iloc[2].at[1]
         self.rivBed = float(df.iloc[5].at[1].replace(',','.'))
@@ -127,20 +127,20 @@ class Point(object):
 
         if dfpress_t0 < dftemp_t0 : 
             while dfpress_t0 != dftemp_t0:
-                dfpress.drop(index=0, inplace=True)
+                dfpress.drop(dftemp.head(1).index, inplace=True)
                 dfpress_t0 = dfpress.iloc[0,0]
         elif dfpress_t0 > dftemp_t0 : 
             while dfpress_t0 != dftemp_t0:
-                dftemp.drop(index=0, inplace=True)
+                dftemp.drop(dftemp.head(1).index, inplace=True)
                 dftemp_t0 = dftemp.iloc[0,0]
 
         if dfpress_tf > dftemp_tf:
             while dfpress_tf != dftemp_tf :
-                dfpress.drop(dfpress.tail(1).index,inplace=True)
+                dfpress.drop(dfpress.tail(1).index, inplace=True)
                 dfpress_tf = dfpress.iloc[-1,0]
         elif dfpress_tf < dftemp_tf:
             while dfpress_tf != dftemp_tf :
-                dftemp.drop(dftemp.tail(1).index,inplace=True)
+                dftemp.drop(dftemp.tail(1).index, inplace=True)
                 dftemp_tf = dftemp.iloc[-1,0]
 
         # On supprime les lignes qui ne respecteraient pas le deltaT

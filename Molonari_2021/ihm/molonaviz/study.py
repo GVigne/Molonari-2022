@@ -105,7 +105,6 @@ class Study(object):
             return
 
         except Exception as e :
-            shutil.rmtree(pointDir)
             raise e
     
     
@@ -118,7 +117,18 @@ class Study(object):
         for file in files:
             psensor = PressureSensor()
             psensor.loadPressureSensor(file, sensorModel)
-        
+            
+    def getPressureSensorsDb(self):
+        sdir = os.path.join(self.sensorDir, "pressure_sensors", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        pressure_sensors = []
+        for file in files:
+            psensor = PressureSensor()
+            psensor.setPressureSensorFromFile(file)
+            pressure_sensors.append(psensor)
+        return pressure_sensors
+    
     def loadShafts(self, sensorModel: QtGui.QStandardItemModel):
         sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
         files = glob.glob(sdir)
@@ -126,7 +136,18 @@ class Study(object):
         for file in files:
             shaft = Shaft()
             shaft.loadShaft(file, sensorModel)  
-
+            
+    def getShaftsDb(self):
+        sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        shafts = []
+        for file in files:
+            shaft = Shaft()
+            shaft.setShaftFromFile(file)
+            shafts.append(shaft)
+        return shafts
+            
     def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
         #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
         sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
@@ -135,6 +156,17 @@ class Study(object):
         for file in files:
             thermometer = Thermometer()
             thermometer.loadThermometer(file, sensorModel)  
+
+    def getThermometersDb(self):
+        sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        thermometers = []
+        for file in files:
+            thermometer = Thermometer()
+            thermometer.setThermometerFromFile(file)
+            thermometers.append(thermometer)
+        return thermometers
 
     def loadPoints(self, pointModel: QtGui.QStandardItemModel):
         rdir = self.rootDir
@@ -147,6 +179,21 @@ class Study(object):
             point = Point(name, pointDir)
             point.loadPointFromDir()
             point.loadPoint(pointModel)
+            
+    def getPointsDb(self):
+        rdir = self.rootDir
+        dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file
+        dirs = list(filter(('.DS_Store').__ne__, dirs))
+        #permet de ne pas prendre en compte les fichiers '.DS_Store'
+        
+        points = []
+        for mydir in dirs:
+            pointDir = os.path.join(self.rootDir, mydir)
+            name = os.path.basename(pointDir)
+            point = Point(name, pointDir)
+            point.loadPointFromDir()
+            points.append(point)
+        return points
 
 
         

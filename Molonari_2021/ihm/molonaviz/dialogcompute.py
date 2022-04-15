@@ -2,6 +2,7 @@ import sys
 import os
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from math import log10
+from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem
 
 From_DialogCompute = uic.loadUiType(os.path.join(os.path.dirname(__file__),"dialogcompute.ui"))[0]
 
@@ -15,20 +16,20 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.setupUi(self)
 
         self.setMouseTracking(True)
-
-        #self.permeabilityValidator = QtGui.QDoubleValidator(0.0, 5.0, 2)
-        #self.lineEditKDirect.setValidator(self.permeabilityValidator)
-        #self.lineEditKMax.setValidator(self.permeabilityValidator)
-        #self.lineEditKMin.setValidator(self.permeabilityValidator)
-
-        for i in range(50, 151, 5):
-            self.comboBoxNCellsDirect.addItem(f'{i}')
-            self.comboBoxNCellsMCMC.addItem(f'{i}')
         
         self.setDefaultValues()
-
-        self.directModelLineEdits = [self.lineEditKDirect, self.lineEditPorosityDirect, self.lineEditThermalConductivityDirect,
-            self.lineEditThermalCapacityDirect]
+            
+        # spinBoxNCellsDirect
+        self.spinBoxNCellsDirect.setRange(0, 200)
+        self.spinBoxNCellsDirect.setSingleStep(10)
+        self.spinBoxNCellsDirect.setValue(100)
+        # self.spinBoxNCellsDirect.setWrapping(True)
+        
+        # spinBoxNLayersDirect
+        self.spinBoxNLayersDirect.setRange(0, 10)
+        self.spinBoxNLayersDirect.setSingleStep(1)
+        self.spinBoxNLayersDirect.setValue(3)
+        # self.spinBoxNLayersDirect.setWrapping(True)
 
         self.MCMCLineEdits = [self.lineEditMaxIterMCMC, 
             self.lineEditKMin, self.lineEditKMax, self.lineEditMoinsLog10KSigma,
@@ -36,30 +37,83 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.lineEditThermalConductivityMin, self.lineEditThermalConductivityMax, self.lineEditThermalConductivitySigma,
             self.lineEditThermalCapacityMin, self.lineEditThermalCapacityMax, self.lineEditThermalCapacitySigma]
 
-        self.radioButtonDirect.toggled.connect(self.inputDirect)
-        self.radioButtonMCMC.toggled.connect(self.inputMCMC)
+        self.pushButtonUpdate.clicked.connect(self.change_showdb)
+        
+        # Show the default table
+        self.showdb()
 
-        #On pré-coche le modèle direct
-        self.radioButtonDirect.setChecked(True)
-
-        self.pushButtonDirect.clicked.connect(self.getInputDirectModel)
-        self.pushButtonMCMC.clicked.connect(self.getInputMCMC)
+        self.pushButtonRun.clicked.connect(self.run)
 
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
         self.pushButtonRestoreDefault.setToolTip("All parameters will be set to default value")
 
-        #self.labelMoinsLog10KDirect.setToolTip("Please enter -log10K, K being permeability")
+        # self.labelMoinsLog10KDirect.setToolTip("Please enter -log10K, K being permeability")
         self.labelsigmaK.setToolTip(f"WARNING : sigma applies to -log<sub>10<sub>K")
+        
+        self.pushButtonUpdate.setToolTip("Click to update the table after having decided the number of layers")
+        self.pushButtonRun.setToolTip("Run MCMC if 'Execute inversion before' is checked, otherwise run Direct Model")
+        self.buttonBox.setToolTip("Close the window")
 
+        
+    # Set the default table
+    def showdb(self): 
+        
+        # spinBoxNCellsDirect
+        self.spinBoxNCellsDirect.setValue(100)
+        
+        row = self.spinBoxNLayersDirect.value() 
+        # col always = 5 
+        # the default number of rows = 3
+        
+        self.tableWidget.setRowCount(10)
+        self.tableWidget.setColumnCount(5)
+        
+        for i in range(row):
+    
+            self.tableWidget.setItem(i, 1, QTableWidgetItem("1e-5"))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem("0.15"))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem("3.4"))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
+                    
+        self.tableWidget.setItem(0, 0, QTableWidgetItem("21"))
+        self.tableWidget.setItem(1, 0, QTableWidgetItem("31"))
+        self.tableWidget.setItem(2, 0, QTableWidgetItem("46"))
+        
+        for k in range(10):
+                if k > row - 1:
+                    self.tableWidget.hideRow(k)
+                else:
+                    self.tableWidget.showRow(k)
+    
+    # Change the number of rows according to spinBoxNLayersDirect    
+    def change_showdb(self): 
+            
+            row = int(self.spinBoxNLayersDirect.value())
+            # col = 5
+                
+            self.tableWidget.setRowCount(10)
+            self.tableWidget.setColumnCount(5)
+            
+            for i in range(row):
+    
+                self.tableWidget.setItem(i, 1, QTableWidgetItem("1e-5"))
+                self.tableWidget.setItem(i, 2, QTableWidgetItem("0.15"))
+                self.tableWidget.setItem(i, 3, QTableWidgetItem("3.4"))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
+                
+            for j in range (row):
+                val = int(6+(40/row)*(j+1))
+                self.tableWidget.setItem(j, 0, QTableWidgetItem(str(val)))
+                
+            for k in range(10):
+                if k > row - 1:
+                    self.tableWidget.hideRow(k)
+                else:
+                    self.tableWidget.showRow(k)
+
+       
     def setDefaultValues(self):
-
-        # Direct model
-        self.lineEditKDirect.setText('1e-5')
-        self.lineEditPorosityDirect.setText('0.15')
-        self.lineEditThermalConductivityDirect.setText('3.4')
-        self.lineEditThermalCapacityDirect.setText('5e6')
-        self.comboBoxNCellsDirect.setCurrentIndex(10) #100 cellules
-
+        
         # MCMC
         self.lineEditMaxIterMCMC.setText('5000')
 
@@ -79,55 +133,30 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.lineEditThermalCapacityMax.setText('1e7')
         self.lineEditThermalCapacitySigma.setText('1e5')
 
-        self.comboBoxNCellsMCMC.setCurrentIndex(10) #100 cellules
-
         self.lineEditQuantiles.setText('0.05,0.5,0.95')
 
-
-    def inputDirect(self):
-
-        self.pushButtonDirect.setEnabled(True)
-        self.pushButtonMCMC.setEnabled(False)
-
-        self.comboBoxNCellsDirect.setEnabled(True)
-        self.comboBoxNCellsMCMC.setEnabled(False)
-
-        for lineEdit in self.directModelLineEdits :
-            lineEdit.setReadOnly(False)
-    
-        for lineEdit in self.MCMCLineEdits :
-            lineEdit.setReadOnly(True)
-
-
-    def inputMCMC(self):
-
-        self.pushButtonDirect.setEnabled(False)
-        self.pushButtonMCMC.setEnabled(True)
-
-        self.comboBoxNCellsDirect.setEnabled(False)
-        self.comboBoxNCellsMCMC.setEnabled(True)
-
-        for lineEdit in self.directModelLineEdits :
-            lineEdit.setReadOnly(True)
-            
-        for lineEdit in self.MCMCLineEdits :
-            lineEdit.setReadOnly(False)
-
-
+    # directModel changes according to the previous result of Inversion 
+    # So need to modify the codes in change_showdb when we have the result of Group calcul
 
     def getInputDirectModel(self):
-        moinslog10K = -log10(float(self.lineEditKDirect.text()))
-        n = float(self.lineEditPorosityDirect.text())
-        lambda_s = float(self.lineEditThermalConductivityDirect.text())
-        rhos_cs = float(self.lineEditThermalCapacityDirect.text())
-        nb_cells = int(self.comboBoxNCellsDirect.currentText())
-        self.done(10)
-        return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
+        
+        nb_cells = self.spinBoxNCellsDirect.value()
+        
+        row = int(self.spinBoxNLayersDirect.value())
+        
+        for i in range (row):
+            
+            moinslog10K = -log10(float(self.tableWidget.item(i, 1).text()))
+            n = float(self.tableWidget.item(i, 2).text())
+            lambda_s = float(self.tableWidget.item(i, 3).text())
+            rhos_cs = float(self.tableWidget.item(i, 4).text())
+            return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
+
 
     def getInputMCMC(self):
 
         nb_iter = int(self.lineEditMaxIterMCMC.text())
-        nb_cells = int(self.comboBoxNCellsMCMC.currentText())
+        nb_cells = self.spinBoxNCellsDirect.value()
 
         moins10logKmin = -log10(float(self.lineEditKMin.text()))
         moins10logKmax = -log10(float(self.lineEditKMax.text()))
@@ -156,10 +185,14 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = tuple(quantiles)
         quantiles = [float(quantile) for quantile in quantiles]
         
-        self.done(1)
         return nb_iter, priors, nb_cells, quantiles
 
-
+    def run(self):
+        if self.groupBoxMCMC.isChecked():
+            self.done(1)
+        else:
+            self.done(10)
+            
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     mainWin = DialogCompute()

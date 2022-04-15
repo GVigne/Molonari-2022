@@ -7,8 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>1827</width>
-    <height>901</height>
+    <height>831</height>
    </rect>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::CustomContextMenu</enum>
   </property>
   <property name="windowTitle">
    <string>MolonaViz</string>
@@ -19,8 +25,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1019</width>
-     <height>26</height>
+     <width>1827</width>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -29,6 +35,7 @@
     </property>
     <addaction name="actionCreate_Study"/>
     <addaction name="actionOpen_Study"/>
+    <addaction name="actionConvert_data_in_SQL"/>
     <addaction name="separator"/>
     <addaction name="actionClose_Study"/>
    </widget>
@@ -81,6 +88,7 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionOpen_Userguide_FR"/>
    </widget>
    <addaction name="menuMolonaViz"/>
    <addaction name="menuStudy"/>
@@ -103,6 +111,9 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTreeView" name="treeViewDataPoints">
+       <property name="contextMenuPolicy">
+        <enum>Qt::DefaultContextMenu</enum>
+       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -132,7 +143,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -290,6 +301,9 @@
    </property>
   </action>
   <action name="actionSwitch_To_Tabbed_View">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Switch To Tabbed View</string>
    </property>
@@ -355,9 +369,22 @@
     <string>Celsius</string>
    </property>
   </action>
+  <action name="actionConvert_data_in_SQL">
+   <property name="text">
+    <string>Convert data in SQL</string>
+   </property>
+  </action>
   <action name="actionSwitch_To_Cascade_View">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Switch To Cascade View</string>
+   </property>
+  </action>
+  <action name="actionOpen_Userguide_FR">
+   <property name="text">
+    <string>Open Userguide (FR)</string>
    </property>
   </action>
  </widget>
