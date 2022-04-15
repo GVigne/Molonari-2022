@@ -1,3 +1,4 @@
+from importlib.resources import path
 from ntpath import join
 import sys, os, shutil
 import pandas as pd
@@ -77,6 +78,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
         self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)
+        self.actionOpen_Userguide_FR.triggered.connect(self.openUserguide)
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
@@ -444,7 +446,11 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_Tabbed_View.setEnabled(True)
         self.actionSwitch_To_SubWindow_View.setEnabled(True)
         self.actionSwitch_To_Cascade_View.setEnabled(False)
-        
+
+    def openUserguide(self):
+        userguidepath=os.path.dirname(__file__)
+        userguidepath=os.path.join(userguidepath, "Docs", "UserguideFR.pdf")
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(userguidepath))
 
 
 if __name__ == '__main__':
