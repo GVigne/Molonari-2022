@@ -6,7 +6,7 @@ From_DialogCleanup = uic.loadUiType(os.path.join(os.path.dirname(__file__),"dial
 
 class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
     
-    def __init__(self,pointDir):
+    def __init__(self,name,pointDir):
         # Call constructor of parent classes
         super(DialogCleanup, self).__init__()
         QtWidgets.QDialog.__init__(self)
@@ -19,7 +19,7 @@ class DialogCleanup(QtWidgets.QDialog, From_DialogCleanup):
         # with open(os.path.join(pointDir,"saved_text.txt"),'w') as f:
         #     f.write(pointDir)
         try:
-            with open(os.path.join(pointDir,"saved_text.txt")) as f:
+            with open(os.path.join(pointDir,"script_"+name+".txt")) as f:
                 sample_text = f.read()
         except:
             print("No saved script, show sample script")
