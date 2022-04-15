@@ -181,6 +181,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 self.currentStudy.saveStudyToText()
                 try :
                     self.openStudy() #on ouvre automatiquement une étude qui vient d'être créée
+                    print("New study successfully created")
                 except LoadingError as e :
                     print(e)
                     print('Study creation aborted')
@@ -207,7 +208,6 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             except Exception as error:
                 print(f'error : {str(error)}')
                 self.currentStudy = None
-            print("New study successfully created")
 
     def openStudy(self):
         if self.currentStudy == None : #si on ne vient pas de créer une étude
