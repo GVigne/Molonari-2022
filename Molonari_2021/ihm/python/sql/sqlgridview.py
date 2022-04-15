@@ -43,16 +43,6 @@ class MplCanvasTimeCurve(FigureCanvasQTAgg):
         self.axes.plot(mdates.date2num(times), values)
 
 
-    def clear(self):
-        self.fig.clf()
-        self.axes = self.fig.add_subplot(111)
-
-    def format_axes(self):
-        # Beautiful time axis
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-        self.axes.xaxis.set_major_formatter(formatter)
-        self.axes.xaxis.set_major_locator(MaxNLocator(4))
-
 class MplCanvaTimeDepthImage(FigureCanvasQTAgg):
     
     def __init__(self):
@@ -198,12 +188,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.tableView.setModel(self.modelTemp)
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers);
 
-        # self.getDF()
-        # self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
-        # self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
-
         # Create a timer for asynchronous launch of refresh
-        self.timer = QtCore.QTimer(self) 
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.doRefresh)
         
         # TODO : to be removed
