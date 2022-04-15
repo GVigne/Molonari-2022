@@ -39,7 +39,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.pushButtonCleanUp.clicked.connect(self.cleanup)
         self.pushButtonCompute.clicked.connect(self.compute)
         self.checkBoxRaw_Data.stateChanged.connect(self.checkbox)
-        self.pushButtonRefresh.clicked.connect(self.refresh)
         self.pushButtonRefreshBins.clicked.connect(self.refreshbins)
         self.horizontalSliderBins.valueChanged.connect(self.label_update)
         self.tabWidget.setCurrentIndex(3)
@@ -196,6 +195,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
 
     def compute(self):
+        return
         
         sensorDir = self.study.getSensorDir()
 
@@ -310,15 +310,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.MCMCiscomputed = True
             print("Model successfully created !")
 
-
-    def refresh(self):
-        depth_index = self.comboBoxDepth.currentIndex()
-        if self.directmodeliscomputed:
-            self.graphintertempdirect.refresh(depth_index)
-        if self.MCMCiscomputed:
-            self.graphintertempMCMC.refresh(depth_index)
-        self.comboBoxDepth.setCurrentIndex(depth_index)
-
     def refreshbins(self):
         if self.MCMCiscomputed:
             bins = self.horizontalSliderBins.value()
@@ -374,13 +365,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.plotUmbrellas()
             self.plotTemperatureMap()
             self.plotTempbyDepth()
-            self.showDepths()
             
             #Les paramètres
             self.setParamsModel()
-            self.plotHistos()
-            #Les meilleurs paramètres
-            self.setBestParamsModel()  
+            self.plotHistos()  
         else:
             self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
@@ -454,15 +442,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
     def plotHistos(self):
         pass
-
-    def setBestParamsModel(self):
-        pass
         
-    def showDepths(self):
-        self.comboBoxDepth.clear()
-        for depth in self.dfdepths.values.tolist():
-            self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
-        pass
     def plotWaterFlowsMCMC(self, dfwater):
         select_flows1 = self.build_result_queries(result_type="WaterFlux",quantile=0.5)
         select_flows2 = self.build_result_queries(result_type="WaterFlux",quantile=0.05)
