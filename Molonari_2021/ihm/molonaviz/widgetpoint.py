@@ -47,9 +47,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         #TO REMOVE
         self.pointDir = self.point.getPointDir()
-        # self.con = QSqlDatabase.addDatabase("QSQLITE")
-        # self.con.setDatabaseName("molonari_slqdb.sqlite")
-        # self.con.open()
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName("molonari_slqdb.sqlite")
+        self.con.open()
+        self.point.name="Point034" #Needs to be changed
 
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
@@ -595,19 +596,19 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             if full_query:
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
                         FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                             """
                 )
             elif field =="Temp":
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
                         FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                             """
                 )
             elif field =="Pressure":
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
                         FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoints WHERE SamplingPoints.Name = "{self.point.name}")
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                             """
                 )
     def computation_type(self):

@@ -71,20 +71,3 @@ class TemperatureDataModel(MoloModel):
     
     def get_dates(self):
         return self.array_data[:,0]
-
-# class TestModel(MoloModel):
-#     def __init__(self, queries):
-#         super().__init__(queries)
-    
-#     def update_df(self):
-#         pass
-    
-#     def get_temps(self):
-#         pass
-#     # def get_depths(self):
-#     #     depth_array = []
-#     #     while self.queries[0].next():
-#     #         depth_array.append(self.queries[0].value(0))
-#     #     return np.array(depth_array)
-#     # def get_temps(self):
-#     #     return

@@ -135,7 +135,7 @@ class PressureView(MoloView1D):
     
     def retrieve_data(self):
         self.x  = self.model.get_dates()
-        self.y  = {"":self.model.get_pressure()} #No label required for this one.
+        self.y  = {"":np.float64(self.model.get_pressure())} #No label required for this one.
 
 class TemperatureView(MoloView1D):
     """
@@ -146,4 +146,4 @@ class TemperatureView(MoloView1D):
     
     def retrieve_data(self):
         self.x  = self.model.get_dates()
-        self.y  = {f"Capteur n°{i}":temp for i,temp in enumerate(self.model.get_temperatures())}
+        self.y  = {f"Capteur n°{i}":np.float64(temp) for i,temp in enumerate(self.model.get_temperatures())}
