@@ -32,7 +32,6 @@ class DialogImportLabo(QtWidgets.QDialog, From_DialogImportLabo):
             
             thermometerDb = ThermometerDb(self.con)
             thermometerDb.insert(thermometers)
-            print("thermometers inserted in the database")
             
             psensorDb = PressureSensorDb(self.con)
             psensorDb.insert(psensors)

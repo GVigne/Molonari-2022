@@ -114,6 +114,22 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         rtd=os.path.dirname(rtd[0])
         self.currentStudy = Study(rootDir=os.path.join(rtd, "studies", "study_2022"))
         self.openStudy()
+        
+        # Creation of the Database, its connection and the model
+        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
+        
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName(self.sqlfile)
+        if not self.con.open():
+            print("Cannot open SQL database")
+            
+        self.model = QSqlTableModel(self, self.con)
+        
+        # Creation of the SQL tables
+        self.mainDb = MainDb(self.con)
+        self.mainDb.createTables()
 
     
     def appendText(self,text):
@@ -282,23 +298,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.currentStudy = None
 
-    def convertDataInSQL(self):
-        # Creation of the Database, its connection and the model
-        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
-        if os.path.exists(self.sqlfile):
-            os.remove(self.sqlfile)
-        
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sqlfile)
-        if not self.con.open():
-            print("Cannot open SQL database")
-            
-        self.model = QSqlTableModel(self, self.con)
-        
-        # Creation of the SQL tables
-        self.mainDb = MainDb(self.con)
-        self.mainDb.createTables()
-        
+    def convertDataInSQL(self):       
         try :
             self.mainDb.laboDb.insert()
             self.mainDb.studyDb.insert(self.currentStudy) 
