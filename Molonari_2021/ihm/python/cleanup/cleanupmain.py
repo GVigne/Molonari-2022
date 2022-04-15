@@ -14,7 +14,7 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.cm as cm
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
 
@@ -763,6 +763,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # self.df_loaded= df_Pressure.merge(df_ZH, on="date")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
+        self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
+        self.widgetToolBar.addWidget(self.toolBar)
 
     def selectPoints(self):
         dig = DialogCleanPoints()
