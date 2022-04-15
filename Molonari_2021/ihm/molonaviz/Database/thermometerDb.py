@@ -53,6 +53,8 @@ class ThermometerDb():
             insertQuery.addBindValue(str(thermometer.sigma))
             
             insertQuery.exec_()
+            if not insertQuery.exec_():
+                print("error during insertion of thermometers in the table")
             
         insertQuery.finish()
         
