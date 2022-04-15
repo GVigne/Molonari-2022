@@ -16,6 +16,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
+from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel
+from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -45,10 +47,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         #TO REMOVE
         self.pointDir = self.point.getPointDir()
-        self.point.name = "P034"
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName("../../../../Test_Molonari/ViewTable.sqlite")
-        self.con.open()
+        # self.con = QSqlDatabase.addDatabase("QSQLITE")
+        # self.con.setDatabaseName("molonari_slqdb.sqlite")
+        # self.con.open()
 
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
@@ -320,35 +321,28 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def setDataPlots(self):
         #Pressure :
         select_pressure = self.build_data_queries(field ="Pressure")
-        select_pressure.exec()
-        #This is ugly, it should be changed!
-        pressure_array = []
-        while select_pressure.next():
-            pressure_array.append([select_pressure.value(0),select_pressure.value(1)]) #Date, Pressure
-        pressure_array = np.array(pressure_array)
-
-        self.graphpress = MplCanvas(pressure_array, "pressure")
+        self.pressuremodel = PressureDataModel([select_pressure])
+        self.graphpress = PressureView(self.pressuremodel, time_dependent=True,ylabel="Pression différentielle (m)")
         self.toolbarPress = NavigationToolbar(self.graphpress, self)
         vbox = QtWidgets.QVBoxLayout()
         self.groupBoxPress.setLayout(vbox)
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
 
+        self.pressuremodel.exec()
+
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
-        select_temp.exec()
-        #This is ugly, it should be changed!
-        temp_array = []
-        while select_temp.next():
-            temp_array.append([select_temp.value(0),select_temp.value(1),select_temp.value(2),select_temp.value(3),select_temp.value(4),select_temp.value(5)]) #Date, Temp1,Temp2,Temp3,Temp4,TempBed
-        temp_array = np.array(temp_array)
-
-        self.graphtemp = MplCanvas(temp_array, "temperature")
+        self.tempmodel = TemperatureDataModel([select_pressure])
+        self.graphtemp = TemperatureView(self.pressuremodel, time_dependent=True,ylabel="Pression différentielle (m)")
+        # self.graphtemp = MplCanvas(temp_array, "temperature")
         self.toolbarTemp = NavigationToolbar(self.graphtemp, self)
         vbox2 = QtWidgets.QVBoxLayout()
         self.groupBoxTemp.setLayout(vbox2)
         vbox2.addWidget(self.graphtemp)
         vbox2.addWidget(self.toolbarTemp)
+
+        self.tempmodel.exec()
     
     def setResultsPlots(self):
         """
@@ -359,22 +353,22 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.vboxwaterMCMC = QtWidgets.QVBoxLayout()
         self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
         
-        if self.computation_type() is not None:
-            self.plotWaterFlows()
-            self.plotHeatFluxes()
-            self.plotUmbrellas()
-            self.plotTemperatureMap()
-            self.plotTempbyDepth()
+        # if self.computation_type() is not None:
+        #     self.plotWaterFlows()
+        #     self.plotHeatFluxes()
+        #     self.plotUmbrellas()
+        #     self.plotTemperatureMap()
+        #     self.plotTempbyDepth()
             
-            #Les paramètres
-            self.setParamsModel()
-            self.plotHistos()  
-        else:
-            self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+        #     #Les paramètres
+        #     self.setParamsModel()
+        #     self.plotHistos()  
+        # else:
+        self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+        self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+        self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+        self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+        self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
         
 
     def setDataFrames(self, mode:str):
@@ -706,9 +700,9 @@ if __name__ == '__main__':
     sys.exit(app.exec_())
 """
  
-# p = Point()
-# s = Study()
-# app = QtWidgets.QApplication(sys.argv)
-# mainWin = WidgetPoint(p,s)
-# mainWin.show()
-# sys.exit(app.exec_())
+p = Point()
+s = Study()
+app = QtWidgets.QApplication(sys.argv)
+mainWin = WidgetPoint(p,s)
+mainWin.show()
+sys.exit(app.exec_())
