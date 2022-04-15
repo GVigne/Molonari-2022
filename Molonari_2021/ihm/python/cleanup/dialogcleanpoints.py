@@ -14,12 +14,13 @@ From_DialogCleanPoints = uic.loadUiType(os.path.join(os.path.dirname(__file__),"
 
 class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
-    def __init__(self, button, df_selected):
+    def __init__(self, button, df_selected,id):
+        self.id = id
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
         super(MplCanvasTimeScatter, self).__init__(self.fig)
         self.df_selected = df_selected
-        self.r = pd.DataFrame(columns=["date","value"])
+        self.r = pd.DataFrame(columns=["date",self.id])
         self.undo_list = [] 
         self.undoButton = button
 
@@ -35,7 +36,7 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         self.mask = np.zeros(len(x), dtype=bool)
         self.mask = self.inside(event1, event2)
 
-        data = pd.concat([self.x,self.y],axis=1,keys=["date","value"])
+        data = pd.concat([self.x,self.y],axis=1,keys=["date",self.id])
 
         self.rectangle = data[self.mask]
         self.out_rectangle = data[~self.mask]
@@ -45,8 +46,8 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         self.undo_list.append(self.rectangle.shape[0])
 
         self.clear()
-        self.refresh(self.out_rectangle["date"],self.out_rectangle["value"],'blue')
-        self.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+        self.refresh(self.out_rectangle["date"],self.out_rectangle[self.id],'blue')
+        self.refresh(self.df_selected["date"],self.df_selected[self.id],"red")
         self.create_selector()
         self.undoButton.setEnabled(True)  
 
@@ -65,9 +66,11 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
     def refresh(self, times: pd.Series, values: pd.Series, color):
         if color=="blue":
             p = 4
+            ms = 1
         else:
             p = 0
-        self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=p)
+            ms = 1
+        self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=p,markersize=ms)
         
         self.format_axes()
         self.fig.canvas.draw()
@@ -98,13 +101,13 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
             x = mdates.num2date(x)
             
-            self.r = pd.DataFrame([[x,y]],columns=["date","value"])
+            self.r = pd.DataFrame([[x,y]],columns=["date",self.id])
             self.df_selected = pd.concat([self.df_selected,self.r])
             self.undo_list.append(1)
 
             self.clear()
             self.refresh(datax,datay,'blue')
-            self.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+            self.refresh(self.df_selected["date"],self.df_selected[self.id],"red")
             self.create_selector()
             self.undoButton.setEnabled(True)  
             
@@ -137,15 +140,15 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
         self.clear()
         self.refresh(datax,datay,'blue')
-        self.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+        self.refresh(self.df_selected["date"],self.df_selected[self.id],"red")
         self.create_selector()
 
         return self.df_selected.shape[0]
     
     def reset(self, times: pd.Series, values: pd.Series, color):
 
-        self.df_selected = pd.DataFrame(columns=["date","value"]) 
-        self.r = pd.DataFrame(columns=["date","value"])
+        self.df_selected = pd.DataFrame(columns=["date",self.id]) 
+        self.r = pd.DataFrame(columns=["date",self.id])
         self.refresh(times, values, color)
         self.create_selector()
 
@@ -176,10 +179,9 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
         
     def plot(self,  varName, df : pd.DataFrame, df_selected : pd.DataFrame):
         self.id = varName
-        self.df_original = df.copy()
-        self.df_selected = df_selected.copy()
-
-        self.mplSelectCurve = MplCanvasTimeScatter(self.pushButtonUndo, df_selected)
+        self.df_original = df.copy().dropna()
+        self.df_selected = df_selected.copy()[["date",self.id]].dropna()
+        self.mplSelectCurve = MplCanvasTimeScatter(self.pushButtonUndo, self.df_selected, self.id)
         self.mplSelectCurve.clear()
         self.mplSelectCurve.refresh(self.df_original["date"], self.df_original[self.id],"blue")
         ## TODO Create function to execute if df_selected.shape[0] > 0 to update red and blue dots
@@ -191,7 +193,7 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
 
             mask = self.df_original.apply(lambda x: True if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else False,axis=1)
             
-            data = pd.concat([x,y],axis=1,keys=["date","value"])
+            data = pd.concat([x,y],axis=1,keys=["date",self.id])
  
             selected = data[mask]
             not_selected = data[~mask]
@@ -199,8 +201,8 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
             self.mplSelectCurve.undo_list.append(self.df_selected.shape[0])
 
             self.mplSelectCurve.clear()
-            self.mplSelectCurve.refresh(not_selected["date"],not_selected["value"],'blue')
-            self.mplSelectCurve.refresh(self.df_selected["date"],self.df_selected["value"],"red")
+            self.mplSelectCurve.refresh(not_selected["date"],not_selected[self.id],'blue')
+            self.mplSelectCurve.refresh(self.df_selected["date"],self.df_selected[self.id],"red")
             self.mplSelectCurve.undoButton.setEnabled(True)  
 
         self.mplSelectCurve.create_selector()

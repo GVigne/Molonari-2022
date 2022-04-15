@@ -51,7 +51,7 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         # self.fig.canvas.draw()
         
         suffix_cl = '_cleaned'
-        varCleaned = df_cleaned.dropna()[["date",id]]
+        varCleaned = df_cleaned[["date",id]].dropna()
         df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl)
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
 
@@ -65,9 +65,9 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         self.fig.canvas.draw()
 
     def refresh(self,df_cleaned,id):
-        df = df_cleaned.copy().dropna()
-        df['date'] = mdates.date2num(df['date'].copy())
-        df.plot(x='date',y=id,ax = self.axes)       
+        varCleaned = df_cleaned[["date",id]].dropna()
+        varCleaned['date'] = mdates.date2num(varCleaned['date'].copy())
+        varCleaned.plot(x='date',y=id,ax = self.axes)       
         self.format_axes()
         self.axes.set_ylabel(id)
         self.fig.canvas.draw()
@@ -81,64 +81,7 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
     def clear(self):
         self.fig.clf()
         self.axes = self.fig.add_subplot(111)
-
-
-
-class MplCanvasTimeScatter(FigureCanvasQTAgg):
-
-    def __init__(self):
-        self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
-        super(MplCanvasTimeScatter, self).__init__(self.fig)
-        
-
-    def refresh(self, times, values):
-        # TODO : Still string to date conversion needed!
-        self.axes.plot(mdates.date2num(times), values,'.',picker=5)
-        self.format_axes()
-        self.fig.canvas.draw()
-    
-    def click_connect(self):
-        def onpick(event):
-            ind = event.ind
-            datax,datay = event.artist.get_data()
-            datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
-            if len(ind) > 1:              
-                msx, msy = event.mouseevent.xdata, event.mouseevent.ydata
-                dist = np.sqrt((np.array(datax_)-msx)**2+(np.array(datay_)-msy)**2)
-                
-                ind = [ind[np.argmin(dist)]]
-                x = datax[ind]
-                y = datay[ind]
-            else:
-                x = datax_
-                y = datay_
-            print(datax[ind])
-            print(datay[ind])
-            datax = np.delete(datax,ind)
-            datay = np.delete(datay,ind)
-            datax = pd.Series(mdates.num2date(datax))
-            # event.artist.get_figure().clear()
-            # event.artist.get_figure().gca().plot(datax,datay,'.',picker=5)
-            self.clear()
-            self.refresh(datax,datay)
-            # self.format_axes()
-            # event.artist.get_figure().gca().plot(x,y,'.',color="red")  
-            # event.artist.get_figure().canvas.draw()
-
-        self.fig.canvas.mpl_connect("pick_event", onpick)
-
-    def clear(self):
-        self.fig.clf()
-        self.axes = self.fig.add_subplot(111)
-
-    def format_axes(self):
-        # Beautiful time axis
-        formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
-        self.axes.xaxis.set_major_formatter(formatter)
-        self.axes.xaxis.set_major_locator(MaxNLocator(4))
-
-        
+     
 class LoadingError(Exception):
     """
     Override Exception base class for particular case of a file loading error
@@ -674,32 +617,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         while selectDataQuery.next():
             print(selectDataQuery.value(1))
         selectDataQuery.finish()
-
-
-    def plotRawSQL(self):    
-        
-        # Load the table directly in a QSqlTableModel
-
-        model = QSqlTableModel(None, self.rawCon) # Without parent but with connection
-        model.setTable("Pressure") # Name of the table
-        model.select() # "Upload" the table
-        
-        while model.canFetchMore():
-            model.fetchMore()
-
-        if model.rowCount() <= 0:
-            return 
-        
-        times = [model.data(model.index(r,1)) for r in range(model.rowCount())]
-        values = [model.data(model.index(r,1+2)) for r in range(model.rowCount())]
-        
-        self.mplRawPressureCurve = MplCanvasTimeScatter()
-        self.mplRawPressureCurve.refresh(times, values)
-        self.mplRawPressureCurve.click_connect()
-
-        self.widgetRawData.addWidget(self.mplRawPressureCurve)
-
-                
+               
     def browseFileTemp(self):
         """
         Display an "Open file dialog" when the user click on the 'Browse' button then
@@ -815,11 +733,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.df_cleaned = self.iqr(self.df_cleaned,self.varName())
         else:
             pass
-        values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else x[self.varName()],axis=1)
-        self.df_cleaned.loc[:,self.varName()] = values
+        for i in list(self.df_loaded.columns)[1:]:
+            df_var = self.df_selected[["date",i]].dropna()
+            values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+            self.df_cleaned.loc[:,i] = values
 
         self.cleanedVars.append(self.varName())
-
         self.plotPrevisualizedVar()
 
     def getDF(self):
@@ -840,7 +759,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
         self.df_loaded = df_Pressure.join(df_ZH.set_index("date"), on="date")
         self.df_cleaned = self.df_loaded.copy().dropna()
-        self.df_selected = pd.DataFrame(columns=["date","value"])
+        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
         # self.df_loaded= df_Pressure.merge(df_ZH, on="date")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
@@ -849,20 +768,24 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         dig = DialogCleanPoints()
         dig.plot(self.varName(), self.df_loaded, self.df_selected)
         res = dig.exec()
-        if res == QtWidgets.QDialog.Accepted:
-            self.df_selected = dig.mplSelectCurve.df_selected
-        print(self.df_selected)
+        if res == QtWidgets.QDialog.Accepted:           
+            selection = dig.mplSelectCurve.df_selected[["date",self.varName()]]
+            self.df_selected = self.df_selected.merge(selection,on=["date"],how="outer",suffixes=(None,"_sel"))           
+            self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
+            self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
+            self.df_selected.dropna(how="all",subset=list(self.df_loaded.columns)[1:],inplace=True)
+            
         self.previsualizeCleaning()
 
     def resetCleanVar(self):
         self.cleanedVars.remove(self.varName())
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
-        self.df_selected = pd.DataFrame(columns=["date","value"])
+        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
         self.plotPrevisualizedVar()
 
     def resetCleanAll(self):
         self.cleanedVars = []
-        self.df_selected = pd.DataFrame(columns=["date","value"])
+        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
         self.df_cleaned = self.df_loaded.copy().dropna()
         self.plotPrevisualizedVar()
 
