@@ -31,11 +31,9 @@ class ThermometerDb():
         createQuery.finish()
         
     
-    def insert(self, study):
+    def insert(self, thermometers):
         self.con.transaction()
-        
-        thermometers = study.getThermometersDb()
-        
+                
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """

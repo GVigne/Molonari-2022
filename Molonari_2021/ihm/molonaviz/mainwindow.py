@@ -4,6 +4,7 @@ import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from queue import Queue
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+from dialogimportlabo import DialogImportLabo
 
 
 from study import Study
@@ -77,7 +78,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionRemove_Point.triggered.connect(self.removePoint)
         self.actionSwitch_To_Tabbed_View.triggered.connect(self.switchToTabbedView)
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
-        self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)
+        # self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)
+        self.actionImport_Labo.triggered.connect(self.importLabo)
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
@@ -303,15 +305,15 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         except Exception :
             raise LoadingError('SQL, study or labo')
         try :
-            self.mainDb.thermometerDb.insert(self.currentStudy)
+            self.mainDb.thermometerDb.insert(self.currentStudy.getThermometersDb())
         except Exception :
             raise LoadingError("SQL, thermometers")
         try :
-            self.mainDb.pressureSensorDb.insert(self.currentStudy)
+            self.mainDb.pressureSensorDb.insert(self.currentStudy.getPressureSensorsDb())
         except Exception :
             raise LoadingError("SQL, pressure sensors")
         try : 
-            self.mainDb.shaftDb.insert(self.currentStudy)
+            self.mainDb.shaftDb.insert(self.currentStudy.getShaftsDb())
         except Exception :
             raise LoadingError("SQL, shafts")
         try :
@@ -343,7 +345,15 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             pointname = dlg.getPointInfo()[0]
             print(f"Importing {pointname}")
             self.importingTimer.start(200)
-                
+            
+    def importLabo(self):
+        # assuming that we converted data in SQL before
+        dlg = DialogImportLabo(self.con)
+        dlg.setWindowModality(QtCore.Qt.ApplicationModal)
+        res = dlg.exec()
+        if res == QtWidgets.QDialog.Accepted:
+            self.currentDlg = dlg
+
     def importPoint(self):
         try :
             name, infofile, prawfile, trawfile, noticefile, configfile  = self.currentDlg.getPointInfo()

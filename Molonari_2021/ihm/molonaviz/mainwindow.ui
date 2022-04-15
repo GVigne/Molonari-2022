@@ -6,15 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1827</width>
-    <height>831</height>
+    <width>1019</width>
+    <height>901</height>
    </rect>
-  </property>
-  <property name="mouseTracking">
-   <bool>false</bool>
-  </property>
-  <property name="contextMenuPolicy">
-   <enum>Qt::CustomContextMenu</enum>
   </property>
   <property name="windowTitle">
    <string>MolonaViz</string>
@@ -25,8 +19,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1827</width>
-     <height>22</height>
+     <width>1019</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -56,7 +50,6 @@
     </property>
     <addaction name="actionSwitch_To_Tabbed_View"/>
     <addaction name="actionSwitch_To_SubWindow_View"/>
-    <addaction name="actionSwitch_To_Cascade_View"/>
     <addaction name="separator"/>
     <addaction name="actionData_Points"/>
     <addaction name="actionSensors"/>
@@ -89,9 +82,16 @@
      <string>Help</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuLabo">
+    <property name="title">
+     <string>Labo</string>
+    </property>
+    <addaction name="actionImport_Labo"/>
+   </widget>
    <addaction name="menuMolonaViz"/>
    <addaction name="menuStudy"/>
    <addaction name="menuPoint"/>
+   <addaction name="menuLabo"/>
    <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -110,9 +110,6 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTreeView" name="treeViewDataPoints">
-       <property name="contextMenuPolicy">
-        <enum>Qt::DefaultContextMenu</enum>
-       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -142,7 +139,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -300,16 +297,13 @@
    </property>
   </action>
   <action name="actionSwitch_To_Tabbed_View">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="text">
     <string>Switch To Tabbed View</string>
    </property>
   </action>
   <action name="actionSwitch_To_SubWindow_View">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Switch To SubWindow View</string>
@@ -373,9 +367,9 @@
     <string>Convert data in SQL</string>
    </property>
   </action>
-  <action name="actionSwitch_To_Cascade_View">
+  <action name="actionImport_Labo">
    <property name="text">
-    <string>Switch To Cascade View</string>
+    <string>Import Labo</string>
    </property>
   </action>
  </widget>
