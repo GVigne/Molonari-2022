@@ -16,8 +16,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
-from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel
-from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView
+from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel
+from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -354,22 +354,20 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.vboxwaterMCMC = QtWidgets.QVBoxLayout()
         self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
         
-        # if self.computation_type() is not None:
-        #     self.plotWaterFlows()
-        #     self.plotHeatFluxes()
-        #     self.plotUmbrellas()
-        #     self.plotTemperatureMap()
-        #     self.plotTempbyDepth()
+        if self.computation_type() is not None:
+            self.plotWaterFlows()
+            self.plotHeatFluxes()
+            self.plotTemperatureMap()
             
-        #     #Les paramètres
-        #     self.setParamsModel()
-        #     self.plotHistos()  
-        # else:
-        self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-        self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-        self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-        self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-        self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            #Les paramètres
+            self.setParamsModel()
+            self.plotHistos()  
+        else:
+            self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
         
 
     def setDataFrames(self, mode:str):
@@ -404,13 +402,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 f.close()
 
     def plotWaterFlows(self):
-        select_flows = self.build_result_queries(result_type="WaterFlux")
-        select_flows.exec()
-        #This is ugly, it should be changed!
-        flows_array = []
-        while select_flows.next():
-            flows_array.append([select_flows.value(0),select_flows.value(1)]) #Date, Flows
-        flows_array = np.array(flows_array)
+        select_flows = self.build_data_queries(field="Temp")
+        
+        
 
         self.graphwaterdirect = MplCanvas(flows_array, "water flow")
         self.toolbarwaterdirect = NavigationToolbar(self.graphwaterdirect, self)
@@ -420,18 +414,36 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def plotWaterFlowsDirect(self):
         return
 
-    def plotHeatFluxes(self):
-        pass
-
-    def plotUmbrellas(self):
-        pass
-
     def plotTemperatureMap(self):
-        pass
-    
-    def plotTempbyDepth(self):
-        pass
+        select_tempmap = self.build_result_queries(result_type="Temperature",option="2DMap")
+        self.tempmap_model = SolvedTemperatureModel([select_tempmap])
+        date = "" #TO DO
+        depth = ""#TO DO
+        self.umbrella_view = UmbrellaView(self.tempmap_model, date)
+        self.tempmap_view = TempMapView(self.tempmap_model)
+        self.depth_view = TempDepthView(self.tempmap_view,depth,title=f"Température à la profondeur {depth} m")
+        
+        self.toolbarUmbrella = NavigationToolbar(self.umbrella_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxUmbrella.setLayout(vbox)
+        vbox.addWidget(self.umbrella_view)
+        vbox.addWidget(self.toolbarUmbrella)
 
+        self.toolbarTempMap = NavigationToolbar(self.tempmap_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxTempMap.setLayout(vbox)
+        vbox.addWidget(self.tempmap_view)
+        vbox.addWidget(self.toolbarTempMap)
+
+        self.toolbarDepth = NavigationToolbar(self.depth_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxTempDepth.setLayout(vbox)
+        vbox.addWidget(self.tempmap_view)
+        vbox.addWidget(self.toolbarDepth)
+
+    
+
+    
     def setParamsModel(self):
         pass
     

@@ -71,3 +71,57 @@ class TemperatureDataModel(MoloModel):
     
     def get_dates(self):
         return self.array_data[:,0]
+
+class SolvedTemperatureModel(MoloModel):
+    """
+    A model to representing the temperature, depth and time. Can be used for umbrellas, temperature heat map or temperature per depth.
+    """
+    def __init__(self, queries):
+        super().__init__(queries)
+        self.array_data = []
+    
+    def test(self,input):
+        self.array_data = np.array(input)
+        nb_elems = self.array_data.shape[0]
+        x = len(self.depths) #One hundred cells
+        y = nb_elems//x
+        self.array_data = np.transpose(self.array_data.reshape(x,y))#Now this is the color map with y-axis being the depth and x-axis being the time
+    
+    def update_df(self):
+        self.dates = []
+        self.array_data = []
+        self.depths = []
+        while self.queries[0].next():
+            self.dates.append(self.queries[0].value(0))
+            self.array_data.append(np.float64(self.queries[0].value(1)))
+            self.depths.append(np.float64(self.queries[0].value(2)))
+        self.dates = np.array(self.dates)
+        self.array_data = np.array(self.array_data)
+        self.depths = np.array(self.depths)
+
+        nb_elems = self.array_data.shape[0]
+        x = len(self.depths) #One hundred cells
+        y = nb_elems//x
+        self.array_data = np.transpose(self.array_data.reshape(x,y))#Now this is the color map with y-axis being the depth and x-axis being the time
+    
+    def get_temperatures_cmap(self):
+        return self.array_data
+    
+    def get_depths(self):
+        return self.depths
+    
+    def get_dates(self):
+        return self.dates
+    
+    def get_depth_by_temp(self,date):
+        """
+        Return two lists: the depths and temperature for given date. The date must be in the database format (YYYY:mm:dd:hh:mm:ss)
+        """
+        return self.array_data[:,np.where(self.dates==date)[0][0]],self.depths
+    
+    def get_temp_by_date(self,depth):
+        """
+        Return two lists: the temperatures and dates for a given depth.
+        """
+        return self.dates,self.array_data[np.where(self.depths == depth)[0][0],:]
+    
