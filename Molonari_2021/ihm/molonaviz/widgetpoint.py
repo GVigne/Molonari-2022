@@ -16,8 +16,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
-from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel
-from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView
+from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel,HeatFluxesModel
+from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView,ConductiveFlowView,TotalFlowView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -355,12 +355,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
         
         if self.computation_type() is not None:
-            self.plotWaterFlows()
-            self.plotHeatFluxes()
+            self.plotFluxes()
             self.plotTemperatureMap()
             
             #Les paramètres
-            self.setParamsModel()
+            # self.setParamsModel()
             self.plotHistos()  
         else:
             self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
@@ -421,7 +420,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         depth = ""#TO DO
         self.umbrella_view = UmbrellaView(self.tempmap_model, date)
         self.tempmap_view = TempMapView(self.tempmap_model)
-        self.depth_view = TempDepthView(self.tempmap_view,depth,title=f"Température à la profondeur {depth} m")
+        self.depth_view = TempDepthView(self.tempmap_model,depth,title=f"Température à la profondeur {depth} m")
         
         self.toolbarUmbrella = NavigationToolbar(self.umbrella_view, self)
         vbox = QtWidgets.QVBoxLayout()
@@ -441,7 +440,31 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.tempmap_view)
         vbox.addWidget(self.toolbarDepth)
 
-    
+    def plotFluxes(self):
+        #Plot the heat fluxes
+        select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") 
+        self.fluxes_model = HeatFluxesModel([select_heatfluxes])
+        self.advective_view = AdvectiveFlowView(self.fluxes_model)
+        self.conductive_view = ConductiveFlowView(self.fluxes_model)
+        self.totalflux_view = TotalFlowView(self.fluxes_model)
+
+        self.toolbarAdvective = NavigationToolbar(self.advective_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxAdvectiveFlux.setLayout(vbox)
+        vbox.addWidget(self.advective_view)
+        vbox.addWidget(self.toolbarAdvective)
+
+        self.toolbarConductive = NavigationToolbar(self.conductive_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxConductiveFlux.setLayout(vbox)
+        vbox.addWidget(self.conductive_view)
+        vbox.addWidget(self.toolbarConductive)
+
+        self.toolbarTotalFlux = NavigationToolbar(self.totalflux_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxTotalFlux.setLayout(vbox)
+        vbox.addWidget(self.totalflux_view)
+        vbox.addWidget(self.toolbarTotalFlux)
 
     
     def setParamsModel(self):
@@ -582,8 +605,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         This function was made so that all SQL queries are in the same place and not scattered throughout the code.
         """
-        
-        if self.currentdata == "raw":
+        computation_type = self.computation_type()
+        if computation_type is None:
+            return None
+        elif not computation_type:
+            #Raw data
             if full_query:
                 return QSqlQuery(f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Pressure
                             FROM RawMeasuresTemp, RawMeasuresPress
@@ -603,7 +629,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                         WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                         """
                 )
-        elif self.currentdata == "processed":
+        else:
             #Display cleaned measures
             if full_query:
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
@@ -669,16 +695,18 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 """
             )
         elif result_type =="2DMap":
-            field_name = ""
-            if option=="Advectif":
-                field_name = "AdvectiveFlow"
-            elif option=="Conductif":
-                field_name = "ConductiveFlow"
-            elif option=="Total":
-                field_name = "TotalFlow"
-            elif option=="Temperature":
-                field_name= "Temperature"
-            return QSqlQuery(f"""SELECT Date.Date, TemperatureAndHeatFlows.{field_name}, TemperatureAndHeatFlows.Depth FROM TemperatureAndHeatFlows
+            if option=="Temperature":
+                return QSqlQuery(f"""SELECT Date.Date, TemperatureAndHeatFlows.Temperature, TemperatureAndHeatFlows.Depth FROM TemperatureAndHeatFlows
+            JOIN Date
+            ON TemperatureAndHeatFlows.Date = Date.id
+            JOIN Depth
+            ON TemperatureAndHeatFlows.Depth = Depth.id
+                WHERE TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+                AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+                    """
+            )
+            elif option=="HeatFlows":
+                return QSqlQuery(f"""SELECT Date.Date, TemperatureAndHeatFlows.AdvectiveFlow,TemperatureAndHeatFlows.ConductiveFlow,TemperatureAndHeatFlows.TotalFlow, TemperatureAndHeatFlows.Depth FROM TemperatureAndHeatFlows
             JOIN Date
             ON TemperatureAndHeatFlows.Date = Date.id
             JOIN Depth
@@ -713,9 +741,9 @@ if __name__ == '__main__':
     sys.exit(app.exec_())
 """
  
-p = Point()
-s = Study()
-app = QtWidgets.QApplication(sys.argv)
-mainWin = WidgetPoint(p,s)
-mainWin.show()
-sys.exit(app.exec_())
+# p = Point()
+# s = Study()
+# app = QtWidgets.QApplication(sys.argv)
+# mainWin = WidgetPoint(p,s)
+# mainWin.show()
+# sys.exit(app.exec_())

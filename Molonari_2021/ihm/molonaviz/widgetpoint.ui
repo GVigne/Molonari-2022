@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1091</width>
+    <width>1093</width>
     <height>861</height>
    </rect>
   </property>
@@ -86,7 +86,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>6</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="tabInfos">
       <attribute name="title">
@@ -148,7 +148,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1023</width>
+                 <width>1025</width>
                  <height>469</height>
                 </rect>
                </property>
@@ -206,7 +206,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1049</width>
+             <width>1051</width>
              <height>284</height>
             </rect>
            </property>
@@ -273,7 +273,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
+            <width>1051</width>
             <height>759</height>
            </rect>
           </property>
@@ -335,7 +335,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
+            <width>1051</width>
             <height>759</height>
            </rect>
           </property>
@@ -399,7 +399,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
+            <width>1051</width>
             <height>759</height>
            </rect>
           </property>
@@ -510,100 +510,149 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabTemperature">
+     <widget class="QWidget" name="tabFluxes">
       <attribute name="title">
-       <string>Temperature</string>
+       <string>Fluxes</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QGroupBox" name="groupBoxFriseTempDirect_2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+      <layout class="QVBoxLayout" name="verticalLayout_22">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_11">
+         <property name="widgetResizable">
+          <bool>true</bool>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>15</pointsize>
-          </font>
-         </property>
-         <property name="title">
-          <string>Temperatures computed with given parameters</string>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <layout class="QVBoxLayout" name="vboxfrisetempdirect_2"/>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="vboxsolvedtempdirect_2"/>
-          </item>
-         </layout>
+         <widget class="QWidget" name="scrollAreaWidgetContents_16">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1051</width>
+            <height>248</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_20">
+           <item>
+            <widget class="QScrollArea" name="scrollArea_13">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetContents_17">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>1031</width>
+                <height>228</height>
+               </rect>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_18">
+               <item>
+                <widget class="QGroupBox" name="groupBox_8">
+                 <property name="title">
+                  <string/>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_19"/>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="groupBoxAdvectiveFlux">
+                 <property name="contextMenuPolicy">
+                  <enum>Qt::DefaultContextMenu</enum>
+                 </property>
+                 <property name="title">
+                  <string/>
+                 </property>
+                 <property name="flat">
+                  <bool>false</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_20"/>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QGroupBox" name="groupBoxFriseTempDirect_3">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>15</pointsize>
-          </font>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>246</height>
+          </size>
          </property>
-         <property name="title">
-          <string>Temperatures computed with given parameters</string>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QScrollArea" name="scrollArea_14">
+         <property name="widgetResizable">
+          <bool>true</bool>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_8">
-          <item>
-           <layout class="QVBoxLayout" name="vboxfrisetempdirect_3"/>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Minimum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="vboxsolvedtempdirect_3"/>
-          </item>
-         </layout>
+         <widget class="QWidget" name="scrollAreaWidgetContents_18">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1051</width>
+            <height>248</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_21">
+           <item>
+            <widget class="QScrollArea" name="scrollArea_15">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetContents_19">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>1031</width>
+                <height>228</height>
+               </rect>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_21">
+               <item>
+                <widget class="QGroupBox" name="groupBoxTotalFlux">
+                 <property name="title">
+                  <string/>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_22"/>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="groupBoxConductiveFlux">
+                 <property name="contextMenuPolicy">
+                  <enum>Qt::DefaultContextMenu</enum>
+                 </property>
+                 <property name="title">
+                  <string/>
+                 </property>
+                 <property name="flat">
+                  <bool>false</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_23"/>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_test">
+     <widget class="QWidget" name="tabTemperature">
       <attribute name="title">
-       <string>test</string>
+       <string>Temperature</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_18">
        <item>
@@ -616,8 +665,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
-            <height>248</height>
+            <width>1051</width>
+            <height>250</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -631,8 +680,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>1029</width>
-                <height>228</height>
+                <width>1031</width>
+                <height>230</height>
                </rect>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -671,6 +720,9 @@
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Minimum</enum>
+         </property>
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
@@ -689,8 +741,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
-            <height>248</height>
+            <width>1051</width>
+            <height>249</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -704,8 +756,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>1029</width>
-                <height>228</height>
+                <width>1031</width>
+                <height>229</height>
                </rect>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_10">
@@ -750,7 +802,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
+            <width>1051</width>
             <height>759</height>
            </rect>
           </property>
@@ -890,7 +942,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1049</width>
+            <width>1051</width>
             <height>691</height>
            </rect>
           </property>

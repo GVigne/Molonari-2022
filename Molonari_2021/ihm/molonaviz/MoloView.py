@@ -201,3 +201,39 @@ class TempMapView(MoloView2D):
         self.cmap = self.model.get_temperatures_cmap()
         self.x = self.model.get_depths()
         self.y = self.model.get_dates()
+
+class AdvectiveFlowView(MoloView2D):
+    """
+    Concrete class for the advective flow map.
+    """
+    def __init__(self, molomodel: MoloModel, time_dependent=True, title="Flux advectif (W/m²)", xlabel="", ylabel="Profondeur en m"):
+        super().__init__(molomodel, time_dependent, title, xlabel, ylabel)
+    
+    def retrieve_data(self):
+        self.cmap = self.model.get_advective_flow()
+        self.x = self.model.get_depths()
+        self.y = self.model.get_dates()
+
+class ConductiveFlowView(MoloView2D):
+    """
+    Concrete class for the conductive flow map.
+    """
+    def __init__(self, molomodel: MoloModel, time_dependent=True, title="Flux convectif (W/m²)", xlabel="", ylabel="Profondeur en m"):
+        super().__init__(molomodel, time_dependent, title, xlabel, ylabel)
+    
+    def retrieve_data(self):
+        self.cmap = self.model.get_conductive_flow()
+        self.x = self.model.get_depths()
+        self.y = self.model.get_dates()
+
+class TotalFlowView(MoloView2D):
+    """
+    Concrete class for the total heat flow map.
+    """
+    def __init__(self, molomodel: MoloModel, time_dependent=True, title="Flux d'énergie total (W/m²)", xlabel="", ylabel="Profondeur en m"):
+        super().__init__(molomodel, time_dependent, title, xlabel, ylabel)
+    
+    def retrieve_data(self):
+        self.cmap = self.model.get_total_flow()
+        self.x = self.model.get_depths()
+        self.y = self.model.get_dates()
