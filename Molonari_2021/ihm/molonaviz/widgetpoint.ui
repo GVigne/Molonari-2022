@@ -546,7 +546,7 @@
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_18">
                <item>
-                <widget class="QGroupBox" name="groupBox_8">
+                <widget class="QGroupBox" name="groupBoxWaterFlux">
                  <property name="title">
                   <string/>
                  </property>

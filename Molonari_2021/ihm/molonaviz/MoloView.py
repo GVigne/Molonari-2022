@@ -190,6 +190,17 @@ class TempDepthView(MoloView1D):
         self.x,self.y = self.model.get_temp_by_date(self.depth)
         self.y = {f"Température à la profondeur {self.depth}":self.y}
 
+class WaterFluxView(MoloView1D):
+    """
+    Concrete class for the water flux as a function of time.
+    """
+    def __init__(self, molomodel: MoloModel, time_dependent=True, title="", ylabel="Débit d'eau en m/s", xlabel=""):
+        super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
+    
+    def retrieve_data(self):
+       self.x = self.model.get_dates()
+       self.x = {"": self.model.get_water_flow()}
+
 class TempMapView(MoloView2D):
     """
     Concrete class for the heat map.

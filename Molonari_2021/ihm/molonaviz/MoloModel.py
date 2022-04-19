@@ -72,6 +72,25 @@ class TemperatureDataModel(MoloModel):
     def get_dates(self):
         return self.array_data[:,0]
 
+class WaterFluxModel(MoloModel):
+    """
+    A model to display the water fluxes.
+    """
+    def __init__(self, queries):
+        super().__init__(queries)
+        self.array_data = []
+    
+    def update_df(self):
+        while self.queries[0].next():
+            self.array_data.append([self.queries[0].value(0),self.queries[0].value(1),self.queries[0].value(2)]) #Date, Flow
+        self.array_data = np.array(self.array_data)
+    
+    def get_water_flow(self):
+        return self.array_data[:, 1]
+    
+    def get_dates(self):
+        return self.array_data[:,0]
+
 class SolvedTemperatureModel(MoloModel):
     """
     A model to representing the temperature, depth and time. Can be used for umbrellas, temperature heat map or temperature per depth.

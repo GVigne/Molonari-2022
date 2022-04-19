@@ -16,8 +16,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
-from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel,HeatFluxesModel
-from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView,ConductiveFlowView,TotalFlowView
+from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel
+from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -465,6 +465,17 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.groupBoxTotalFlux.setLayout(vbox)
         vbox.addWidget(self.totalflux_view)
         vbox.addWidget(self.toolbarTotalFlux)
+
+        #Plot the water fluxes
+        select_waterflux= self.build_result_queries(result_type="WaterFlux") 
+        self.waterflux_model = WaterFluxModel([select_waterflux])
+        self.waterflux_view = WaterFluxView(self.waterflux_model)
+        
+        self.toolbarWaterFlux = NavigationToolbar(self.waterflux_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxWaterFlux.setLayout(vbox)
+        vbox.addWidget(self.waterflux_view)
+        vbox.addWidget(self.toolbarWaterFlux)
 
     
     def setParamsModel(self):
