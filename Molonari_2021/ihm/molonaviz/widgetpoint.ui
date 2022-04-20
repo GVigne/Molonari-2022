@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1093</width>
-    <height>861</height>
+    <height>755</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -81,12 +81,28 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QTableView" name="tableViewBestParams">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>60</height>
+        </size>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>5</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tabInfos">
       <attribute name="title">
@@ -149,7 +165,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>1025</width>
-                 <height>469</height>
+                 <height>328</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -207,7 +223,7 @@
              <x>0</x>
              <y>0</y>
              <width>1051</width>
-             <height>284</height>
+             <height>228</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -258,258 +274,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabWater">
-      <attribute name="title">
-       <string>Water Flux</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <widget class="QScrollArea" name="scrollArea_2">
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_3">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1051</width>
-            <height>759</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_9">
-           <item>
-            <widget class="QGroupBox" name="groupBoxWaterDirect">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Water Flows computed with given parameters</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBoxWaterMCMC">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Water Flows computed with MCMC</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabHeat">
-      <attribute name="title">
-       <string>Heat Fluxes</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_12">
-       <item>
-        <widget class="QScrollArea" name="scrollArea_4">
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_5">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1051</width>
-            <height>759</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_11">
-           <item>
-            <widget class="QGroupBox" name="groupBoxFluxesDirect">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Solved heat fluxes computed with given parameters</string>
-             </property>
-             <layout class="QVBoxLayout" name="vboxfluxesdirect"/>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBoxFluxesMCMC">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Solved heat fluxes computed with MCMC</string>
-             </property>
-             <layout class="QVBoxLayout" name="vboxfluxesMCMC"/>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabSolvedTemp">
-      <attribute name="title">
-       <string>Solved Temperatures</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_6">
-       <item>
-        <widget class="QScrollArea" name="scrollArea_3">
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_4">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1051</width>
-            <height>759</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_10">
-           <item>
-            <widget class="QGroupBox" name="groupBoxFriseTempDirect">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Temperatures computed with given parameters</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <item>
-               <layout class="QVBoxLayout" name="vboxfrisetempdirect"/>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Minimum</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="vboxsolvedtempdirect"/>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Minimum</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBoxFriseTempMCMC">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Temperatures computed with MCMC</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
-              <item>
-               <layout class="QVBoxLayout" name="vboxfrisetempMCMC"/>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_3">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Minimum</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="vboxsolvedtempMCMC"/>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="tabFluxes">
       <attribute name="title">
        <string>Fluxes</string>
@@ -526,7 +290,7 @@
             <x>0</x>
             <y>0</y>
             <width>1051</width>
-            <height>248</height>
+            <height>196</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_20">
@@ -541,7 +305,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>1031</width>
-                <height>228</height>
+                <height>176</height>
                </rect>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_18">
@@ -550,7 +314,6 @@
                  <property name="title">
                   <string/>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_19"/>
                 </widget>
                </item>
                <item>
@@ -564,7 +327,6 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_20"/>
                 </widget>
                </item>
               </layout>
@@ -583,7 +345,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>246</height>
+           <height>212</height>
           </size>
          </property>
         </spacer>
@@ -599,7 +361,7 @@
             <x>0</x>
             <y>0</y>
             <width>1051</width>
-            <height>248</height>
+            <height>196</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -614,7 +376,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>1031</width>
-                <height>228</height>
+                <height>176</height>
                </rect>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_21">
@@ -623,7 +385,6 @@
                  <property name="title">
                   <string/>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_22"/>
                 </widget>
                </item>
                <item>
@@ -637,7 +398,6 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_23"/>
                 </widget>
                </item>
               </layout>
@@ -666,7 +426,7 @@
             <x>0</x>
             <y>0</y>
             <width>1051</width>
-            <height>250</height>
+            <height>179</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -681,7 +441,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>1031</width>
-                <height>230</height>
+                <height>159</height>
                </rect>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -690,7 +450,6 @@
                  <property name="title">
                   <string/>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_11"/>
                 </widget>
                </item>
                <item>
@@ -704,7 +463,6 @@
                  <property name="flat">
                   <bool>false</bool>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_12"/>
                 </widget>
                </item>
               </layout>
@@ -742,7 +500,7 @@
             <x>0</x>
             <y>0</y>
             <width>1051</width>
-            <height>249</height>
+            <height>179</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -757,7 +515,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>1031</width>
-                <height>229</height>
+                <height>159</height>
                </rect>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_10">
@@ -766,7 +524,6 @@
                  <property name="title">
                   <string/>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_13"/>
                 </widget>
                </item>
                <item>
@@ -774,75 +531,10 @@
                  <property name="title">
                   <string/>
                  </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_14"/>
                 </widget>
                </item>
               </layout>
              </widget>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabSolvedInterfaceTemp">
-      <attribute name="title">
-       <string>Solved Temperature by Depth</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_14">
-       <item>
-        <widget class="QScrollArea" name="scrollArea_6">
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents_8">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1051</width>
-            <height>759</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_15">
-           <item>
-            <widget class="QGroupBox" name="groupBoxInterfaceTempDirect">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Interface temperature computed with given parameters</string>
-             </property>
-             <layout class="QVBoxLayout" name="vboxintertempdirect"/>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="groupBoxInterfaceTempMCMC">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-              </font>
-             </property>
-             <property name="title">
-              <string>Interface temperature computed with MCMC</string>
-             </property>
-             <layout class="QVBoxLayout" name="vboxintertempMCMC"/>
             </widget>
            </item>
           </layout>
@@ -862,22 +554,6 @@
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>Best Parameters (rounded)  :</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QTableView" name="tableViewBestParams">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>60</height>
-            </size>
            </property>
           </widget>
          </item>
@@ -943,7 +619,7 @@
             <x>0</x>
             <y>0</y>
             <width>1051</width>
-            <height>691</height>
+            <height>585</height>
            </rect>
           </property>
           <property name="sizePolicy">

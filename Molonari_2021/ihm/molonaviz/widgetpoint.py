@@ -341,22 +341,34 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         Display the results in the corresponding tabs.
         """
-        self.vboxwaterdirect = QtWidgets.QVBoxLayout()
-        self.groupBoxWaterDirect.setLayout(self.vboxwaterdirect)
-        self.vboxwaterMCMC = QtWidgets.QVBoxLayout()
-        self.groupBoxWaterMCMC.setLayout(self.vboxwaterMCMC)
-        
-        if self.computation_type() is not None:
+        if False: #self.computation_type() is not None:
             self.plotFluxes()
             self.plotTemperatureMap()
             self.setParamsModel()
             self.plotHistos()  
         else:
-            self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxfluxesdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-            self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
+            # vbox = QtWidgets.QVBoxLayout()
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxWaterFlux.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxAdvectiveFlux.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxTotalFlux.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxConductiveFlux.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxTempMap.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxUmbrella.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxTempDepth.setLayout(vbox)
 
     def plotTemperatureMap(self):
         select_tempmap = self.build_result_queries(result_type="Temperature",option="2DMap")
