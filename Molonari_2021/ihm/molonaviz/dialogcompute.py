@@ -53,7 +53,31 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.pushButtonUpdate.setToolTip("Click to update the table after having decided the number of layers")
         self.pushButtonRun.setToolTip("Run MCMC if 'Execute inversion before' is checked, otherwise run Direct Model")
         self.buttonBox.setToolTip("Close the window")
+        
+        item0 = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(0, item0)
+        item0.setText('Depth_bottom (cm)')
+        item0.setToolTip('Depth of each layer. By default, it shows the distance between river bed and the middle of each layer')
+        
+        item1 = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(1, item1)
+        item1.setText('Permeability (m/s)')
+        item1.setToolTip('Measure that represents the ability of water to move through a rock')
+        
+        item2 = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(2, item2)
+        item2.setText('Porosity')
+        item2.setToolTip('Percentage of void space in a rock')
 
+        item3 = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(3, item3)
+        item3.setText('SediThermCon (W/m/K)')
+        item3.setToolTip('A key factor in basin modelling')
+        
+        item4 = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(4, item4)
+        item4.setText('SolVolThermCap (J/m^3/K)')
+        item4.setToolTip('Solid Volumetric Thermal Capacity: heat capacity of a sample of the substance divided by the volume of the sample')
         
     # Set the default table
     def showdb(self): 
