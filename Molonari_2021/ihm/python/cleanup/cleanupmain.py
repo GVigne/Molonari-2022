@@ -242,7 +242,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.buttonGroupMethod.setId(self.radioButtonNone,3)
         
         self.buttonGroupMethod.buttonClicked.connect(self.selectMethod)
-
+        self.radioButtonNone.setChecked(True)
 
         self.checkBoxChanges.setChecked(True)
         # Remove existing SQL database file (if so)
@@ -265,11 +265,14 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # Create data models and associate to corresponding viewers
 
         self.getDF()
-        self.comboBoxRawVar.addItems(list(self.df_loaded.columns)[1:])
+        self.varList = list(self.df_loaded.columns)
+        self.comboBoxRawVar.addItems(self.varList[1:])
         self.varName = self.comboBoxRawVar.currentText
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         self.cleanedVars = []
+
+        self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
 
         self.plotPrevisualizedVar()
 
@@ -700,7 +703,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         return df_out
 
     def plotPrevisualizedVar(self):
-        # self.idk()
+        self.method_dic[self.varName()].setChecked(True)
         "Refresh plot"
         if self.varName() in self.cleanedVars:
             self.pushButtonPrevisualize.setEnabled(False)
@@ -796,30 +799,39 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     # Define the selectMethod function and edit thhe sample_text.txt
     def selectMethod(self,object):
         id = self.buttonGroupMethod.id(object)
-        print("Key was pressed, id is:", id)
-        listVariables = list(self.df_loaded.columns)
-        varIndex = listVariables.index(self.varName())
+        varIndex = self.varList.index(self.varName())
         methodsLine = 9-1
+        self.method_dic[self.varName()] = self.buttonGroupMethod.button(id)
 
-
-        with open('sample_text.txt', 'r') as file:
-            # read a list of lines into data
-            data = file.readlines()
-            file.close()
+        try: 
+            with open('saved_text.txt', 'r') as file:
+                # read a list of lines into data
+                data = file.readlines()
+                file.close()
+        except FileNotFoundError:
+            with open('sample_text.txt', 'r') as file:
+                # read a list of lines into data
+                data = file.readlines()
+                file.close()
 
         # now change the n-th line
-        data[methodsLine+varIndex*2] = f'self.remove_outlier_z(self.df_cleaned,{self.varName()})\n'
+        if id == 1:
+            method = "remove_outlier_z"
+        elif id == 2:
+            method = "iqr"
+        else:
+            method = None
+        
+        if method:
+            data[methodsLine+varIndex*2] = f'self.df_cleaned = self.{method}(self.df_cleaned,{self.varName()})\n'
+        else:
+            data[methodsLine+varIndex*2] = "\n"
 
-        # and write everything back
+        # write everything back
         with open('saved_text.txt', 'w') as file:
             file.writelines( data )
             file.close()
-        # if self.radioButtonZScore.isChecked():
-        #     self.df_cleaned = self.remove_outlier_z(self.df_cleaned,self.varName())
-        # elif self.radioButtonIQR.isChecked():
-        #     self.df_cleaned = self.iqr(self.df_cleaned,self.varName())
-        # else:
-        #     pass
+        self.previsualizeCleaning()
 
 
     def previsualizeCleaning(self):
@@ -871,15 +883,19 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.previsualizeCleaning()
 
     def resetCleanVar(self):
-        self.cleanedVars.remove(self.varName())
+        # self.cleanedVars.remove(self.varName())
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
-        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
-        self.plotPrevisualizedVar()
+        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns)) # TODO it should reset just the selected variable, not the whole DF
+        obj = self.buttonGroupMethod.button(3)
+        self.selectMethod(obj)
+        # self.plotPrevisualizedVar()
 
     def resetCleanAll(self):
         self.cleanedVars = []
         self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
         self.df_cleaned = self.df_loaded.copy().dropna()
+        self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
+        os.remove("saved_text.txt")
         self.plotPrevisualizedVar()
     
     
@@ -897,5 +913,8 @@ if __name__ == '__main__':
     mainWin = TemperatureViewer()
     mainWin.show()
 
-    sys.exit(app.exec_())
-    
+    app.exec_()
+    try:
+        os.remove("saved_text.txt")
+    except FileNotFoundError:
+        pass
