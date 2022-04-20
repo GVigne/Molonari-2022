@@ -19,6 +19,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
 
 from dialogcleanpoints import DialogCleanPoints
+from dialogscript import DialogScript
 
 # Load "UI" (user interface) XML file produced by QtDesigner
 # and construct an object which inherits from the global parent class (PyQt5.QtWidgets.QDialog)
@@ -229,21 +230,18 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
         self.pushButtonPrevisualize.clicked.connect(self.previsualizeCleaning)
         self.pushButtonSelectPoints.clicked.connect(self.selectPoints)
+        self.pushButtonEditCode.clicked.connect(self.editScript)
 
         self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
         self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
         self.pushButtonResetAll.clicked.connect(self.resetCleanAll)
-
-        # Define the slot function and print the received parameters
-        def slot(object):
-            print("Key was pressed, id is:", self.buttonGroupMethod.id(object))
 
         # connects the slot function and makes the argument of the band int type
         self.buttonGroupMethod.setId(self.radioButtonZScore,1)
         self.buttonGroupMethod.setId(self.radioButtonIQR,2)
         self.buttonGroupMethod.setId(self.radioButtonNone,3)
         
-        self.buttonGroupMethod.buttonClicked.connect(slot)
+        self.buttonGroupMethod.buttonClicked.connect(self.selectMethod)
 
 
         self.checkBoxChanges.setChecked(True)
@@ -702,7 +700,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         return df_out
 
     def plotPrevisualizedVar(self):
-        self.nosecomollamar()
+        # self.idk()
         "Refresh plot"
         if self.varName() in self.cleanedVars:
             self.pushButtonPrevisualize.setEnabled(False)
@@ -725,11 +723,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             print("Entered exception")
             pass
             
-    def getScript(self):
-        # scriptpartiel = self.plainTextEdit.toPlainText()
-        # scriptindente = scriptpartiel.replace("\n", "\n   ")
-        scriptpartiel = "self.test_function()"
-        scriptindente = "self.test_function()"
+    def getScript(self, plainTextEdit):
+        scriptpartiel = plainTextEdit.toPlainText()
+        scriptindente = scriptpartiel.replace("\n", "\n   ")
+        # scriptpartiel = "self.test_function()"
+        # scriptindente = "self.test_function()"
         script = "def fonction(self, dft, dfp): \n   " + scriptindente + "\n" + "   return(dft, dfp)"
         return(script, scriptpartiel)
 
@@ -768,10 +766,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         except Exception as e :
             raise e
         
-    def nosecomollamar(self):
-        script,scriptpartiel = self.getScript()
+    def idk(self,plainTextEdit):
+        script,scriptpartiel = self.getScript(plainTextEdit)
         print("Cleaning data...")
-
+        
         try :
             dftemp, dfpress = self.cleanup(script, 3, 7)
             print(dftemp)
@@ -789,14 +787,43 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
             # self.cleanup()
 
+    def editScript(self):
+        dig = DialogScript()
+        res = dig.exec()
+        if res == QtWidgets.QDialog.Accepted:
+            self.idk(dig.plainTextEdit)
+    
+    # Define the selectMethod function and edit thhe sample_text.txt
+    def selectMethod(self,object):
+        id = self.buttonGroupMethod.id(object)
+        print("Key was pressed, id is:", id)
+        listVariables = list(self.df_loaded.columns)
+        varIndex = listVariables.index(self.varName())
+        methodsLine = 9-1
+
+
+        with open('sample_text.txt', 'r') as file:
+            # read a list of lines into data
+            data = file.readlines()
+            file.close()
+
+        # now change the n-th line
+        data[methodsLine+varIndex*2] = f'self.remove_outlier_z(self.df_cleaned,{self.varName()})\n'
+
+        # and write everything back
+        with open('saved_text.txt', 'w') as file:
+            file.writelines( data )
+            file.close()
+        # if self.radioButtonZScore.isChecked():
+        #     self.df_cleaned = self.remove_outlier_z(self.df_cleaned,self.varName())
+        # elif self.radioButtonIQR.isChecked():
+        #     self.df_cleaned = self.iqr(self.df_cleaned,self.varName())
+        # else:
+        #     pass
+
+
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        if self.radioButtonZScore.isChecked():
-            self.df_cleaned = self.remove_outlier_z(self.df_cleaned,self.varName())
-        elif self.radioButtonIQR.isChecked():
-            self.df_cleaned = self.iqr(self.df_cleaned,self.varName())
-        else:
-            pass
         for i in list(self.df_loaded.columns)[1:]:
             df_var = self.df_selected[["date",i]].dropna()
             values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
@@ -854,6 +881,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
         self.df_cleaned = self.df_loaded.copy().dropna()
         self.plotPrevisualizedVar()
+    
+    
 
 
 if __name__ == '__main__':
