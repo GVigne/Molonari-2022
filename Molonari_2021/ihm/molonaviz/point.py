@@ -181,11 +181,16 @@ class Point(object):
         with open(scriptDir, "w") as f:
             f.write(script)
             f.close()
-
-        from script import fonction
-
-        os.remove(scriptDir)
-        del sys.modules["script"]
+        
+        # There are different error in the script, sometimes it will cause the import step to fail, in this case we still have to remove the scripy.py file.
+        try:
+            from script import fonction
+        except Exception as e:
+            # print("Failed to import the script.py")
+            raise e
+        finally:
+            os.remove(scriptDir)
+            del sys.modules["script"]
 
         try :
             new_dft, new_dfp = fonction(dft, dfp)
@@ -204,7 +209,13 @@ class Point(object):
             return(new_dft, new_dfp)
         
         except Exception as e :
+            # print("Failed to execute the script.py")
             raise e
+
+        
+              
+        
+  
     
     def reset(self):
         resultsDir = self.pointDir + "/results"
