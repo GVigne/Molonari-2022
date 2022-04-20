@@ -1,11 +1,10 @@
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 import os
 
-from .bestParametersDb import BestParametersDb
+from .lastParametersDb import LastParametersDb
 from .cleanedMeasuresDb import CleanedMeasuresDb
 from .dateDb import DateDb
 from .depthDb import DepthDb
-from .directParametersDb import DirectParametersDb
 from .laboDb import LaboDb
 from .layerDb import LayerDb
 from .parametersDistributionDb import ParametersDistributionDb
@@ -28,11 +27,10 @@ class MainDb():
         self.con = con
         
         
-        self.bestParametersDb = BestParametersDb(self.con)
+        self.lastParametersDb = LastParametersDb(self.con)
         self.cleanedMeasuresDb = CleanedMeasuresDb(self.con)
         self.dateDb = DateDb(self.con)
         self.depthDb = DepthDb(self.con)
-        self.directParametersDb = DirectParametersDb(self.con)
         self.laboDb = LaboDb(self.con)
         self.layerDb = LayerDb(self.con)
         self.parametersDistribution = ParametersDistributionDb(self.con)
@@ -64,9 +62,8 @@ class MainDb():
         self.dateDb.create()
         self.quantileDb.create()
         self.layerDb.create()
-        self.bestParametersDb.create()
+        self.lastParametersDb.create()
         self.depthDb.create()
-        self.directParametersDb.create()
         self.parametersDistribution.create()
         self.temperatureAndHeatFlowsDb.create()
         self.waterFlowDb.create()
