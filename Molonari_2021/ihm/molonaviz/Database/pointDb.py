@@ -36,5 +36,31 @@ class PointDb():
         
     
     def insert(self):
-        pass
+        insertQuery = QSqlQuery(self.con)
+        
+        insertQuery.prepare(
+            """
+            INSERT INTO Point (
+                SamplingPoint,
+                IncertT,
+                n_discr
+            )
+            VALUES (?, ?, ?)
+            """
+        )
+    
+        
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.exec_("SELECT id FROM SamplingPoint")
+        
+        while selectQuery.next():
+            id = int(selectQuery.value(0))
+            insertQuery.addbindvalue(id)
+            insertQuery.addbindvalue("0")
+            insertQuery.addbindvalue("100")
+            
+            insertQuery.exec_()
+            
+        insertQuery.finish()
+        selectQuery.finish()
         

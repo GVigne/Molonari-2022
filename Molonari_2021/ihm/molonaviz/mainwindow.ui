@@ -36,6 +36,7 @@
     <addaction name="actionCreate_Study"/>
     <addaction name="actionOpen_Study"/>
     <addaction name="actionConvert_data_in_SQL"/>
+    <addaction name="actionConvert_data_in_SQL_raw"/>
     <addaction name="separator"/>
     <addaction name="actionClose_Study"/>
    </widget>
@@ -385,6 +386,11 @@
   <action name="actionOpen_Userguide_FR">
    <property name="text">
     <string>Open Userguide (FR)</string>
+   </property>
+  </action>
+  <action name="actionConvert_data_in_SQL_raw">
+   <property name="text">
+    <string>Convert data in SQL raw</string>
    </property>
   </action>
  </widget>
