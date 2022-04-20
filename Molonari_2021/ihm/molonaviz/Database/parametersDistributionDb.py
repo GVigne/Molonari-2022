@@ -24,6 +24,7 @@ class ParametersDistributionDb():
             log10K         REAL,
             LambdaS         REAL,
             N               REAL,
+            Cap             REAL,
             Layer           INTEGER REFERENCES Layer (id),
             PointKey        INTEGER REFERENCES Point (id)
         );
