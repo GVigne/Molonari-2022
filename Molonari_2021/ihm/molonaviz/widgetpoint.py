@@ -56,30 +56,26 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.setResultsPlots()
 
     def setInfoTab(self):
-        #Needs to be adapted!
-        return 
-        # Set the "Infos" tab
-            #Installation
-        self.labelSchema.setPixmap(QPixmap(self.pointDir + "/info_data" + "/config.png"))
-        self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
+        select_path,select_notice,select_infos = self.build_infos_queries()
 
+        #Installation image
+        select_path.exec()
+        select_path.next()
+        self.labelSchema.setPixmap(QPixmap(select_path.value(0))) 
+        self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
         #This allows the image to take the entire size of the widget, however it will be misshapen
         # self.labelSchema.setScaledContents(True)
         # self.labelSchema.setSizePolicy(QtWidgets.QSizePolicy.Ignored,QtWidgets.QSizePolicy.Ignored)
-            #Notice
-        file = open(self.pointDir + "/info_data" + "/notice.txt", encoding="charmap", errors="surrogateescape")
-        notice = file.read()
-        self.plainTextEditNotice.setPlainText(notice)
-        file.close()
-            #Infos
-        infoFile = self.pointDir + "/info_data" + "/info.csv"
-        dfinfo = pd.read_csv(infoFile, header=None)
-        self.infosModel = PandasModel(dfinfo)
+        
+        #Notice
+        select_notice.exec()
+        select_notice.next()
+        self.plainTextEditNotice.setPlainText(select_notice.value(0))
+        
+        #Infos
+        self.infosModel = QSqlQueryModel()
+        self.infosModel.setQuery(select_infos)
         self.tableViewInfos.setModel(self.infosModel)
-        self.tableViewInfos.horizontalHeader().hide()
-        self.tableViewInfos.verticalHeader().hide()
-        self.tableViewInfos.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        self.tableViewInfos.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
 
     def setPressureAndTemperatureModels(self):
         # Set the Temperature and Pressure arrays
@@ -96,7 +92,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.setWindowTitle(pointName)
         self.lineEditSensor.setText(pointPressureSensor)
         self.lineEditShaft.setText(pointShaft)
-    
     
     def checkbox(self):
         """
@@ -316,7 +311,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
 
-        self.pressuremodel.exec()
+        # self.pressuremodel.exec()
 
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
@@ -328,7 +323,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox2.addWidget(self.graphtemp)
         vbox2.addWidget(self.toolbarTemp)
 
-        self.tempmodel.exec()
+        # self.tempmodel.exec()
     
     def setResultsPlots(self):
         """
@@ -390,7 +385,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.tempmap_view)
         vbox.addWidget(self.toolbarDepth)
 
-        self.tempmap_model.exec()
+        # self.tempmap_model.exec()
 
     def plotFluxes(self):
         #Plot the heat fluxes
@@ -418,7 +413,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.totalflux_view)
         vbox.addWidget(self.toolbarTotalFlux)
 
-        self.fluxes_model.exec()
+        # self.fluxes_model.exec()
 
         #Plot the water fluxes
         select_waterflux= self.build_result_queries(result_type="WaterFlux") 
@@ -431,7 +426,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.waterflux_view)
         vbox.addWidget(self.toolbarWaterFlux)
 
-        self.waterflux_model.exec()
+        # self.waterflux_model.exec()
 
     
     def setParamsModel(self):
@@ -467,14 +462,35 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         return
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
     
+    def build_infos_queries(self):
+        """
+        Build and return three queries for the info tab:
+        -one to get the path to the image of sampling point (so a .png of .jpg file)
+        -one to get the Notice
+        -one to get the rest of the information of the sampling point.
+        
+        This function could be greatly enhanced!
+        """
+        scheme_path = QSqlQuery(f"""
+        SELECT SamplingPoint.Scheme FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}"
+        """
+        )
+        notice = QSqlQuery(f"""
+        SELECT SamplingPoint.Notice FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}"
+        """
+        )
+        infos = QSqlQuery(f"""
+        SELECT SamplingPoint.Name,SamplingPoint.Longitude,SamplingPoint.Latitude,SamplingPoint.Implentation,SamplingPoint.LastTransfer,SamplingPoint.DeltaH,SamplingPoint.RiverBed FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}"
+        """
+        )
+        return scheme_path,notice,infos
+    
     def build_data_queries(self, full_query=False, field=""):
         """
         Build and return ONE AND ONLY ONE of the following queries:
         -if full_query is True, then extract the Date, Pressure and all Temperatures (this is for the Data part)
         -if field is not "", then it MUST be either "Temp" or "Pressure". Extract the Date and the corresponding field (this is for the Plot part): either all the temperatures or just the pressure.
         Theses queries take into account the actual value of self.currentdata to make to correct request (to either RawMeasuresTemp or CleanedMeasures)
-
-        This function was made so that all SQL queries are in the same place and not scattered throughout the code.
         """
         if self.currentdata=="raw":
             #Raw data
