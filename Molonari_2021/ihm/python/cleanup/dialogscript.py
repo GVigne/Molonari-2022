@@ -19,12 +19,16 @@ class DialogScript(QtWidgets.QDialog, From_DialogScript):
         # with open(os.path.join(pointDir,"saved_text.txt"),'w') as f:
         #     f.write(pointDir)
         try:
-            with open(os.path.join(pointDir,"script_"+name+".txt")) as f:
+            with open('saved_text.txt', 'r') as f:
                 sample_text = f.read()
+                f.close()
+            # with open(os.path.join(pointDir,"script_"+name+".txt")) as f:
+            #     sample_text = f.read()
         except:
             print("No saved script, show sample script")
             with open(os.path.join(os.path.dirname(__file__),"sample_text.txt")) as f:
                 sample_text = f.read()
+                f.close()
         # Set sample_text.txt as the defaut text on plainTextEdit
         self.plainTextEdit.setPlainText(sample_text)
 
