@@ -23,7 +23,7 @@ class CleanedMeasuresDb():
         """
         CREATE TABLE CleanedMeasures (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Date          INTEGER REFERENCES Date (id),
+            Date          INTEGER REFERENCES NewDate (id),
             TempBed      REAL     NOT NULL,
             Temp1            REAL     NOT NULL,
             Temp2            REAL     NOT NULL,
