@@ -36,7 +36,7 @@ class SamplingPointDb():
             Shaft           INTEGER REFERENCES Shaft (id),
             PressureSensor  INTEGER REFERENCES PressureSensor (id),
             Study           INTEGER REFERENCES Study (id),
-            Scheme          BLOB,
+            Scheme          VARCHAR,
             CleanupScript   VARCHAR
         );
         """
