@@ -32,11 +32,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         self.point = point
         self.study = study
-        
         self.computeEngine = Compute(self.point)
 
         # Link every button to their function
-
         self.pushButtonReset.clicked.connect(self.reset)
         self.pushButtonCleanUp.clicked.connect(self.cleanup)
         self.pushButtonCompute.clicked.connect(self.compute)
@@ -57,6 +55,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.setResultsPlots()
 
     def setInfoTab(self):
+        #Needs to be adapted!
+        return 
         # Set the "Infos" tab
             #Installation
         self.labelSchema.setPixmap(QPixmap(self.pointDir + "/info_data" + "/config.png"))
@@ -115,21 +115,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.currentDataModel.setQuery(select_query)
         self.tableViewDataArray.setModel(self.currentDataModel)
 
-        # if self.currentdata == "processed"
-        #     self.dftemp = readCSVWithDates(self.TemperatureDir)
-        #     self.dfpress = readCSVWithDates(self.PressureDir)
-        #     self.currentTemperatureModel.setData(self.dftemp)
-        #     self.currentPressureModel.setData(self.dfpress)
-        
-        # elif self.currentdata == "raw":
-        #     self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
-        #     self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
-        #     self.currentTemperatureModel.setData(self.dftemp)
-        #     self.currentPressureModel.setData(self.dfpress)  
-
-
     def reset(self):
-        #This needs to be redone from scratch to be compatible with the SQL database
+        #Needs to be adapted!
         return
         dlg = DialogReset()
         res = dlg.exec_()
@@ -171,7 +158,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
 
     def cleanup(self):
-        #This needs to be redone from scratch to be compatible with the SQL database
+        #Needs to be adapted!
         return
         if self.currentdata == "raw":
             print("Please clean-up your processed data. Click again on the raw data box")
@@ -197,6 +184,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
 
     def compute(self):
+        #Needs to be adapted! Especially self.onMCMCisFinished (when computations are done)
         return
         
         sensorDir = self.study.getSensorDir()
@@ -265,6 +253,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
 
     def onMCMCFinished(self):
+        #Needs to be adapted!
+        return
 
         self.setDataFrames('MCMC')
 
@@ -313,6 +303,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             print("Model successfully created !")
 
     def refreshbins(self):
+        #Needs to be adapted!
+        return
         if self.MCMCiscomputed:
             bins = self.horizontalSliderBins.value()
             self.histos.refresh(bins)
@@ -357,9 +349,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.computation_type() is not None:
             self.plotFluxes()
             self.plotTemperatureMap()
-            
-            #Les paramètres
-            # self.setParamsModel()
+            self.setParamsModel()
             self.plotHistos()  
         else:
             self.vboxwaterdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
@@ -367,51 +357,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.vboxfrisetempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxintertempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
             self.vboxsolvedtempdirect.addWidget(QtWidgets.QLabel("No model has been computed yet"))
-        
-
-    def setDataFrames(self, mode:str):
-
-        if mode == 'DirectModel':
-            self.dfwater = readCSVWithDates(self.directmodelDir + "/solved_flows.csv")
-            self.dfdepths = pd.read_csv(self.directdepthsdir)
-            self.dfsolvedtemp = readCSVWithDates(self.directmodelDir + "/solved_temperatures.csv")
-            #self.dfintertemp = self.dfsolvedtemp[self.dfsolvedtemp.columns[0:2]]
-            #C'EST ICI QU'ON AJOUTE LE CHOIX DE LA PROFONDEUR ?
-            self.dfadvec = readCSVWithDates(self.directmodelDir + "/advective_flux.csv")
-            self.dfconduc = readCSVWithDates(self.directmodelDir + "/conductive_flux.csv")
-            self.dftot = readCSVWithDates(self.directmodelDir + "/total_flux.csv")
-            self.dfparams = pd.read_csv(self.directmodelDir + "/params.csv")
-            self.dfparams = self.dfparams[self.dfparams.columns[1:]].round(decimals=3)
-
-        elif mode == 'MCMC':
-            self.dfwater = readCSVWithDates(self.MCMCDir + "/MCMC_flows_quantiles.csv")
-            self.dfsolvedtemp = readCSVWithDates(self.MCMCDir + "/solved_temperatures.csv")
-            self.dfdepths = pd.read_csv(self.MCMCdepthsdir)
-            self.dfintertemp = readCSVWithDates(self.MCMCDir + "/MCMC_temps_quantiles.csv")
-            #C'EST ICI QU'ON AJOUTE LE CHOIX DE LA PROFONDEUR ?
-            self.dfallparams = pd.read_csv(self.MCMCDir + "/MCMC_all_params.csv")
-            self.dfadvec = readCSVWithDates(self.MCMCDir + "/advective_flux.csv")
-            self.dfconduc = readCSVWithDates(self.MCMCDir + "/conductive_flux.csv")
-            self.dftot = readCSVWithDates(self.MCMCDir + "/total_flux.csv")
-            self.dfbestparams = pd.read_csv(self.MCMCDir + "/MCMC_best_params.csv")
-            self.dfbestparams = self.dfbestparams[self.dfbestparams.columns[1:]].round(decimals=3)
-            #print(self.dfbestparams)
-            with open(self.MCMCDir+"/nb_quantiles", "r") as f:
-                self.nb_quantiles = int(f.read())
-                f.close()
-
-    def plotWaterFlows(self):
-        select_flows = self.build_data_queries(field="Temp")
-        
-        
-
-        self.graphwaterdirect = MplCanvas(flows_array, "water flow")
-        self.toolbarwaterdirect = NavigationToolbar(self.graphwaterdirect, self)
-        self.vboxwaterdirect.addWidget(self.graphwaterdirect)
-        self.vboxwaterdirect.addWidget(self.toolbarwaterdirect)
-    
-    def plotWaterFlowsDirect(self):
-        return
 
     def plotTemperatureMap(self):
         select_tempmap = self.build_result_queries(result_type="Temperature",option="2DMap")
@@ -440,6 +385,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.tempmap_view)
         vbox.addWidget(self.toolbarDepth)
 
+        self.tempmap_model.exec()
+
     def plotFluxes(self):
         #Plot the heat fluxes
         select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") 
@@ -466,6 +413,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.totalflux_view)
         vbox.addWidget(self.toolbarTotalFlux)
 
+        self.fluxes_model.exec()
+
         #Plot the water fluxes
         select_waterflux= self.build_result_queries(result_type="WaterFlux") 
         self.waterflux_model = WaterFluxModel([select_waterflux])
@@ -477,134 +426,40 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.waterflux_view)
         vbox.addWidget(self.toolbarWaterFlux)
 
+        self.waterflux_model.exec()
+
     
     def setParamsModel(self):
         pass
     
     def plotHistos(self):
         pass
-        
-    def plotWaterFlowsMCMC(self, dfwater):
-        select_flows1 = self.build_result_queries(result_type="WaterFlux",quantile=0.5)
-        select_flows2 = self.build_result_queries(result_type="WaterFlux",quantile=0.05)
-        select_flows3 = self.build_result_queries(result_type="WaterFlux",quantile=0.95)
-        select_flows1.exec()
-        select_flows2.exec()
-        select_flows3.exec()
-        #This is ugly, it should be changed!
-        flows_array = []
-        while select_flows1.next():
-            flows_array.append([select_flows1.value(0),select_flows1.value(1),select_flows2.value(1),select_flows3.value(1)]) #Date, Flows with 0.5, Flows with 0.05, Flows with 0.95
-        flows_array = np.array(flows_array)
-        self.graphwaterMCMC = MplCanvas(flows_array, "water flow with quantiles")
-        self.toolbarwaterMCMC = NavigationToolbar(self.graphwaterMCMC, self)
-        self.vboxwaterMCMC.addWidget(self.graphwaterMCMC)
-        self.vboxwaterMCMC.addWidget(self.toolbarwaterMCMC)
-    
-    def plotFriseHeatFluxesDirect(self, dfadvec, dfconduc, dftot, dfdepths):
-        self.graphfluxesdirect = MplCanvaHeatFluxes(dfadvec, dfconduc, dftot, dfdepths)
-        self.toolbarfluxesdirect = NavigationToolbar(self.graphfluxesdirect, self)
-        self.vboxfluxesdirect.addWidget(self.graphfluxesdirect)
-        self.vboxfluxesdirect.addWidget(self.toolbarfluxesdirect)       
 
-    def plotFriseHeatFluxesMCMC(self, dfadvec, dfconduc, dftot, dfdepths):
-        self.graphfluxesMCMC = MplCanvaHeatFluxes(dfadvec, dfconduc, dftot, dfdepths)
-        self.toolbarfluxesMCMC = NavigationToolbar(self.graphfluxesMCMC, self)
-        self.vboxfluxesMCMC.addWidget(self.graphfluxesMCMC)
-        self.vboxfluxesMCMC.addWidget(self.toolbarfluxesMCMC)      
+    # def setBestParamsModel(self, dfbestparams):
+    #     self.BestParamsModel = PandasModel(self.dfbestparams)
+    #     self.tableViewBestParams.setModel(self.BestParamsModel)
+    #     self.tableViewBestParams.resizeColumnsToContents()
+    #     self.tableViewBestParams.verticalHeader().hide()
+    #     self.tableViewBestParams.verticalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
     
-    def plotFriseTempDirect(self):
-        select_temps = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0)
-        select_temps.exec()
-        #This is ugly, it should be changed!
-        temps_array = []
-        while select_temps.next():
-            temps_array.append([select_temps.value(0),select_temps.value(1), select_temps.value(2)]) #Date, Flows, Depths
-        temps_array = np.array(temps_array)
-        self.graphsolvedtempdirect = MplCanvas(temps_array, "frise")
-        self.toolbarsolvedtempdirect = NavigationToolbar(self.graphsolvedtempdirect, self)
-        self.vboxfrisetempdirect.addWidget(self.graphsolvedtempdirect)
-        self.vboxfrisetempdirect.addWidget(self.toolbarsolvedtempdirect)
-
-    def plotFriseTempMCMC(self):
-        select_temps1 = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0.05)
-        select_temps2 = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0.5)
-        select_temps3 = self.build_result_queries(result_type ="2DMap", option="Temperature", quantile=0.95)
-        select_temps1.exec()
-        select_temps2.exec()
-        select_temps3.exec()
-        #This is ugly, it should be changed!
-        temps_array = []
-        while select_temps1.next():
-            temps_array.append([select_temps1.value(0),select_temps1.value(1),select_temps2.value(1),select_temps3.value(1), select_temps1.value(2)]) #Date, Flows0.05,Flows 0.5, Flows 0.95, Depths
-        temps_array = np.array(temps_array)
-
-        self.graphsolvedtempMCMC = MplCanvas(temps_array, "frise")
-        self.toolbarsolvedtempMCMC = NavigationToolbar(self.graphsolvedtempMCMC, self)
-        self.vboxfrisetempMCMC.addWidget(self.graphsolvedtempMCMC)
-        self.vboxfrisetempMCMC.addWidget(self.toolbarsolvedtempMCMC)
-    
-    def plotInterfaceTempDirect(self, dfintertemp, depths):
-        self.graphintertempdirect = MplTempbydepth(dfintertemp, "direct", depths)
-        self.toolbarintertempdirect = NavigationToolbar(self.graphintertempdirect, self)
-        self.vboxintertempdirect.addWidget(self.graphintertempdirect)
-        self.vboxintertempdirect.addWidget(self.toolbarintertempdirect)
-    
-    def plotInterfaceTempMCMC(self, dfintertemp, depths, nb_quantiles):
-        self.graphintertempMCMC = MplTempbydepth(dfintertemp, "MCMC", depths, nb_quantiles=nb_quantiles)
-        self.toolbarintertempMCMC = NavigationToolbar(self.graphintertempMCMC, self)
-        self.vboxintertempMCMC.addWidget(self.graphintertempMCMC)
-        self.vboxintertempMCMC.addWidget(self.toolbarintertempMCMC)
-    
-    def histos(self, dfallparams):
-        self.histos = MplCanvasHisto(dfallparams)
-        self.toolbarhistos = NavigationToolbar(self.histos, self)
-        self.vboxhistos.addWidget(self.histos)
-        self.vboxhistos.addWidget(self.toolbarhistos)
-
-    def plotParapluies(self, dfsolvedtemp, dfdepths):
-        return
-        select_umb = self.build_result_queries(result_type ="Umbrella",quantile=0)
-        select_temps.exec()
-        #This is ugly, it should be changed!
-        temps_array = []
-        while select_temps.next():
-            temps_array.append([select_temps.value(0),select_temps.value(1), select_temps.value(2)]) #Date, Flows, Depths
-        temps_array = np.array(temps_array)
-        self.parapluies = MplCanvas(dfsolvedtemp, "parapluies", dfdepths)
-        self.toolbarparapluies = NavigationToolbar(self.parapluies, self)
-        self.vboxsolvedtempdirect.addWidget(self.parapluies)
-        self.vboxsolvedtempdirect.addWidget(self.toolbarparapluies)
-    
-    def plotParapluiesMCMC(self, dfsolvedtemp, dfdepths):
-        self.parapluiesMCMC = MplCanvas(dfsolvedtemp, "parapluies", dfdepths)
-        self.toolbarparapluiesMCMC = NavigationToolbar(self.parapluiesMCMC, self)
-        self.vboxsolvedtempMCMC.addWidget(self.parapluiesMCMC)
-        self.vboxsolvedtempMCMC.addWidget(self.toolbarparapluiesMCMC)
-
-    def setBestParamsModel(self, dfbestparams):
-        self.BestParamsModel = PandasModel(self.dfbestparams)
-        self.tableViewBestParams.setModel(self.BestParamsModel)
-        self.tableViewBestParams.resizeColumnsToContents()
-        self.tableViewBestParams.verticalHeader().hide()
-        self.tableViewBestParams.verticalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.tableViewBestParams.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.tableViewBestParams.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.tableViewBestParams.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-        self.tableViewBestParams.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
-    
-    def setParamsModel(self, dfparams):
-        self.paramsModel = PandasModel(self.dfparams)
-        self.tableViewParams.setModel(self.paramsModel)
-        self.tableViewParams.resizeColumnsToContents()
-        self.tableViewParams.verticalHeader().hide()
-        self.tableViewParams.verticalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.tableViewParams.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.tableViewParams.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.tableViewParams.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-        self.tableViewParams.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+    # def setParamsModel(self, dfparams):
+    #     self.paramsModel = PandasModel(self.dfparams)
+    #     self.tableViewParams.setModel(self.paramsModel)
+    #     self.tableViewParams.resizeColumnsToContents()
+    #     self.tableViewParams.verticalHeader().hide()
+    #     self.tableViewParams.verticalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
     
     def label_update(self):
+        #Needs to be adapted?
+        return
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
     
     def build_data_queries(self, full_query=False, field=""):
@@ -752,9 +607,9 @@ if __name__ == '__main__':
     sys.exit(app.exec_())
 """
  
-# p = Point()
-# s = Study()
-# app = QtWidgets.QApplication(sys.argv)
-# mainWin = WidgetPoint(p,s)
-# mainWin.show()
-# sys.exit(app.exec_())
+p = Point()
+s = Study()
+app = QtWidgets.QApplication(sys.argv)
+mainWin = WidgetPoint(p,s)
+mainWin.show()
+sys.exit(app.exec_())
