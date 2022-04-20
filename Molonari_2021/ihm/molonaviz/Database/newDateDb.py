@@ -2,9 +2,8 @@ from PyQt5.QtSql import QSqlQuery
 import pandas as pd
 
 class DateDb():
-    def __init__(self, con, study) -> None:
+    def __init__(self, con) -> None:
         self.con = con
-        self.study = study
     
     def create(self):
         dropQuery = QSqlQuery()
@@ -31,7 +30,7 @@ class DateDb():
         createQuery.finish()
         
     
-    def insert(self):
+    def insert(self, study):
         insertQuery = QSqlQuery(self.con)
         
         insertQuery.prepare(
@@ -43,11 +42,11 @@ class DateDb():
             """
         )
     
-        points = self.study.getPointsDb()
+        points = study.getPointsDb()
         
         for point in points:
-            df_processed_temp = pd.read_csv(self.study.rootDir + "/" + point.name + "/processed_data/processed_temperatures.csv")
-            df_processed_press = pd.read_csv(self.study.rootDir + "/" + point.name + "/processed_data/processed_pressures.csv")
+            df_processed_temp = pd.read_csv(study.rootDir + "/" + point.name + "/processed_data/processed_temperatures.csv")
+            df_processed_press = pd.read_csv(study.rootDir + "/" + point.name + "/processed_data/processed_pressures.csv")
             df_processed_measures = df_processed_temp.merge(df_processed_press)
             
             df = df_processed_measures
@@ -59,5 +58,17 @@ class DateDb():
             insertQuery.exec_()
             
         insertQuery.finish()
+        
+    def getIdByDate(self, date):
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.prepare("SELECT id FROM NewDate where Date = :date")
+        selectQuery.bindValue(":date", date)
+        selectQuery.exec_()
+        
+        selectQuery.next()
+        id = int(selectQuery.value(0))
+        selectQuery.finish()
+        return id
+        
         
         
