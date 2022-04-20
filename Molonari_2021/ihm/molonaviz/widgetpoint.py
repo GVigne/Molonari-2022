@@ -35,6 +35,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.computeEngine = Compute(self.point)
 
         # Link every button to their function
+        self.comboBoxSelectLayer.currentTextChanged.connect(self.changeDisplayedParams)
         self.pushButtonReset.clicked.connect(self.reset)
         self.pushButtonCleanUp.clicked.connect(self.cleanup)
         self.pushButtonCompute.clicked.connect(self.compute)
@@ -51,6 +52,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.con.open()
         self.point.name="Point034" #Needs to be changed
 
+        self.setupComboBoxLayers()
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
         self.setResultsPlots()
@@ -76,6 +78,24 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.infosModel = QSqlQueryModel()
         self.infosModel.setQuery(select_infos)
         self.tableViewInfos.setModel(self.infosModel)
+
+    def setupComboBoxLayers(self):
+        """
+        Setup the Combo box and which will be used to display the parameters
+        """
+        select_depths_layers = self.build_layers_query()
+        select_depths_layers.exec()
+        while select_depths_layers.next():
+            self.comboBoxSelectLayer.addItem(select_depths_layers.value(0))
+    
+    def changeDisplayedParams(self,layer):
+        """
+        Display in the table view the parameters corresponding to the given layer.
+        """
+        select_params = self.build_params_query(layer)
+        self.paramsModel = QSqlQueryModel()
+        self.paramsModel.setQuery(select_params)
+        self.tableViewParams.setModel(self.paramsModel)
 
     def setPressureAndTemperatureModels(self):
         # Set the Temperature and Pressure arrays
@@ -311,7 +331,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
 
-        # self.pressuremodel.exec()
+        self.pressuremodel.exec()
 
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
@@ -323,7 +343,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox2.addWidget(self.graphtemp)
         vbox2.addWidget(self.toolbarTemp)
 
-        # self.tempmodel.exec()
+        self.tempmodel.exec()
     
     def setResultsPlots(self):
         """
@@ -332,7 +352,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.computation_type() is not None:
             self.plotFluxes()
             self.plotTemperatureMap()
-            self.setParamsModel()
             self.plotHistos()  
         else:
             # vbox = QtWidgets.QVBoxLayout()
@@ -385,7 +404,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.tempmap_view)
         vbox.addWidget(self.toolbarDepth)
 
-        # self.tempmap_model.exec()
+        self.tempmap_model.exec()
 
     def plotFluxes(self):
         #Plot the heat fluxes
@@ -413,7 +432,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.totalflux_view)
         vbox.addWidget(self.toolbarTotalFlux)
 
-        # self.fluxes_model.exec()
+        self.fluxes_model.exec()
 
         #Plot the water fluxes
         select_waterflux= self.build_result_queries(result_type="WaterFlux") 
@@ -426,37 +445,17 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.waterflux_view)
         vbox.addWidget(self.toolbarWaterFlux)
 
-        # self.waterflux_model.exec()
-
-    
-    def setParamsModel(self):
-        pass
+        self.waterflux_model.exec()
     
     def plotHistos(self):
         pass
 
-    # def setBestParamsModel(self, dfbestparams):
-    #     self.BestParamsModel = PandasModel(self.dfbestparams)
-    #     self.tableViewBestParams.setModel(self.BestParamsModel)
-    #     self.tableViewBestParams.resizeColumnsToContents()
-    #     self.tableViewBestParams.verticalHeader().hide()
-    #     self.tableViewBestParams.verticalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewBestParams.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
-    
-    # def setParamsModel(self, dfparams):
-    #     self.paramsModel = PandasModel(self.dfparams)
-    #     self.tableViewParams.setModel(self.paramsModel)
-    #     self.tableViewParams.resizeColumnsToContents()
-    #     self.tableViewParams.verticalHeader().hide()
-    #     self.tableViewParams.verticalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-    #     self.tableViewParams.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
-    
+    # def histos(self, dfallparams):
+    #     self.histos = MplCanvasHisto(dfallparams)
+    #     self.toolbarhistos = NavigationToolbar(self.histos, self)
+    #     self.vboxhistos.addWidget(self.histos)
+    #     self.vboxhistos.addWidget(self.toolbarhistos)
+
     def label_update(self):
         #Needs to be adapted?
         return
@@ -484,6 +483,32 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         )
         return scheme_path,notice,infos
+
+    def build_layers_query(self):
+        """
+        Build and return a query giving the depths of all the layers.
+        """
+        return QSqlQuery(f"""
+            SELECT Layer.DepthBed FROM Layer 
+            JOIN BestParameters ON Layer.id = BestParameters.Layer
+            JOIN Point ON BestParameters.PointKey = Point.id
+            JOIN SamplingPoint ON Point.SamplingPoint = SamplingPoint.id
+            WHERE SamplingPoint.Name ="{self.point.name}"       
+        """
+        )
+    
+    def build_params_query(self,depth):
+        """
+        Build and return the parameters for the given depth.
+        """
+        return QSqlQuery(f"""
+                SELECT BestParameters.log10KBest, BestParameters.LambdaSBest,BestParameters.NBest FROM BestParameters 
+                JOIN Layer ON BestParameters.Layer = Layer.id WHERE Layer.DepthBed ={depth}      
+        """
+        )
+
+
+
     
     def build_data_queries(self, full_query=False, field=""):
         """
@@ -616,7 +641,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 AND TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
                 AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
             """)
-
 
 if __name__ == '__main__':
     p = Point()
