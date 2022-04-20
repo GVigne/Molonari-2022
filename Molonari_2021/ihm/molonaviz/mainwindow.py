@@ -79,6 +79,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
         self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)
         self.actionOpen_Userguide_FR.triggered.connect(self.openUserguide)
+        self.actionConvert_data_in_SQL_raw.triggered.connect(self.convertDataInSQLRaw)
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
@@ -104,7 +105,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
 
         self.convertingTimer = QtCore.QTimer(self)
         self.convertingTimer.setSingleShot(True)
-        self.convertingTimer.timeout.connect(self.convertDataInSQL)
+        self.convertingTimer.timeout.connect(self.convertDataInSQLProcessed)
 
         #On adapte la taille de la fenêtre principale à l'écran
         # screenSize = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -290,9 +291,9 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         print("Converting data...")
         self.convertingTimer.start(200)
     
-    def convertDataInSQL(self):
+    def convertDataInSQLProcessed(self):
         # Creation of the Database, its connection and the model
-        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
+        self.sqlfile = "molonari_" + self.currentStudy.name + "processed" + ".sqlite"
         if os.path.exists(self.sqlfile):
             os.remove(self.sqlfile)
         
@@ -337,6 +338,50 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         
         self.actionConvert_data_in_SQL.setEnabled(False)
         print(" ==> done")
+        
+    def convertDataInSQLRaw(self):
+        # Creation of the Database, its connection and the model
+        self.sqlfile = "molonari_" + self.currentStudy.name + "raw" + ".sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
+        
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName(self.sqlfile)
+        if not self.con.open():
+            print("Cannot open SQL database")
+            
+        self.model = QSqlTableModel(self, self.con)
+        
+        # Creation of the SQL tables
+        self.mainDb = MainDb(self.con)
+        self.mainDb.createTables()
+        
+        try :
+            self.mainDb.laboDb.insert()
+            self.mainDb.studyDb.insert(self.currentStudy) 
+        except Exception :
+            raise LoadingError('SQL, study or labo')
+        try :
+            self.mainDb.thermometerDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, thermometers")
+        try :
+            self.mainDb.pressureSensorDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, pressure sensors")
+        try : 
+            self.mainDb.shaftDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError("SQL, shafts")
+        try :
+            self.mainDb.samplingPointDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('SQL, points')
+        try :
+            self.mainDb.rawMeasuresTempDb.insert(self.currentStudy)
+            self.mainDb.rawMeasuresPressDb.insert(self.currentStudy)
+        except Exception :
+            raise LoadingError('SQL, Measures')
 
     def importPointTimer(self):
         dlg = DialogImportPoint()

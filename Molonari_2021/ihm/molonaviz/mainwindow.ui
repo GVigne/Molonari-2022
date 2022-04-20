@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>1827</width>
-     <height>18</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -371,7 +371,7 @@
   </action>
   <action name="actionConvert_data_in_SQL">
    <property name="text">
-    <string>Convert data in SQL</string>
+    <string>Convert data in SQL processed</string>
    </property>
   </action>
   <action name="actionSwitch_To_Cascade_View">
