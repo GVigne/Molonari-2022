@@ -44,6 +44,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.tabWidget.setCurrentIndex(3)
 
         #TO REMOVE
+        self.currentdata ="processed"
         self.pointDir = self.point.getPointDir()
         self.con = QSqlDatabase.addDatabase("QSQLITE")
         self.con.setDatabaseName("molonari_slqdb.sqlite")
@@ -81,12 +82,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.tableViewInfos.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
 
     def setPressureAndTemperatureModels(self):
-        # Set the Temperature and Pressure models
-        self.currentdata = "processed"
-        if self.checkBoxRaw_Data.isChecked():
-            self.currentdata = "raw"
-
-        select_query = self.build_data_queries(full_query=True)
+        # Set the Temperature and Pressure arrays
+        select_query = self.build_data_queries(full_query=True) #Query changes according to self.currentdata
         self.currentDataModel = QSqlQueryModel()
         self.currentDataModel.setQuery(select_query)
         self.tableViewDataArray.setModel(self.currentDataModel)
@@ -109,11 +106,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.currentdata = "raw"
         else :
             self.currentdata = "processed"
-
-        select_query = self.build_data_queries(full_query=True) #Query changes according to self.currentdata
-        self.currentDataModel = QSqlQueryModel()
-        self.currentDataModel.setQuery(select_query)
-        self.tableViewDataArray.setModel(self.currentDataModel)
+        self.setPressureAndTemperatureModels()
+        self.setDataPlots()
 
     def reset(self):
         #Needs to be adapted!
@@ -326,9 +320,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
-        self.tempmodel = TemperatureDataModel([select_pressure])
-        self.graphtemp = TemperatureView(self.pressuremodel, time_dependent=True,ylabel="Pression différentielle (m)")
-        # self.graphtemp = MplCanvas(temp_array, "temperature")
+        self.tempmodel = TemperatureDataModel([select_temp])
+        self.graphtemp = TemperatureView(self.tempmodel, time_dependent=True,ylabel="Pression différentielle (m)")
         self.toolbarTemp = NavigationToolbar(self.graphtemp, self)
         vbox2 = QtWidgets.QVBoxLayout()
         self.groupBoxTemp.setLayout(vbox2)
@@ -341,7 +334,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         Display the results in the corresponding tabs.
         """
-        if False: #self.computation_type() is not None:
+        if self.computation_type() is not None:
             self.plotFluxes()
             self.plotTemperatureMap()
             self.setParamsModel()
@@ -483,10 +476,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         This function was made so that all SQL queries are in the same place and not scattered throughout the code.
         """
-        computation_type = self.computation_type()
-        if computation_type is None:
-            return None
-        elif not computation_type:
+        if self.currentdata=="raw":
             #Raw data
             if full_query:
                 return QSqlQuery(f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Pressure
@@ -507,7 +497,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                         WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                         """
                 )
-        else:
+        elif self.currentdata == "processed":
             #Display cleaned measures
             if full_query:
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
@@ -611,17 +601,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
             """)
 
-"""
+
 if __name__ == '__main__':
+    p = Point()
+    s = Study()
     app = QtWidgets.QApplication(sys.argv)
-    mainWin = WidgetPoint()
+    mainWin = WidgetPoint(p,s)
     mainWin.show()
     sys.exit(app.exec_())
-"""
- 
-p = Point()
-s = Study()
-app = QtWidgets.QApplication(sys.argv)
-mainWin = WidgetPoint(p,s)
-mainWin.show()
-sys.exit(app.exec_())
