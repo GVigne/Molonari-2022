@@ -265,7 +265,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # Create data models and associate to corresponding viewers
 
         self.getDF()
-        self.varList = list(self.df_loaded.columns)
         self.comboBoxRawVar.addItems(self.varList[1:])
         self.varName = self.comboBoxRawVar.currentText
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
@@ -831,7 +830,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        for i in list(self.df_loaded.columns)[1:]:
+        for i in self.varList[1:]:
             df_var = self.df_selected[["date",i]].dropna()
             values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
             self.df_cleaned.loc[:,i] = values
@@ -855,8 +854,9 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
         self.df_loaded = df_Pressure.join(df_ZH.set_index("date"), on="date")
+        self.varList = list(self.df_loaded.columns)
         self.df_cleaned = self.df_loaded.copy().dropna()
-        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
+        self.df_selected = pd.DataFrame(columns=self.varList)
         # self.df_loaded= df_Pressure.merge(df_ZH, on="date")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
@@ -872,19 +872,19 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.df_selected = self.df_selected.merge(selection,on=["date"],how="outer",suffixes=(None,"_sel"))           
             self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
             self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
-            self.df_selected.dropna(how="all",subset=list(self.df_loaded.columns)[1:],inplace=True)
+            self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
             
         self.previsualizeCleaning()
 
     def resetCleanVar(self):
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
-        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns)) # TODO it should reset just the selected variable, not the whole DF
+        self.df_selected = pd.DataFrame(columns=self.varList) # TODO it should reset just the selected variable, not the whole DF
         obj = self.buttonGroupMethod.button(3)
         self.selectMethod(obj)
         # self.plotPrevisualizedVar()
 
     def resetCleanAll(self):
-        self.df_selected = pd.DataFrame(columns=list(self.df_loaded.columns))
+        self.df_selected = pd.DataFrame(columns=self.varList)
         self.df_cleaned = self.df_loaded.copy().dropna()
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         os.remove("saved_text.txt")
