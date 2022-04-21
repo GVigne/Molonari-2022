@@ -794,7 +794,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     def selectMethod(self,object):
         id = self.buttonGroupMethod.id(object)
         varIndex = self.varList.index(self.varName())
-        methodsLine = 9-1
+        methodsLine = 17-1
         self.method_dic[self.varName()] = self.buttonGroupMethod.button(id)
 
         try: 
@@ -830,10 +830,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        for i in self.varList[1:]:
-            df_var = self.df_selected[["date",i]].dropna()
-            values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
-            self.df_cleaned.loc[:,i] = values
+        
 
         self.plotPrevisualizedVar()
 
@@ -873,6 +870,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
             self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
             self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
+            self.df_selected.to_csv("selected_points.csv")
             
         self.previsualizeCleaning()
 
@@ -887,7 +885,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.df_selected = pd.DataFrame(columns=self.varList)
         self.df_cleaned = self.df_loaded.copy().dropna()
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
-        os.remove("saved_text.txt")
+        os.remove("saved_text.txt") # TODO error
         self.plotPrevisualizedVar()
     
     

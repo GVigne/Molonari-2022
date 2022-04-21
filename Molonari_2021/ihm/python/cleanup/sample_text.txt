@@ -1,4 +1,12 @@
-# DO NOT TOUCH
+####### DO NOT TOUCH #######
+# MODULES 
+import sys, os
+import numpy as np
+import pandas as pd
+from scipy import stats
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 # PRESSION
 print("Here we get the pressure")
@@ -20,6 +28,11 @@ print("Here we get the tempreatures right")
 # t4
 
 # MANUAL SELECTED POINTS
+
+for i in self.varList[1:]:
+    df_var = self.df_selected[["date",i]].dropna()
+    values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+    self.df_cleaned.loc[:,i] = values
 
 # YOU CAN TOUCH - USER DEFINED FUNCTION
 a = 1
