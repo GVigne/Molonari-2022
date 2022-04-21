@@ -1,4 +1,6 @@
 import sys, os
+
+from pkg_resources import run_script
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -719,18 +721,24 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             print("Entered exception")
             pass
             
-    def getScript(self, plainTextEdit):
-        scriptpartiel = plainTextEdit.toPlainText()
-        scriptindente = scriptpartiel.replace("\n", "\n   ")
-        # scriptpartiel = "self.test_function()"
-        # scriptindente = "self.test_function()"
-        script = "def fonction(self, dft, dfp): \n   " + scriptindente + "\n" + "   return(dft, dfp)"
-        return(script, scriptpartiel)
+    def getScript(self):
+        try:
+            with open('saved_text.txt', 'r') as f:
+                sample_text = f.read()
+                f.close()
+            # with open(os.path.join(pointDir,"script_"+name+".txt")) as f:
+            #     sample_text = f.read()
+        except:
+            print("No saved script, show sample script")
+            with open(os.path.join(os.path.dirname(__file__),"sample_text.txt")) as f:
+                sample_text = f.read()
+                f.close()
+        # scriptpartiel = plainTextEdit.toPlainText()
+        scriptindente = sample_text.replace("\n", "\n   ")
+        script = "def fonction(self): \n   " + scriptindente + "\n" + "   return(1)"
+        return(script)
 
-    def test_function(self):
-        print("funciona el test?")
-        
-    def cleanup(self, script, dft, dfp):
+    def cleanup(self, script):
         scriptDir = "script.py"
         # sys.path.append(self.pointDir) # TODO uncomment
 
@@ -748,7 +756,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             del sys.modules["script"]
 
         try :
-            new_dft, new_dfp = fonction(self,dft, dfp)
+            fonction(self)
 
             #On réécrit les csv:
             # os.remove(self.tprocessedfile)
@@ -759,35 +767,35 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             # self.dftemp = readCSVWithDates(self.tprocessedfile)
             # self.dfpress = readCSVWithDates(self.pprocessedfile)
 
-            return(new_dft+1, new_dfp+1)
+            return(1)
         
         except Exception as e :
             raise e
         
+    def runScript(self):
+        script = self.getScript()
+        print("Cleaning data...")
+        
+        try :
+            self.cleanup(script)
+            print("Data successfully cleaned !...")
+
+            # Save the modified text
+            # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
+            #     file.write(scriptpartiel)
+            print("Script successfully saved")
+            
+            
+        except Exception as e :
+            print(e, "==> Clean-up aborted")
+            displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
+            # self.cleanup()
 
     def editScript(self):
         dig = DialogScript()
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
-            script,scriptpartiel = self.getScript(dig.plainTextEdit)
-            print("Cleaning data...")
-            
-            try :
-                dftemp, dfpress = self.cleanup(script, 3, 7)
-                print(dftemp)
-                print(dfpress)
-                print("Data successfully cleaned !...")
-
-                # Save the modified text
-                # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
-                #     file.write(scriptpartiel)
-                print("Script successfully saved")
-                
-                
-            except Exception as e :
-                print(e, "==> Clean-up aborted")
-                displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
-                # self.cleanup()
+            self.runScript()
         self.plotPrevisualizedVar()
     
     # Define the selectMethod function and edit thhe sample_text.txt
@@ -830,7 +838,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        
+        self.runScript()
 
         self.plotPrevisualizedVar()
 
@@ -877,13 +885,15 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     def resetCleanVar(self):
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
         self.df_selected = pd.DataFrame(columns=self.varList) # TODO it should reset just the selected variable, not the whole DF
+        self.df_selected.to_csv("selected_points.csv")
         obj = self.buttonGroupMethod.button(3)
         self.selectMethod(obj)
         # self.plotPrevisualizedVar()
 
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=self.varList)
-        self.df_cleaned = self.df_loaded.copy().dropna()
+        self.df_selected.to_csv("selected_points.csv")
+        self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         os.remove("saved_text.txt") # TODO error
         self.plotPrevisualizedVar()
