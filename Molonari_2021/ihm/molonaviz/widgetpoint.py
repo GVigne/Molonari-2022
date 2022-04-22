@@ -36,6 +36,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         # Link every button to their function
         self.comboBoxSelectLayer.currentTextChanged.connect(self.changeDisplayedParams)
+        self.radioButtonTherm1.toggled.connect(self.refreshTempDepthView)
+        self.radioButtonTherm2.toggled.connect(self.refreshTempDepthView)
+        self.radioButtonTherm3.toggled.connect(self.refreshTempDepthView)      
         self.pushButtonReset.clicked.connect(self.reset)
         self.pushButtonCleanUp.clicked.connect(self.cleanup)
         self.pushButtonCompute.clicked.connect(self.compute)
@@ -53,6 +56,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.point.name="Point034" #Needs to be changed
 
         self.setupComboBoxLayers()
+        self.setupCheckboxesQuantiles()
         self.setPressureAndTemperatureModels()
         self.setDataPlots()
         self.setResultsPlots()
@@ -61,7 +65,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_path,select_notice,select_infos = self.build_infos_queries()
 
         #Installation image
-        select_path.exec()
+        # select_path.exec()
         select_path.next()
         self.labelSchema.setPixmap(QPixmap(select_path.value(0))) 
         self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
@@ -70,7 +74,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         # self.labelSchema.setSizePolicy(QtWidgets.QSizePolicy.Ignored,QtWidgets.QSizePolicy.Ignored)
         
         #Notice
-        select_notice.exec()
+        # select_notice.exec()
         select_notice.next()
         self.plainTextEditNotice.setPlainText(select_notice.value(0))
         
@@ -84,7 +88,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Setup the Combo box and which will be used to display the parameters
         """
         select_depths_layers = self.build_layers_query()
-        select_depths_layers.exec()
+        # select_depths_layers.exec()
         while select_depths_layers.next():
             self.comboBoxSelectLayer.addItem(select_depths_layers.value(0))
     
@@ -96,6 +100,31 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.paramsModel = QSqlQueryModel()
         self.paramsModel.setQuery(select_params)
         self.tableViewParams.setModel(self.paramsModel)
+    
+    def setupCheckboxesQuantiles(self):
+        """
+        Display as many checkboxes as there are quantiles in the database, along with the associated RMSE.
+        """
+        select_quantiles = self.build_global_RMSE_query()
+        select_quantiles.exec()
+        i=0
+        while select_quantiles.next():
+            if select_quantiles.value(1) =="0":
+                text_checkbox = "Modèle direct"
+            else:
+                text_checkbox = f"Quantile {select_quantiles.value(1)}"
+            quantile_checkbox = QtWidgets.QCheckBox(text_checkbox)
+            quantile_checkbox.stateChanged.connect(self.refreshTempDepthView)
+            self.gridLayoutQuantiles.addWidget(quantile_checkbox,i,0)
+            self.gridLayoutQuantiles.addWidget(QtWidgets.QLabel(f"RMSE: {select_quantiles.value(0)}"),i,1)
+            i +=1
+
+    def refreshTempDepthView(self):
+        """
+        This method is called when a checkbox showing a quantile or a radio buttion is changed. New curves should be plotted in the Temperature per Depth View.
+        """
+        #Needs to be adapted!
+        return
 
     def setPressureAndTemperatureModels(self):
         # Set the Temperature and Pressure arrays
@@ -331,7 +360,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
 
-        self.pressuremodel.exec()
+        # self.pressuremodel.exec()
 
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
@@ -343,7 +372,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox2.addWidget(self.graphtemp)
         vbox2.addWidget(self.toolbarTemp)
 
-        self.tempmodel.exec()
+        # self.tempmodel.exec()
     
     def setResultsPlots(self):
         """
@@ -378,8 +407,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.groupBoxTempDepth.setLayout(vbox)
 
     def plotTemperatureMap(self):
-        select_tempmap = self.build_result_queries(result_type="Temperature",option="2DMap")
-        self.tempmap_model = SolvedTemperatureModel([select_tempmap])
+        select_tempmap = self.build_result_queries(result_type="Temperature",option="2DMap") #This is a list
+        self.tempmap_model = SolvedTemperatureModel(select_tempmap)
         date = "" #TO DO
         depth = ""#TO DO
         self.umbrella_view = UmbrellaView(self.tempmap_model, date)
@@ -404,12 +433,12 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.tempmap_view)
         vbox.addWidget(self.toolbarDepth)
 
-        self.tempmap_model.exec()
+        # self.tempmap_model.exec()
 
     def plotFluxes(self):
         #Plot the heat fluxes
-        select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") 
-        self.fluxes_model = HeatFluxesModel([select_heatfluxes])
+        select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") #This is a list
+        self.fluxes_model = HeatFluxesModel(select_heatfluxes)
         self.advective_view = AdvectiveFlowView(self.fluxes_model)
         self.conductive_view = ConductiveFlowView(self.fluxes_model)
         self.totalflux_view = TotalFlowView(self.fluxes_model)
@@ -435,8 +464,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.fluxes_model.exec()
 
         #Plot the water fluxes
-        select_waterflux= self.build_result_queries(result_type="WaterFlux") 
-        self.waterflux_model = WaterFluxModel([select_waterflux])
+        select_waterflux= self.build_result_queries(result_type="WaterFlux") #This is already a list
+        self.waterflux_model = WaterFluxModel(select_waterflux)
         self.waterflux_view = WaterFluxView(self.waterflux_model)
         
         self.toolbarWaterFlux = NavigationToolbar(self.waterflux_view, self)
@@ -445,7 +474,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.waterflux_view)
         vbox.addWidget(self.toolbarWaterFlux)
 
-        self.waterflux_model.exec()
+        # self.waterflux_model.exec()
     
     def plotHistos(self):
         pass
@@ -506,9 +535,17 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 JOIN Layer ON BestParameters.Layer = Layer.id WHERE Layer.DepthBed ={depth}      
         """
         )
-
-
-
+    
+    def build_global_RMSE_query(self):
+        """
+        Build and return all the quantiles as well as the associated global RMSE.
+        """
+        return QSqlQuery(f"""
+                SELECT RMSE.RMSET, Quantile.Quantile FROM RMSE 
+                JOIN Quantile
+                ON RMSE.QuantileID = Quantile.id     
+        """
+        )
     
     def build_data_queries(self, full_query=False, field=""):
         """

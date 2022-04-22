@@ -105,7 +105,7 @@ class MoloView2D(MoloView):
         self.time_dependent = time_dependent
         self.title = title
         self.ylabel = ylabel
-        self.xlable = xlabel
+        self.xlabel = xlabel
         self.x = []
         self.y = []
         self.cmap = []
@@ -222,8 +222,8 @@ class AdvectiveFlowView(MoloView2D):
     
     def retrieve_data(self):
         self.cmap = self.model.get_advective_flow()
-        self.x = self.model.get_depths()
-        self.y = self.model.get_dates()
+        self.x = self.model.get_dates()
+        self.y = self.model.get_depths()
 
 class ConductiveFlowView(MoloView2D):
     """
@@ -234,8 +234,8 @@ class ConductiveFlowView(MoloView2D):
     
     def retrieve_data(self):
         self.cmap = self.model.get_conductive_flow()
-        self.x = self.model.get_depths()
-        self.y = self.model.get_dates()
+        self.x = self.model.get_dates()
+        self.y = self.model.get_depths()
 
 class TotalFlowView(MoloView2D):
     """
@@ -246,5 +246,5 @@ class TotalFlowView(MoloView2D):
     
     def retrieve_data(self):
         self.cmap = self.model.get_total_flow()
-        self.x = self.model.get_depths()
-        self.y = self.model.get_dates()
+        self.x = self.model.get_dates()
+        self.y = self.model.get_depths()
