@@ -78,18 +78,32 @@ class WaterFluxModel(MoloModel):
     """
     def __init__(self, queries):
         super().__init__(queries)
-        self.array_data = []
+        self.flows = {}
+        self.dates=[]
     
     def update_df(self):
+        #Initialize data structures
+        self.queries[0].next()
+        self.dates.append(self.queries[0].value(0))
+        self.flows[self.queries[0].value(2)] = [self.queries[0].value(1)]
         while self.queries[0].next():
-            self.array_data.append([self.queries[0].value(0),self.queries[0].value(1),self.queries[0].value(2)]) #Date, Flow
-        self.array_data = np.array(self.array_data)
+            self.dates.append(self.queries[0].value(0)) #Dates
+            self.flows[self.queries[0].value(2)].append(self.queries[0].value(1)) #Flow
+        for i in range(1,len(self.queries)):
+            self.queries[i].next()
+            self.flows[self.queries[i].value(2)] = [self.queries[i].value(1)]
+            #Add the other flows for the different quantiles if they exist
+            while self.queries[i].next():
+                self.flows[self.queries[i].value(2)].append(self.queries[i].value(1))
     
     def get_water_flow(self):
-        return self.array_data[:, 1]
+        """
+        Return a dictionnary with keys beings the quantiles and values being the arrays of associated flows.
+        """
+        return {key:np.array(value) for index, (key,value) in enumerate(self.flows.items())}
     
     def get_dates(self):
-        return self.array_data[:,0]
+        return np.array(self.dates)
 
 class SolvedTemperatureModel(MoloModel):
     """

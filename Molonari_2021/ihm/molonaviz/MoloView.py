@@ -199,7 +199,9 @@ class WaterFluxView(MoloView1D):
     
     def retrieve_data(self):
        self.x = self.model.get_dates()
-       self.x = {"": self.model.get_water_flow()}
+       all_flows = self.model.get_water_flow()
+       self.y = {f"Quantile {key}":value for index, (key,value) in enumerate(all_flows.items()) if key!=0}
+       self.y["Modèle direct"] = all_flows[0] 
 
 class TempMapView(MoloView2D):
     """

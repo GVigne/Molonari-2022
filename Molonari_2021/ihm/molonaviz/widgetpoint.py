@@ -623,7 +623,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             return [self.define_result_queries(result_type=result_type,option=option, quantile=0)]
         else:
             #This could be enhanced by going in the database and seeing which quantiles are available. For now, these available quantiles will be hard-coded
-            return [self.define_result_queries(result_type=result_type,option=option, quantile=1) for i in [0,0.05,0.5,0.95]]
+            return [self.define_result_queries(result_type=result_type,option=option, quantile=i) for i in [0,0.05,0.5,0.95]]
     
     def define_result_queries(self,result_type ="",option="",quantile = 0):
         """
@@ -633,11 +633,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         #Water Flux
         if result_type =="WaterFlux":
-            return QSqlQuery(f"""SELECT Date.Date, WaterFlow.WaterFlow FROM WaterFlow
+            return QSqlQuery(f"""SELECT Date.Date, WaterFlow.WaterFlow, Quantile.Quantile FROM WaterFlow
             JOIN Date
             ON WaterFlow.Date = Date.id
-                WHERE WaterFlow.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+            JOIN Quantile
+            ON WaterFlow.Quantile = Quantile.id
+                WHERE Quantile.Quantile = {quantile}
                 AND WaterFlow.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+                ORDER BY Date.Dat
                 """
             )
         elif result_type =="2DMap":
