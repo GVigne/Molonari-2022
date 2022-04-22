@@ -17,8 +17,7 @@ df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
 self.df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
 self.varList = list(self.df_loaded.columns)
-self.df_cleaned = self.df_loaded.copy().dropna()
-self.df_selected = pd.DataFrame(columns=self.varList)
+self.df_cleaned = self.df_loaded.copy().dropna() 
 
 # TIMES
 print("Here we get the tempreatures right")

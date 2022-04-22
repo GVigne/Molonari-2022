@@ -805,7 +805,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     def selectMethod(self,object):
         id = self.buttonGroupMethod.id(object)
         varIndex = self.varList.index(self.varName())
-        methodsLine = 26-1
         self.method_dic[self.varName()] = self.buttonGroupMethod.button(id)
 
         try: 
@@ -819,6 +818,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 data = file.readlines()
                 file.close()
 
+        method_key = '# METHOD'
+        for i in range(len(data)):
+            if data[i].find(method_key) != -1:
+                methodsLine = i
+            
+        print(methodsLine)
         # now change the n-th line
         if id == 1:
             method = "remove_outlier_z"
@@ -871,8 +876,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # self.df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
         # self.varList = list(self.df_loaded.columns)
         # self.df_cleaned = self.df_loaded.copy().dropna()
-        # self.df_selected = pd.DataFrame(columns=self.varList)
-        # self.df_selected.to_csv("selected_points.csv")
+        self.df_selected = pd.DataFrame(columns=self.varList)
+        self.df_selected.to_csv("selected_points.csv")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
         self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
@@ -888,13 +893,17 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
             self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
             self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
+            print(self.df_selected)
             self.df_selected.to_csv("selected_points.csv")
             
         self.previsualizeCleaning()
 
     def resetCleanVar(self):
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
-        self.df_selected = pd.DataFrame(columns=self.varList) # TODO it should reset just the selected variable, not the whole DF
+        nan_values = np.empty((self.df_selected.shape[0],1))
+        nan_values.fill(np.nan)
+        self.df_selected[self.varName()] = nan_values
+        self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
         self.df_selected.to_csv("selected_points.csv")
         obj = self.buttonGroupMethod.button(3)
         self.selectMethod(obj)
