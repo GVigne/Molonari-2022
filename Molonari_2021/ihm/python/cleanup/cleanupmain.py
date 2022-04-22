@@ -735,10 +735,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 f.close()
         # scriptpartiel = plainTextEdit.toPlainText()
         scriptindente = sample_text.replace("\n", "\n   ")
-        script = "def fonction(self): \n   " + scriptindente + "\n" + "   return(1)"
+        script = "def fonction(self, df_ZH, df_Pressure, df_Calibration): \n   " + scriptindente + "\n" + "   return(1)"
         return(script)
 
-    def cleanup(self, script):
+    def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
         scriptDir = "script.py"
         # sys.path.append(self.pointDir) # TODO uncomment
 
@@ -756,7 +756,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             del sys.modules["script"]
 
         try :
-            fonction(self)
+            fonction(self,df_ZH, df_Pressure, df_Calibration)
 
             #On réécrit les csv:
             # os.remove(self.tprocessedfile)
@@ -772,12 +772,15 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         except Exception as e :
             raise e
         
-    def runScript(self):
+    def runScript(self, df_ZH, df_Pressure, df_Calibration):
+        df_ZH = df_ZH.copy()
+        df_Pressure = df_Pressure.copy()
+        df_Calibration = df_Calibration.copy()
         script = self.getScript()
         print("Cleaning data...")
         
         try :
-            self.cleanup(script)
+            self.cleanup(script, df_ZH, df_Pressure, df_Calibration)
             print("Data successfully cleaned !...")
 
             # Save the modified text
@@ -795,14 +798,14 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         dig = DialogScript()
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
-            self.runScript()
+            self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
         self.plotPrevisualizedVar()
     
     # Define the selectMethod function and edit thhe sample_text.txt
     def selectMethod(self,object):
         id = self.buttonGroupMethod.id(object)
         varIndex = self.varList.index(self.varName())
-        methodsLine = 17-1
+        methodsLine = 26-1
         self.method_dic[self.varName()] = self.buttonGroupMethod.button(id)
 
         try: 
@@ -838,31 +841,38 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
-        self.runScript()
+        self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+
+        # selected_df = pd.read_csv("selected_points.csv")
+
+        # for i in self.varList[1:]:
+        #     df_var = selected_df[["date",i]].dropna()
+        #     values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+        #     self.df_cleaned.loc[:,i] = values
 
         self.plotPrevisualizedVar()
 
     def getDF(self):
         "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
-        df_ZH = self.load_pandas(self.rawCon, "SELECT date, t1, t2, t3, t4 FROM ZH", ["date", "t1", "t2", "t3", "t4"])
-        convertDates(df_ZH)
-        df_Pressure = self.load_pandas(self.rawCon, "SELECT date, tension, t_stream FROM Pressure", ["date", "tension", "t_stream"])
-        convertDates(df_Pressure)
-        df_Calibration = self.load_pandas(self.rawCon, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
+        self.df_ZH = self.load_pandas(self.rawCon, "SELECT date, t1, t2, t3, t4 FROM ZH", ["date", "t1", "t2", "t3", "t4"])
+        convertDates(self.df_ZH)
+        self.df_Pressure = self.load_pandas(self.rawCon, "SELECT date, tension, t_stream FROM Pressure", ["date", "tension", "t_stream"])
+        convertDates(self.df_Pressure)
+        self.df_Calibration = self.load_pandas(self.rawCon, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
 
+        self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+        # intercept = float(df_Calibration.iloc[2][list(df_Calibration.columns)[-1]])
+        # dUdH = float(df_Calibration.iloc[3][list(df_Calibration.columns)[-1]])
+        # dUdT = float(df_Calibration.iloc[4][list(df_Calibration.columns)[-1]])
 
-        intercept = float(df_Calibration.iloc[2][list(df_Calibration.columns)[-1]])
-        dUdH = float(df_Calibration.iloc[3][list(df_Calibration.columns)[-1]])
-        dUdT = float(df_Calibration.iloc[4][list(df_Calibration.columns)[-1]])
+        # df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
+        # df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
-        df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
-        df_Pressure.drop(labels="tension",axis=1,inplace=True)
-
-        self.df_loaded = df_Pressure.join(df_ZH.set_index("date"), on="date")
-        self.varList = list(self.df_loaded.columns)
-        self.df_cleaned = self.df_loaded.copy().dropna()
-        self.df_selected = pd.DataFrame(columns=self.varList)
-        # self.df_loaded= df_Pressure.merge(df_ZH, on="date")
+        # self.df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
+        # self.varList = list(self.df_loaded.columns)
+        # self.df_cleaned = self.df_loaded.copy().dropna()
+        # self.df_selected = pd.DataFrame(columns=self.varList)
+        # self.df_selected.to_csv("selected_points.csv")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
         self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
@@ -893,10 +903,14 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=self.varList)
         self.df_selected.to_csv("selected_points.csv")
-        self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
+        # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
+        # print("reset-begin")
+        # print(self.df_cleaned)
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         os.remove("saved_text.txt") # TODO error
-        self.plotPrevisualizedVar()
+        self.previsualizeCleaning()
+        # print("reset-end")
+        # print(self.df_cleaned)
     
     
 
