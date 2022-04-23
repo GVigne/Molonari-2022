@@ -6,6 +6,7 @@ import pandas as pd
 from scipy import stats
 import matplotlib
 import matplotlib.dates as mdates
+from scipy.signal import savgol_filter
 
 # PRESSION
 intercept = float(df_Calibration.iloc[2][list(df_Calibration.columns)[-1]])
@@ -46,4 +47,10 @@ for i in self.varList[1:]:
 
 # YOU CAN TOUCH - USER DEFINED FUNCTION
 
-# SMOOTH
+# SMOOTHING
+to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 't3': False, 't4': False}
+
+
+for var in to_filter:
+    if to_filter[var]:
+        self.df_cleaned[var] = savgol_filter(self.df_cleaned[var],20,2)

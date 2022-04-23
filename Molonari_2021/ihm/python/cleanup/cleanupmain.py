@@ -19,6 +19,7 @@ import matplotlib.cm as cm
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
+from scipy.signal import savgol_filter
 
 from dialogcleanpoints import DialogCleanPoints
 from dialogscript import DialogScript
@@ -230,11 +231,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
         self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
-        self.pushButtonPrevisualize.clicked.connect(self.previsualizeCleaning)
         self.pushButtonSelectPoints.clicked.connect(self.selectPoints)
         self.pushButtonEditCode.clicked.connect(self.editScript)
 
         self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
+        self.checkBoxFilter.clicked.connect(self.triggerSetFilter)
         self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
         self.pushButtonResetAll.clicked.connect(self.resetCleanAll)
 
@@ -247,6 +248,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.radioButtonNone.setChecked(True)
 
         self.checkBoxChanges.setChecked(True)
+        self.checkBoxFilter.setChecked(False)
         # Remove existing SQL database file (if so)
         self.sql = "molonari_grid_temp.sqlite"
         if os.path.exists(self.sql):
@@ -272,6 +274,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
+        self.filter_dic = dict.fromkeys(self.varList[1:],False)
 
         self.plotPrevisualizedVar()
 
@@ -703,6 +706,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def plotPrevisualizedVar(self):
         self.method_dic[self.varName()].setChecked(True)
+        self.checkBoxFilter.setChecked(self.filter_dic[self.varName()])
         "Refresh plot"
         try: # this try can be erased TODO
             if type(self.mplPrevisualizeCurve) == MplCanvasTimeCompare:
@@ -823,7 +827,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             if data[i].find(method_key) != -1:
                 methodsLine = i
             
-        print(methodsLine)
         # now change the n-th line
         if id == 1:
             method = "remove_outlier_z"
@@ -843,6 +846,33 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             file.close()
         self.previsualizeCleaning()
 
+    def triggerSetFilter(self):
+        self.setFilter(self.varName())
+    
+    def setFilter(self,var):
+        self.filter_dic[var] = self.checkBoxFilter.isChecked()
+        try: # TODO make a function so it doesn't repeat
+            with open('saved_text.txt', 'r') as file:
+                # read a list of lines into data
+                data = file.readlines()
+                file.close()
+        except FileNotFoundError:
+            with open('sample_text.txt', 'r') as file:
+                # read a list of lines into data
+                data = file.readlines()
+                file.close()
+
+        filter_key = '# SMOOTHING'
+        for i in range(len(data)):
+            if data[i].find(filter_key) != -1:
+                filterLine = i
+        
+        data[filterLine+1] = f'to_filter = {self.filter_dic}\n'
+
+        with open('saved_text.txt', 'w') as file: # TODO make a function so it doesn't repeat
+            file.writelines( data )
+            file.close()
+        self.previsualizeCleaning()
 
     def previsualizeCleaning(self):
         "Cleans data and shows a previsuaization"
@@ -900,26 +930,26 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
 
     def resetCleanVar(self):
         self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
+
         nan_values = np.empty((self.df_selected.shape[0],1))
         nan_values.fill(np.nan)
         self.df_selected[self.varName()] = nan_values
         self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
         self.df_selected.to_csv("selected_points.csv")
+
         obj = self.buttonGroupMethod.button(3)
         self.selectMethod(obj)
-        # self.plotPrevisualizedVar()
+        self.checkBoxFilter.setChecked(False)
+        self.setFilter(self.varName())
 
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=self.varList)
         self.df_selected.to_csv("selected_points.csv")
         # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
-        # print("reset-begin")
-        # print(self.df_cleaned)
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         os.remove("saved_text.txt") # TODO error
+        self.checkBoxFilter.setChecked(False)
         self.previsualizeCleaning()
-        # print("reset-end")
-        # print(self.df_cleaned)
     
     
 
