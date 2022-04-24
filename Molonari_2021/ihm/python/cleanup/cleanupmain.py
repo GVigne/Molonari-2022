@@ -1,3 +1,4 @@
+from binhex import openrsrc
 import sys, os
 
 from pkg_resources import run_script
@@ -42,7 +43,7 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
     def refresh_compare(self, df_or, df_cleaned,id):
         suffix_or = "_or"
         varOr = df_or.dropna()[['date',id]]
-        df_compare_or = df_or[["date",id]].join(varOr.set_index("date"),on="date",rsuffix=suffix_or)
+        df_compare_or = df_or[["date",id]].join(varOr.set_index("date"),on="date",rsuffix=suffix_or) # TODO use merge
         df_compare_or['missing'] = df_compare_or[list(df_compare_or.columns)[-1]]
 
         df_compare_or.loc[np.isnan(df_compare_or['missing']),'missing'] = True
@@ -56,22 +57,28 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         
         suffix_cl = '_cleaned'
         varCleaned = df_cleaned[["date",id]].dropna()
-        df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl)
-        df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
+        df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl) # TODO use merge
 
-        df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
-        df_compare.loc[df_compare['outliers'] != True, 'outliers'] = False
+        df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
+        mask = df_compare.apply(lambda x: True if x[id]!=x[id+suffix_cl] else False,axis=1)
+        point_sizes = df_compare[mask].apply(lambda x: 3 if np.isnan(x[id+suffix_cl]) else 0.2, axis=1)
+        if point_sizes.empty:
+            point_sizes = pd.Series([],dtype=np.float64)
+        # df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
+        # df_compare.loc[df_compare['outliers'] != True, 'outliers'] = False
         
         df_compare['date'] = mdates.date2num(df_compare['date'])
-        df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
-        df_compare[df_compare['outliers'] == True].plot.scatter(x='date',y=id,c = 'r',s = 3,ax = self.axes)
+        varCleaned['date'] = mdates.date2num(varCleaned['date'])
+        # df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
+        varCleaned.plot(x='date',y=id,ax = self.axes)
+        df_compare[mask].plot.scatter(x='date',y=id,c = '#FF6D6D',s =point_sizes,ax = self.axes)
         self.format_axes()
         self.fig.canvas.draw()
 
     def refresh(self,df_cleaned,id):
         varCleaned = df_cleaned[["date",id]].dropna()
         varCleaned['date'] = mdates.date2num(varCleaned['date'].copy())
-        varCleaned.plot(x='date',y=id,ax = self.axes)       
+        varCleaned.plot(x='date',y=id,ax = self.axes)
         self.format_axes()
         self.axes.set_ylabel(id)
         self.fig.canvas.draw()
@@ -370,78 +377,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # If failure, return an empty dataframe
         return pd.DataFrame()
     
-    def writeSQL(self, dfdepth: pd.DataFrame, df: pd.DataFrame):
-        """
-        Write the given Pandas dataframe into the SQL database
-        """
-        # Number of depths
-        self.ndepth = df.shape[1] - 1 # Remove Date/Time column
-        if self.ndepth != dfdepth.shape[0]:
-            displayCriticalMessage(f"{str(e)}", "Number of depths doesn't match")
-            return
-            
-        # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.con) 
-        createTableQuery.exec(
-            """
-            CREATE TABLE solved_depth (
-                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                depth FLOAT NOT NULL
-            )
-            """
-        )
-        createTableQuery.finish() #### Do not forget to finish your queries (close the transaction and free memory)
-        
-        # Insert temperatures
-        insertDataQuery = QSqlQuery(self.con)
-        insertDataQuery.prepare(
-            f"""
-            INSERT INTO solved_depth (
-                depth
-            )
-            VALUES (?)
-            """
-        )
-        for row in range(0, dfdepth.shape[0]): # TODO Not efficient !!
-            insertDataQuery.addBindValue(float(dfdepth.iloc[row, 0]))
-            insertDataQuery.exec()
-        insertDataQuery.finish()
-
-
-        # Create the table for storing the solved temperature (id, date, temp in ndepth columns)
-        createTableQuery.exec(
-            f"""
-            CREATE TABLE solved_temp (
-                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                date DATETIME NOT NULL,
-                {', '.join(['d_' + str(i) + ' FLOAT NOT NULL' for i in range(1, self.ndepth+1)])}
-            )
-            """
-        )
-        createTableQuery.finish()
-
-        # For large dataset, try a transaction :
-        self.con.transaction()
-        
-        # Insert temperatures
-        insertDataQuery.prepare(
-            f"""
-            INSERT INTO solved_temp (
-                date,
-                {', '.join(['d_' + str(i) for i in range(1, self.ndepth+1)])}
-            )
-            VALUES (?, {', '.join('?'*self.ndepth)})
-            """
-        )
-        # https://stackoverflow.com/questions/24245245/pyqt-qstandarditemmodel-how-to-get-a-row-as-a-list
-        for row in range(0, df.shape[0]): # TODO : There is a limit of the query size ! (no more than 250 rows inserted)
-            insertDataQuery.addBindValue(str(df.iloc[row,0]))
-            for col in range(1, df.shape[1]): # TODO Not efficient !!
-                insertDataQuery.addBindValue(float(df.iloc[row, col]))
-            insertDataQuery.exec()
-        insertDataQuery.finish()
-        
-        self.con.commit()
 
     def writeRawZHSQL(self, df: pd.DataFrame):
         """
@@ -449,15 +384,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         # Remove the previous measures table (if so)
         dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
-        
-        ### TODO
         dropTableQuery.exec("DROP TABLE IF EXISTS ZH") 
-        ### End TODO
         dropTableQuery.finish()
         
         # Create the table for storing the temperature measures (id, date, temp*4)
-        ### TODO
-
         createTableQuery = QSqlQuery(self.rawCon) 
         # Columns and their data type are defined
         createTableQuery.exec(
@@ -473,11 +403,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             """
         )
         createTableQuery.finish()
-        ### End TODO
 
-        # Construct the dynamic insert SQL request and execute it
-        ### TODO
-        
+        # Construct the dynamic insert SQL request and execute it        
         dynamicInsertQuery = QSqlQuery(self.rawCon)
         # In a dynamic query, first of all the query is prepared with placeholders (?)
         dynamicInsertQuery.prepare(
@@ -493,7 +420,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             """
         )
 
-         
         for i in range(df.shape[0]): 
             val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
             dynamicInsertQuery.addBindValue(str(val[0])) # The first placeholder is for the date. Then, it should be a string
@@ -501,7 +427,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
             dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
         dynamicInsertQuery.finish()
-        ### End TODO
 
     def writeRawPressureSQL(self, df: pd.DataFrame):
         """
@@ -509,15 +434,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         """
         # Remove the previous measures table (if so)
         dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
-        
-        ### TODO
         dropTableQuery.exec("DROP TABLE IF EXISTS Pressure") 
-        ### End TODO
         dropTableQuery.finish()
         
         # Create the table for storing the temperature measures (id, date, temp*4)
-        ### TODO
-
         createTableQuery = QSqlQuery(self.rawCon) 
         # Columns and their data type are defined
         createTableQuery.exec(
@@ -531,11 +451,8 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             """
         )
         createTableQuery.finish()
-        ### End TODO
 
         # Construct the dynamic insert SQL request and execute it
-        ### TODO
-        
         dynamicInsertQuery = QSqlQuery(self.rawCon)
         # In a dynamic query, first of all the query is prepared with placeholders (?)
         dynamicInsertQuery.prepare(
@@ -549,14 +466,12 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             """
         )
 
-         
         for i in range(df.shape[0]): 
             val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
             dynamicInsertQuery.addBindValue(str(val[0])) # The first placeholder is for the date. Then, it should be a string
             for j in range(1,3):
                 dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
             dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
-        ### End TODO
         dynamicInsertQuery.finish()
 
     def writeCalibrationSQL(self, df: pd.DataFrame):
@@ -708,22 +623,17 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.method_dic[self.varName()].setChecked(True)
         self.checkBoxFilter.setChecked(self.filter_dic[self.varName()])
         "Refresh plot"
-        try: # this try can be erased TODO
-            if type(self.mplPrevisualizeCurve) == MplCanvasTimeCompare:
-                id = self.comboBoxRawVar.currentText()
-                self.mplPrevisualizeCurve.clear()
+        id = self.comboBoxRawVar.currentText()
+        self.mplPrevisualizeCurve.clear()
 
-                if self.checkBoxChanges.isChecked():
-                    self.mplPrevisualizeCurve.refresh_compare(self.df_loaded, self.df_cleaned, id)
-                else:
-                    self.mplPrevisualizeCurve.refresh(self.df_cleaned, id)
-                
+        if self.checkBoxChanges.isChecked():
+            self.mplPrevisualizeCurve.refresh_compare(self.df_loaded, self.df_cleaned, id)
+        else:
+            self.mplPrevisualizeCurve.refresh(self.df_cleaned, id)
+        
 
-                self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
+        self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
 
-        except AttributeError:
-            print("Entered exception")
-            pass
             
     def getScript(self):
         try:
@@ -806,11 +716,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.plotPrevisualizedVar()
     
     # Define the selectMethod function and edit thhe sample_text.txt
-    def selectMethod(self,object):
-        id = self.buttonGroupMethod.id(object)
-        varIndex = self.varList.index(self.varName())
-        self.method_dic[self.varName()] = self.buttonGroupMethod.button(id)
-
+    def openScript(self):
         try: 
             with open('saved_text.txt', 'r') as file:
                 # read a list of lines into data
@@ -821,6 +727,19 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
+        return data
+    
+    def saveScript(self, data):
+        with open('saved_text.txt', 'w') as file:
+            file.writelines( data )
+            file.close()
+    
+    def selectMethod(self,object):
+        id = self.buttonGroupMethod.id(object)
+        varIndex = self.varList.index(self.varName())
+        self.method_dic[self.varName()] = self.buttonGroupMethod.button(id)
+
+        data = self.openScript()
 
         method_key = '# METHOD'
         for i in range(len(data)):
@@ -841,26 +760,16 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             data[methodsLine+varIndex*2] = "\n"
 
         # write everything back
-        with open('saved_text.txt', 'w') as file:
-            file.writelines( data )
-            file.close()
+        self.saveScript(data)
         self.previsualizeCleaning()
+        
 
     def triggerSetFilter(self):
         self.setFilter(self.varName())
     
     def setFilter(self,var):
         self.filter_dic[var] = self.checkBoxFilter.isChecked()
-        try: # TODO make a function so it doesn't repeat
-            with open('saved_text.txt', 'r') as file:
-                # read a list of lines into data
-                data = file.readlines()
-                file.close()
-        except FileNotFoundError:
-            with open('sample_text.txt', 'r') as file:
-                # read a list of lines into data
-                data = file.readlines()
-                file.close()
+        data  = self.openScript()
 
         filter_key = '# SMOOTHING'
         for i in range(len(data)):
@@ -869,9 +778,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         
         data[filterLine+1] = f'to_filter = {self.filter_dic}\n'
 
-        with open('saved_text.txt', 'w') as file: # TODO make a function so it doesn't repeat
-            file.writelines( data )
-            file.close()
+        self.saveScript(data)
         self.previsualizeCleaning()
 
     def previsualizeCleaning(self):
@@ -923,7 +830,6 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
             self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
             self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
-            print(self.df_selected)
             self.df_selected.to_csv("selected_points.csv")
             
         self.previsualizeCleaning()
@@ -948,6 +854,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         os.remove("saved_text.txt") # TODO error
+        self.filter_dic = dict.fromkeys(self.varList[1:],False)
         self.checkBoxFilter.setChecked(False)
         self.previsualizeCleaning()
     

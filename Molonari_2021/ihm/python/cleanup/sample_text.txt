@@ -53,4 +53,4 @@ to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 
 
 for var in to_filter:
     if to_filter[var]:
-        self.df_cleaned[var] = savgol_filter(self.df_cleaned[var],20,2)
+        self.df_cleaned.loc[self.df_cleaned[var].notnull(),var] = savgol_filter(self.df_cleaned.loc[self.df_cleaned[var].notnull(),var],20,2)
