@@ -31,5 +31,19 @@ class LayerDb():
         
     
     def insert(self):
-        pass
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO Layer (
+            Layer,
+            Depth_bed
+        )
+        VALUES (?)
+        """
+        )
+        insertQuery.addBindValue("0")
+        insertQuery.addBindValue("0")
+        insertQuery.exec_()
+            
+        insertQuery.finish()
         

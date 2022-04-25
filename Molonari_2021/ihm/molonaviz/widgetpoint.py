@@ -19,7 +19,7 @@ From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widget
 
 class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
-    def __init__(self, point: Point, study: Study):
+    def __init__(self, point: Point, study: Study, db):
         # Call constructor of parent classes
         super(WidgetPoint, self).__init__()
         QtWidgets.QWidget.__init__(self)
@@ -28,6 +28,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         self.point = point
         self.study = study
+        self.mainDb = db
         self.pointDir = self.point.getPointDir()
         self.directmodelDir = self.pointDir + "/results/direct_model_results"
         self.MCMCDir = self.pointDir + "/results/MCMC_results"
@@ -450,7 +451,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         elif mode == 'MCMC':
             self.dfwater = readCSVWithDates(self.MCMCDir + "/MCMC_flows_quantiles.csv")
             self.dfsolvedtemp = readCSVWithDates(self.MCMCDir + "/solved_temperatures.csv")
+            
             self.dfdepths = pd.read_csv(self.MCMCdepthsdir)
+            self.mainDb.depthDb.insert(self.dfdepths)
+            
             self.dfintertemp = readCSVWithDates(self.MCMCDir + "/MCMC_temps_quantiles.csv")
             #C'EST ICI QU'ON AJOUTE LE CHOIX DE LA PROFONDEUR ?
             self.dfallparams = pd.read_csv(self.MCMCDir + "/MCMC_all_params.csv")
