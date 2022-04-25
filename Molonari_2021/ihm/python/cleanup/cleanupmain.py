@@ -649,7 +649,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
                 f.close()
         # scriptpartiel = plainTextEdit.toPlainText()
         scriptindente = sample_text.replace("\n", "\n   ")
-        script = "def fonction(self, df_ZH, df_Pressure, df_Calibration): \n   " + scriptindente + "\n" + "   return(1)"
+        script = "def fonction(self, df_ZH, df_Pressure, df_Calibration): \n   " + scriptindente + "\n" + "   return(df_loaded, df_cleaned, varList)"
         return(script)
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
@@ -670,7 +670,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             del sys.modules["script"]
 
         try :
-            fonction(self,df_ZH, df_Pressure, df_Calibration)
+            self.df_loaded, self.df_cleaned, self.varList = fonction(self,df_ZH, df_Pressure, df_Calibration)
 
             #On réécrit les csv:
             # os.remove(self.tprocessedfile)
@@ -691,16 +691,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         df_Pressure = df_Pressure.copy()
         df_Calibration = df_Calibration.copy()
         script = self.getScript()
-        print("Cleaning data...")
+        
         
         try :
             self.cleanup(script, df_ZH, df_Pressure, df_Calibration)
-            print("Data successfully cleaned !...")
-
-            # Save the modified text
-            # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
-            #     file.write(scriptpartiel)
-            print("Script successfully saved")
             
             
         except Exception as e :
@@ -712,8 +706,15 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         dig = DialogScript()
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
-            self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
-        self.plotPrevisualizedVar()
+
+            # Save the modified text
+            try:
+                dig.updateScript()
+                self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+                self.plotPrevisualizedVar()
+            except Exception as e:
+                displayCriticalMessage("Error: Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ')
+                self.editScript()
     
     # Define the selectMethod function and edit thhe sample_text.txt
     def openScript(self):
@@ -755,7 +756,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
             method = None
         
         if method:
-            data[methodsLine+varIndex*2] = f'self.df_cleaned = self.{method}(self.df_cleaned,"{self.varName()}")\n'
+            data[methodsLine+varIndex*2] = f'df_cleaned = self.{method}(df_cleaned,"{self.varName()}")\n'
         else:
             data[methodsLine+varIndex*2] = "\n"
 
@@ -835,7 +836,7 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.previsualizeCleaning()
 
     def resetCleanVar(self):
-        self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
+        # self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
 
         nan_values = np.empty((self.df_selected.shape[0],1))
         nan_values.fill(np.nan)

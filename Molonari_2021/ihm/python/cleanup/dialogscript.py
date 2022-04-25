@@ -37,3 +37,14 @@ class DialogScript(QtWidgets.QDialog, From_DialogScript):
         scriptindente = scriptpartiel.replace("\n", "\n   ")
         script = "def fonction(dft, dfp): \n   " + scriptindente + "\n" + "   return(dft, dfp)"
         return(script,scriptpartiel)
+
+    def updateScript(self):
+        scriptpartiel = self.plainTextEdit.toPlainText()
+        try:
+            compilation = compile(scriptpartiel,"compilescript.py", "exec")
+        except Exception as e:
+            raise e
+        # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
+        with open("saved_text.txt", "w") as f:
+            f.write(scriptpartiel)
+        print("Script successfully updated")

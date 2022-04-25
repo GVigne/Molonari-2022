@@ -16,9 +16,9 @@ dUdT = float(df_Calibration.iloc[4][list(df_Calibration.columns)[-1]])
 df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
 df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
-self.df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
-self.varList = list(self.df_loaded.columns)
-self.df_cleaned = self.df_loaded.copy().dropna() 
+df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
+varList = list(df_loaded.columns)
+df_cleaned = df_loaded.copy().dropna() 
 
 # TIMES
 print("Here we get the tempreatures right")
@@ -40,10 +40,10 @@ print("Here we get the tempreatures right")
 
 selected_df = pd.read_csv("selected_points.csv")
 
-for i in self.varList[1:]:
+for i in varList[1:]:
     df_var = selected_df[["date",i]].dropna()
-    values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
-    self.df_cleaned.loc[:,i] = values
+    values = df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+    df_cleaned.loc[:,i] = values
 
 # YOU CAN TOUCH - USER DEFINED FUNCTION
 
@@ -53,4 +53,4 @@ to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 
 
 for var in to_filter:
     if to_filter[var]:
-        self.df_cleaned.loc[self.df_cleaned[var].notnull(),var] = savgol_filter(self.df_cleaned.loc[self.df_cleaned[var].notnull(),var],20,2)
+        df_cleaned.loc[df_cleaned[var].notnull(),var] = savgol_filter(df_cleaned.loc[df_cleaned[var].notnull(),var],20,2)
