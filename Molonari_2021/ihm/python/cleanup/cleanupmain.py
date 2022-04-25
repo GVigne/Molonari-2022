@@ -43,7 +43,8 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
     def refresh_compare(self, df_or, df_cleaned,id):
         suffix_or = "_or"
         varOr = df_or.dropna()[['date',id]]
-        df_compare_or = df_or[["date",id]].join(varOr.set_index("date"),on="date",rsuffix=suffix_or) # TODO use merge
+        # df_compare_or = df_or[["date",id]].join(varOr.set_index("date"),on="date",rsuffix=suffix_or) # TODO use merge
+        df_compare_or= df_or[["date",id]].merge(varOr,on=["date"],how="outer",suffixes=(None,suffix_or))           
         df_compare_or['missing'] = df_compare_or[list(df_compare_or.columns)[-1]]
 
         df_compare_or.loc[np.isnan(df_compare_or['missing']),'missing'] = True
@@ -57,7 +58,8 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         
         suffix_cl = '_cleaned'
         varCleaned = df_cleaned[["date",id]].dropna()
-        df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl) # TODO use merge
+        # df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl) # TODO use merge
+        df_compare= varOr.merge(varCleaned,on=["date"],how="outer",suffixes=(None,suffix_cl))     
 
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
         mask = df_compare.apply(lambda x: True if x[id]!=x[id+suffix_cl] else False,axis=1)
@@ -559,17 +561,20 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         Get the CSV file for the raw data to be cleaned up
         """
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw ZH File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
+        # filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw ZH File",'.', filter='*.csv')[0]
         if filePath:
             self.lineEditRawZHFile.setText(filePath)
             df = self.readRawZHCSV()            
             # Dump the measures to SQL database
             self.writeRawZHSQL(df)
+            
 
     def browseFileRawPressure(self):
         """
         Get the CSV file for the raw data to be cleaned up
         """
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw Pressure File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
+        # filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw Pressure File",'.', filter='*.csv')[0]
         if filePath:
             self.lineEditRawPressureFile.setText(filePath)
             df = self.readRawPressureCSV()            
@@ -581,11 +586,13 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         Get the CSV file for the raw data to be cleaned up
         """
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Calibration File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/configuration/pressure_sensors', filter='*.csv')[0]
+        # filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Calibration File",'.', filter='*.csv')[0]
         if filePath:
             self.lineEditCalibrationFile.setText(filePath)
             df = self.readCalibrationCSV()            
             # Dump the measures to SQL database
             self.writeCalibrationSQL(df)
+            self.getDF()
 
     def load_pandas(self,db, statement, cols):    
         query = QSqlQuery(db)
@@ -799,8 +806,11 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
         self.df_ZH = self.load_pandas(self.rawCon, "SELECT date, t1, t2, t3, t4 FROM ZH", ["date", "t1", "t2", "t3", "t4"])
         convertDates(self.df_ZH)
+        # self.df_ZH[["t1","t2","t3","t4"]] = self.df_ZH[["t1","t2","t3","t4"]].apply(lambda x: (x-32)/1.8, axis=1) # Uncomment if original data is in Fahrenheit
         self.df_Pressure = self.load_pandas(self.rawCon, "SELECT date, tension, t_stream FROM Pressure", ["date", "tension", "t_stream"])
         convertDates(self.df_Pressure)
+        # self.df_Pressure[["t_stream"]] = self.df_Pressure[["t_stream"]].apply(lambda x: (x-32)/1.8, axis=1) # Uncomment if original data is in Fahrenheit
+        
         self.df_Calibration = self.load_pandas(self.rawCon, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
 
         self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
@@ -854,7 +864,10 @@ class TemperatureViewer(From_sqlgridview[0], From_sqlgridview[1]):
         self.df_selected.to_csv("selected_points.csv")
         # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
-        os.remove("saved_text.txt") # TODO error
+        try:
+            os.remove("saved_text.txt")
+        except FileNotFoundError:
+            pass
         self.filter_dic = dict.fromkeys(self.varList[1:],False)
         self.checkBoxFilter.setChecked(False)
         self.previsualizeCleaning()
@@ -879,3 +892,19 @@ if __name__ == '__main__':
         os.remove("saved_text.txt")
     except FileNotFoundError:
         pass
+    try:
+        os.remove("selected_points.csv")
+    except FileNotFoundError:
+        pass
+    # lower_limit = max(mainWin.df_cleaned[["t_stream"]].first_valid_index(),mainWin.df_cleaned[["charge_diff"]].first_valid_index(),mainWin.df_cleaned[["t4"]].first_valid_index())
+    # upper_limit = min(mainWin.df_cleaned[["t_stream"]].last_valid_index(),mainWin.df_cleaned[["charge_diff"]].last_valid_index(),mainWin.df_cleaned[["t4"]].last_valid_index())
+    # print(mainWin.df_cleaned)
+    # print(mainWin.df_cleaned.loc[lower_limit:upper_limit,:])
+    # cleaned = mainWin.df_cleaned.loc[lower_limit:upper_limit,:]
+    # zh = cleaned[["date","t1","t2","t3","t4"]]
+    # zh.to_csv("processed_temperatures_P51-1.csv")
+    # press = cleaned[["date","charge_diff","t_stream"]]
+    # press.to_csv("processed_pressures_P51-1.csv")
+    
+
+

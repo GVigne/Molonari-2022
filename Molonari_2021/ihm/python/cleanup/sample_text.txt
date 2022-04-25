@@ -16,13 +16,16 @@ dUdT = float(df_Calibration.iloc[4][list(df_Calibration.columns)[-1]])
 df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
 df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
+
+# TIMES - DATES
+
 df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
 varList = list(df_loaded.columns)
-df_cleaned = df_loaded.copy().dropna() 
 
-# TIMES
-print("Here we get the tempreatures right")
-
+lower_limit = max(df_loaded[["t_stream"]].first_valid_index(),df_loaded[["charge_diff"]].first_valid_index(),df_loaded[["t4"]].first_valid_index())
+upper_limit = min(df_loaded[["t_stream"]].last_valid_index(),df_loaded[["charge_diff"]].last_valid_index(),df_loaded[["t4"]].last_valid_index())
+# df_cleaned = df_loaded.copy().loc[lower_limit:upper_limit,:]
+df_cleaned = df_loaded.copy().dropna()
 # METHODS
 # t_stream
 
@@ -37,13 +40,15 @@ print("Here we get the tempreatures right")
 # t4
 
 # MANUAL SELECTED POINTS
+try:
+    selected_df = pd.read_csv("selected_points.csv")
 
-selected_df = pd.read_csv("selected_points.csv")
-
-for i in varList[1:]:
-    df_var = selected_df[["date",i]].dropna()
-    values = df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
-    df_cleaned.loc[:,i] = values
+    for i in varList[1:]:
+        df_var = selected_df[["date",i]].dropna()
+        values = df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+        df_cleaned.loc[:,i] = values
+except FileNotFoundError:
+    pass
 
 # YOU CAN TOUCH - USER DEFINED FUNCTION
 
