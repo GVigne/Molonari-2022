@@ -5,6 +5,7 @@ import numpy as np
 class MoloModel(QObject):
     """
     Abstract class representing a model onto which one or several views may be subscribed.
+    If there are different queries for different quantiles, then the first query MUST be the on which corresponds to the default model.
     """
     dataChanged = QtCore.Signal()
 
@@ -111,27 +112,38 @@ class SolvedTemperatureModel(MoloModel):
     """
     def __init__(self, queries):
         super().__init__(queries)
-        self.array_data = []
     
     def update_df(self):
         self.dates = []
-        self.array_data = []
+        self.data = {}
         self.depths = []
         while self.queries[0].next():
             self.dates.append(self.queries[0].value(0))
-            self.array_data.append(np.float64(self.queries[0].value(1)))
-            self.depths.append(np.float64(self.queries[0].value(2)))
         self.dates = np.array(self.dates)
-        self.array_data = np.array(self.array_data)
+        while self.queries[1].next():
+            self.depths.append(np.float64(self.queries[1].value(0)))
         self.depths = np.array(self.depths)
 
-        nb_elems = self.array_data.shape[0]
-        x = len(self.depths) #One hundred cells
-        y = nb_elems//x
-        self.array_data = np.transpose(self.array_data.reshape(x,y))#Now this is the color map with y-axis being the depth and x-axis being the time
+        for i in range(2,len(self.queries)):
+            query = self.queries[i]
+            query.next()
+            array_data = [np.float64(query.value(2))]
+            quantile = query.value(3)
+            while query.next():
+                array_data.append(np.float64(query.value(2)))
+            array_data = np.array(array_data)
+            nb_elems = array_data.shape[0]
+            x = len(self.depths) #One hundred cells
+            y = nb_elems//x
+            array_data = np.transpose(array_data.reshape(x,y))#Now this is the color map with y-axis being the depth and x-axis being the time
+            self.data[quantile] = array_data
+
     
-    def get_temperatures_cmap(self):
-        return self.array_data
+    def get_temperatures_cmap(self,quantile):
+        """
+        Given a quantile, return the associated heat map.
+        """
+        return self.data[quantile]
     
     def get_depths(self):
         return self.depths
@@ -139,17 +151,17 @@ class SolvedTemperatureModel(MoloModel):
     def get_dates(self):
         return self.dates
     
-    def get_depth_by_temp(self,date):
+    def get_depth_by_temp(self,date, quantile):
         """
-        Return two lists: the depths and temperature for given date. The date must be in the database format (YYYY:mm:dd:hh:mm:ss)
+        Return two lists: the temperature and depth for given date and quantile. The date must be in the database format (YYYY:mm:dd:hh:mm:ss)
         """
-        return self.array_data[:,np.where(self.dates==date)[0][0]],self.depths
+        return self.array_data[quantile][:,np.where(self.dates==date)[0][0]],self.depths
     
-    def get_temp_by_date(self,depth):
+    def get_temp_by_date(self,depth,quantile):
         """
-        Return two lists: the temperatures and dates for a given depth.
+        Return two lists: the dates and temperatures for a given depth and quantile.
         """
-        return self.dates,self.array_data[np.where(self.depths == depth)[0][0],:]
+        return self.dates,self.array_data[quantile][np.where(self.depths == depth)[0][0],:]
     
 class HeatFluxesModel(MoloModel):
     """

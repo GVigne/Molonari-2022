@@ -407,8 +407,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.groupBoxTempDepth.setLayout(vbox)
 
     def plotTemperatureMap(self):
-        select_tempmap = self.build_result_queries(result_type="Temperature",option="2DMap") #This is a list
-        self.tempmap_model = SolvedTemperatureModel(select_tempmap)
+        select_tempmap = self.build_result_queries(result_type="2DMap",option="Temperature") #This is a list of temperatures for all quantiles
+        select_depths = self.build_depths()
+        select_dates = self.build_dates()
+        self.tempmap_model = SolvedTemperatureModel([select_dates,select_depths]+select_tempmap)
         date = "" #TO DO
         depth = ""#TO DO
         self.umbrella_view = UmbrellaView(self.tempmap_model, date)
@@ -556,6 +558,24 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         ) 
     
+    def build_depths(self):
+        """
+        Build and return all the depths values
+        """
+        return QSqlQuery(f"""
+                SELECT Depth.Depth FROM Depth    
+        """
+        )
+        
+    def build_dates(self):
+        """
+        Build and return all the dates
+        """
+        return QSqlQuery(f"""
+                SELECT Date.Date FROM Date    
+        """
+        )
+    
     def build_data_queries(self, full_query=False, field=""):
         """
         Build and return ONE AND ONLY ONE of the following queries:
@@ -659,14 +679,17 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             )
         elif result_type =="2DMap":
             if option=="Temperature":
-                return QSqlQuery(f"""SELECT Date.Date, TemperatureAndHeatFlows.Temperature, TemperatureAndHeatFlows.Depth FROM TemperatureAndHeatFlows
+                return QSqlQuery(f"""SELECT TemperatureAndHeatFlows.Temperature,Quantile.Quantile FROM TemperatureAndHeatFlows
             JOIN Date
             ON TemperatureAndHeatFlows.Date = Date.id
             JOIN Depth
             ON TemperatureAndHeatFlows.Depth = Depth.id
-                WHERE TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
+            JOIN Quantile
+            ON TemperatureAndHeatFlows. Quantile = Quantile.id
+                WHERE Quantile.Quantile = {quantile}
                 AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
-                    """
+                ORDER BY Date.Date    
+                    """ #Column major: order by date
             )
             elif option=="HeatFlows":
                 return QSqlQuery(f"""SELECT Date.Date, TemperatureAndHeatFlows.AdvectiveFlow,TemperatureAndHeatFlows.ConductiveFlow,TemperatureAndHeatFlows.TotalFlow, TemperatureAndHeatFlows.Depth FROM TemperatureAndHeatFlows
