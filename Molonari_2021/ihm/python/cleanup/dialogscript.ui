@@ -14,13 +14,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Clean-up your data</string>
+   <string>Edit script</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please write below your Python code to clean-up your data. You may use the following predefined variables : &lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;dft&lt;/span&gt; for temperatures data frame&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;dfp&lt;/span&gt; for pressure data frame&lt;/p&gt;&lt;p&gt;Vous pouvez vous aider des exemples fournis&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please write below your Python code to clean-up your data. You may use the following predefined variables: &lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;self.df_loaded &lt;/span&gt;for the dataframe with the raw data from both sensors. Tension values have been already changed to Charge_diff values.&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;self.df_cleaned &lt;/span&gt;is the exit dataframe with NaN values where there is an outlier and with the updated values if the signal has been filtered.&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;self.varList &lt;/span&gt;is the list of names for each column in self.df_loaded. &lt;/p&gt;&lt;p&gt;- The DataFrames &lt;span style=&quot; font-weight:600;&quot;&gt;df_ZH&lt;/span&gt;, &lt;span style=&quot; font-weight:600;&quot;&gt;df_Pressure&lt;/span&gt;, and &lt;span style=&quot; font-weight:600;&quot;&gt;df_Calibration&lt;/span&gt; are input to this script and can be got from the .csv files.&lt;/p&gt;&lt;p&gt;Please do not touch the predifined functions and just use the space dedicated to the user's customized functions. Filtering is always made after all the data has been cleaned.&lt;/p&gt;&lt;p&gt;Press &lt;span style=&quot; font-weight:600;&quot;&gt;OK &lt;/span&gt;to save and run the code, or press &lt;span style=&quot; font-weight:600;&quot;&gt;Cancel&lt;/span&gt; to ignore the changes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="textFormat">
       <enum>Qt::AutoText</enum>
@@ -36,39 +36,7 @@
    <item>
     <widget class="QPlainTextEdit" name="plainTextEdit">
      <property name="plainText">
-      <string># Point 27
-
-# Remove measures after 2016/03/30
-dft = dft.iloc[:2236]
-dfp = dfp.iloc[:2236]
-
-# Remove all first measures up to 2016/03/19
-dft = dft.iloc[1084:]
-dfp = dfp.iloc[1084:]
-
-# TODO : use date/time comparison instead of sample indices
-
-
-
-
-# Point 23
-
-# Import numpy
-import numpy as np
-
-# Remove measures after 2015/12/15 10:00:00
-dft = dft.iloc[:660]
-dfp = dfp.iloc[:660]
-
-# Remove all first measures up to 2015/12/19 12:00:00
-dft = dft.iloc[92:]
-dfp = dfp.iloc[92:]
-
-
-# Remove Spurious Temperatures (Kelvin)
-dft.iloc[:,1:]=np.where((dft.iloc[:,1:]&lt;274), np.NaN, dft.iloc[:,1:])
-dft.iloc[:,1:]=np.where((dft.iloc[:,1:]&gt;304), np.NaN, dft.iloc[:,1:])
-</string>
+      <string/>
      </property>
     </widget>
    </item>
