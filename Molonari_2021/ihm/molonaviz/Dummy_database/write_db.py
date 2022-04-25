@@ -63,7 +63,10 @@ def readCSVWithDates(path: str, skiprows=0, sep=','):
     return df
 
 def my_format(st):
-    return "20"+st[0:2]+":"+st[3:5]+":"+st[6:8]+":"+st[9:17]
+    if len(st) ==20:
+        return "20"+st[6:8]+":"+st[0:2]+":"+st[3:5]+":"+st[9:17]
+    elif len(st) ==16:
+        return st[6:10]+":" + st[0:2] +":" + st[3:5] +":" + st[11:16]+":00"
 
 con = QSqlDatabase.addDatabase("QSQLITE")
 con.setDatabaseName("MCMC.sqlite")
@@ -185,59 +188,126 @@ con.transaction()
 
 
 
-df = pd.read_csv("../../../studies/study_2022/Point034/results/MCMC_results/MCMC_temps_quantiles.csv")
+# df = pd.read_csv("../../../studies/study_2022/Point034/results/MCMC_results/MCMC_temps_quantiles.csv")
 
+# q = QSqlQuery()
+# q.prepare(f"""
+# INSERT INTO TemperatureAndHeatFlows (
+#                                         Date,
+#                                         Depth,
+#                                         Temperature,
+#                                         AdvectiveFlow,
+#                                         ConductiveFlow,
+#                                         TotalFlow,
+#                                         PointKey,
+#                                         Quantile
+#                                     )
+#                                     VALUES (
+#                                         :a,
+#                                         :b,
+#                                         :c,
+#                                         :d,
+#                                         :e,
+#                                         :f,
+#                                         1,
+#                                         :g
+#                                     )
+# """)
+
+
+# for rowIndex, row in df.iterrows(): #iterate over rows
+#             elem = []
+#             for columnIndex, value in row.items():
+#                 elem.append(value)
+#             print(len(elem))
+#             m= QSqlQuery(f"""SELECT Date.id FROM Date WHERE Date.Date = "{my_format(elem[0])}" """)
+#             m.exec()
+#             m.next()
+#             q.bindValue(":a",m.value(0))
+
+#             for i in range(1,400,4):
+#                 q.bindValue(":b",(i+3)//4)
+#                 q.bindValue(":d",0)
+#                 q.bindValue(":e",0)
+#                 q.bindValue(":f",0)
+
+#                 q.bindValue(":c",elem[i+1])
+#                 q.bindValue(":g",4) #0.05
+#                 q.exec()
+
+#                 q.bindValue(":c",elem[i+2])
+#                 q.bindValue(":g",2) #0.5
+#                 q.exec()
+
+#                 q.bindValue(":c",elem[i+3])
+#                 q.bindValue(":g",3) #0.95
+#                 q.exec()
+
+# con.commit()
+
+df = pd.read_csv("../../../studies/study_2022/Point034/raw_data/raw_pressures.csv",skiprows=1)
+print(df.head())
 q = QSqlQuery()
 q.prepare(f"""
-INSERT INTO TemperatureAndHeatFlows (
-                                        Date,
-                                        Depth,
-                                        Temperature,
-                                        AdvectiveFlow,
-                                        ConductiveFlow,
-                                        TotalFlow,
-                                        PointKey,
-                                        Quantile
-                                    )
-                                    VALUES (
-                                        :a,
-                                        :b,
-                                        :c,
-                                        :d,
-                                        :e,
-                                        :f,
-                                        1,
-                                        :g
-                                    )
+INSERT INTO RawMeasuresPress (
+                                 Date,
+                                 TempBed,
+                                 Tension,
+                                 PointKey
+                             )
+                             VALUES (
+                                 :a,
+                                 :b,
+                                 :c,
+                                 1
+                             )
+
 """)
 
+for rowIndex, row in df.iterrows(): #iterate over rows
+        elem = []
+        for columnIndex, value in row.items():
+            elem.append(value)
+        print(elem[1])
+        q.bindValue(":a", my_format(elem[1]))
+        q.bindValue(":c",elem[2])
+        q.bindValue(":b",elem[3])  
+        q.exec()
+con.commit()
+
+con.transaction()
+df = pd.read_csv("../../../studies/study_2022/Point034/raw_data/raw_temperatures.csv",skiprows=1)
+print(df.head())
+q = QSqlQuery()
+q.prepare(f"""
+INSERT INTO RawMeasuresTemp (
+                                Date,
+                                Temp1,
+                                Temp2,
+                                Temp3,
+                                Temp4,
+                                PointKey
+                            )
+                            VALUES (
+                                :a,
+                                :b,
+                                :c,
+                                :d,
+                                :e,
+                                1
+                            );
+
+""")
 
 for rowIndex, row in df.iterrows(): #iterate over rows
-            elem = []
-            for columnIndex, value in row.items():
-                elem.append(value)
-            print(len(elem))
-            m= QSqlQuery(f"""SELECT Date.id FROM Date WHERE Date.Date = "{my_format(elem[0])}" """)
-            m.exec()
-            m.next()
-            q.bindValue(":a",m.value(0))
-
-            for i in range(1,400,4):
-                q.bindValue(":b",(i+3)//4)
-                q.bindValue(":d",0)
-                q.bindValue(":e",0)
-                q.bindValue(":f",0)
-
-                q.bindValue(":c",elem[i+1])
-                q.bindValue(":g",4) #0.05
-                q.exec()
-
-                q.bindValue(":c",elem[i+2])
-                q.bindValue(":g",2) #0.5
-                q.exec()
-
-                q.bindValue(":c",elem[i+3])
-                q.bindValue(":g",3) #0.95
-                q.exec()
-
+        elem = []
+        for columnIndex, value in row.items():
+            elem.append(value)
+        print(elem)
+        q.bindValue(":a", my_format(elem[1]))
+        q.bindValue(":b",elem[2])
+        q.bindValue(":c",elem[3]) 
+        q.bindValue(":d",elem[4]) 
+        q.bindValue(":e",elem[5])  
+        q.exec()
 con.commit()
