@@ -159,9 +159,9 @@ class SolvedTemperatureModel(MoloModel):
     
     def get_temp_by_date(self,depth,quantile):
         """
-        Return two lists: the dates and temperatures for a given depth and quantile.
+        Return the temperatures for a given depth and quantile.
         """
-        return self.dates,self.array_data[quantile][np.where(self.depths == depth)[0][0],:]
+        return self.array_data[quantile][np.where(self.depths == depth)[0][0],:]
     
 class HeatFluxesModel(MoloModel):
     """

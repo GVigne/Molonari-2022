@@ -181,14 +181,23 @@ class UmbrellaView(MoloView1D):
 class TempDepthView(MoloView1D):
     """
     Concrete class for the temperature to a given depth as a function of time.
+    An important attribut for this class is option, which reflects what the user wants to display: either quantiles or depths for the thermometer. Option is a list of two elements:
+        - the first one is a depth corresponding to a thermometer
+        - a list of values representing the quantiles. If this list is empty, then nothing will be displayed
     """
-    def __init__(self, molomodel: MoloModel,depth, time_dependent=True, title="", ylabel="Température en K", xlabel=""):
+    def __init__(self, molomodel: MoloModel,depth, time_dependent=True, title="", ylabel="Température en K", xlabel="",options=[0,[]]):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
         self.depth = depth
+        self.options = options
     
+    def update_options(self,options):
+        self.options = options
+
     def retrieve_data(self):
-        self.x,self.y = self.model.get_temp_by_date(self.depth)
-        self.y = {f"Température à la profondeur {self.depth}":self.y}
+        thermo_depth = self.options[0]
+        self.x = self.model.get_dates()
+        for quantile in self.options[1]:
+            self.y[f"Température à la profondeur {self.depth} - quantile {quantile}"] = self.model.get_temp_by_date(thermo_depth, quantile)
 
 class WaterFluxView(MoloView1D):
     """
@@ -211,7 +220,7 @@ class TempMapView(MoloView2D):
         super().__init__(molomodel, time_dependent, title, xlabel, ylabel)
     
     def retrieve_data(self):
-        self.cmap = self.model.get_temperatures_cmap()
+        self.cmap = self.model.get_temperatures_cmap(0)
         self.x = self.model.get_depths()
         self.y = self.model.get_dates()
 

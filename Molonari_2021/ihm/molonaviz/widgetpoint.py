@@ -124,7 +124,29 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         This method is called when a checkbox showing a quantile or a radio buttion is changed. New curves should be plotted in the Temperature per Depth View.
         """
         #Needs to be adapted!
-        return
+        quantiles = []
+        for i in range (self.gridLayoutQuantiles.count()):
+            checkbox = self.gridLayoutQuantiles.itemAt(i,0).widget()
+            if checkbox.isChecked():
+                txt = checkbox.text()
+                #A bit ugly but it works
+                if txt == "Modèle direct":
+                    quantiles.append(0)
+                else:
+                    #txt is "Quantile ... "
+                    quantiles.append(float(txt[8:]))
+        depth_id = 0
+        if self.radioButtonTherm1.isChecked():
+            depth_id = 1
+        elif self.radioButtonTherm2.isChecked():
+            depth_id = 2
+        elif self.radioButtonTherm3.isChecked():
+            depth_id = 3
+        select_thermo_depth = self.build_thermo_depth(depth_id)
+        select_thermo_depth.exec()
+        select_thermo_depth.next()
+        self.depth_view.update_options([select_thermo_depth.value(0),quantiles])
+        self.depth_view.on_update() #Refresh the view
 
     def setPressureAndTemperatureModels(self):
         # Set the Temperature and Pressure arrays
@@ -575,6 +597,24 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 SELECT Date.Date FROM Date    
         """
         )
+    
+    def build_thermo_depth(self,id):
+        """
+        Given an integer (1,2 or 3), return the associated depth of the thermometer.
+        """
+        if id in [1,2,3]:
+            field = f"Depth{id}ID"
+            return QSqlQuery(f"""
+                SELECT Depth.Depth FROM Depth
+                JOIN RMSE
+                ON Depth.id = RMSE.{field} 
+                JOIN Point
+                ON RMSE.PointKey = Point.id 
+                JOIN SamplingPoint
+                ON Point.SamplingPoint = SamplingPoint.id
+                WHERE SamplingPoint.Name = "{self.point.name}"
+            """
+            ) 
     
     def build_data_queries(self, full_query=False, field=""):
         """
