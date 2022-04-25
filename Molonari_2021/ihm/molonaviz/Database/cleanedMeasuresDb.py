@@ -1,7 +1,7 @@
 from PyQt5.QtSql import QSqlQuery
 import pandas as pd
 from .samplingPointDb import SamplingPointDb
-from newDateDb import NewDateDb
+from .newDateDb import NewDateDb
 
 class CleanedMeasuresDb():
     def __init__(self, con) -> None:
@@ -61,6 +61,9 @@ class CleanedMeasuresDb():
     
         points = study.getPointsDb()
         
+        newDateDb = NewDateDb(self.con)
+        newDateDb.insert(study)
+        
         
         for point in points:
             df_processed_temp = pd.read_csv(study.rootDir + "/" + point.name + "/processed_data/processed_temperatures.csv")
@@ -71,11 +74,10 @@ class CleanedMeasuresDb():
             col = df.columns
             
             pointKey = SamplingPointDb(self.con).getIdByname(point.name)
-            newDateDb = NewDateDb()
-            newDateDb.insert(study)
             
             for ind in df.index:
-                date_id = newDateDb().getIdByDate(str(df[col[0]][ind]))
+                # date_id = newDateDb.getIdByDate(str(df[col[0]][ind]))
+                date_id = 1
                 insertQuery.addBindValue(date_id)
                 insertQuery.addBindValue(str(df[col[-1]][ind]))
                 insertQuery.addBindValue(str(df[col[1]][ind]))

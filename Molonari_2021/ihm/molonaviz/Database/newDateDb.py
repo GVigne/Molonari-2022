@@ -1,7 +1,7 @@
 from PyQt5.QtSql import QSqlQuery
 import pandas as pd
 
-class DateDb():
+class NewDateDb():
     def __init__(self, con) -> None:
         self.con = con
     

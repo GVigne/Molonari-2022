@@ -3,7 +3,7 @@ import os
 
 from .bestParametersDb import BestParametersDb
 from .cleanedMeasuresDb import CleanedMeasuresDb
-from .dateDb import DateDb
+from .newDateDb import NewDateDb
 from .depthDb import DepthDb
 from .directParametersDb import DirectParametersDb
 from .laboDb import LaboDb
@@ -30,7 +30,7 @@ class MainDb():
         
         self.bestParametersDb = BestParametersDb(self.con)
         self.cleanedMeasuresDb = CleanedMeasuresDb(self.con)
-        self.dateDb = DateDb(self.con)
+        self.dateDb = NewDateDb(self.con)
         self.depthDb = DepthDb(self.con)
         self.directParametersDb = DirectParametersDb(self.con)
         self.laboDb = LaboDb(self.con)
