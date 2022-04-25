@@ -3,9 +3,16 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from PyQt5 import QtCore
-
-from pyheatmy import *
 from point import Point
+from errors import *
+from usefulfonctions import *
+
+try:
+   from pyheatmy import *
+except Exception as e:
+    print(e, "==> Package pyheatmy not installed(compute.py)")
+    displayCriticalMessage_pyheatmy(str(os.path.join(os.path.dirname(__file__),"compute.py")))
+
 
 
 class ColumnMCMCRunner(QtCore.QObject):

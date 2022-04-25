@@ -1,3 +1,4 @@
+from cmath import e
 import unicodedata
 import string
 import numpy as np
@@ -144,4 +145,12 @@ def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
     msg.setIcon(QtWidgets.QMessageBox.Critical)
     msg.setText(mainMessage)
     msg.setInformativeText(infoMessage)
+    msg.exec_() 
+
+def displayCriticalMessage_pyheatmy(place_of_error: str):
+    app = QtWidgets.QApplication([])
+    msg = QtWidgets.QMessageBox()
+    msg.setIcon(QtWidgets.QMessageBox.Warning)
+    msg.setText("Warning : Can not import package pyheatmy in " + place_of_error + ", the calculation part of Molonaviz is not available.")
+    msg.setInformativeText("Please follow this guide for the installation of pyheatmy: https://github.com/mathisbrdn/pyheatmy.")
     msg.exec_() 

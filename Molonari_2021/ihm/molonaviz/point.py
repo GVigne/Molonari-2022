@@ -6,8 +6,13 @@ from datetime import datetime, timedelta
 
 from sensors import PressureSensor, Shaft, Thermometer
 from usefulfonctions import *
-from pyheatmy import *
 from errors import *
+try:
+   from pyheatmy import *
+except Exception as e:
+    print(e, "==> Package pyheatmy not installed(point.py)")
+    displayCriticalMessage_pyheatmy(str(os.path.join(os.path.dirname(__file__),"point.py")))
+
 
 class Point(object):
     
