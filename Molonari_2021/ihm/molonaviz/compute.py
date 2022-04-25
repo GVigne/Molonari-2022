@@ -23,8 +23,10 @@ class ColumnMCMCRunner(QtCore.QObject):
         
     def run(self):
         print("Launching MCMC...")
+
+        all_priors = [["Couche 1", self.col._real_z[-1], self.priors]]
         
-        self.col.compute_mcmc(self.nb_iter, self.priors, self.nb_cells, self.quantiles)
+        self.col.compute_mcmc(self.nb_iter, all_priors, self.nb_cells, self.quantiles)
 
         self.finished.emit()
 
@@ -79,7 +81,7 @@ class Compute(QtCore.QObject):
         self.thread.quit()
         print("MCMC finished")
 
-        best_params = self.col.get_best_param()
+        best_params = self.col.get_best_param()[0]
 
         # Sauvegarde des résultats de la MCMC
         resultsDir = os.path.join(self.point.getPointDir(), 'results', 'MCMC_results')
@@ -138,7 +140,7 @@ class Compute(QtCore.QObject):
         Pour accéder au fichier : pointDir --> results --> MCMC_results --> MCMC_best_params.csv
         """
 
-        best_params = self.col.get_best_param()
+        best_params = self.col.get_best_param()[0]
 
         best_params_dict = {
             'moinslog10K':[best_params[0]], 
@@ -177,13 +179,13 @@ class Compute(QtCore.QObject):
 
         times = self.col.times_solve
 
-        flows = self.col.flows_solve
+        flows = self.col.flows_solve[0,::]
         #quantile05 = self.col.get_flows_quantile(0.05)
         #quantile50 = self.col.get_flows_quantile(0.5)
         #quantile95 = self.col.get_flows_quantile(0.95)
         QUANTILES = []
         for quantile in self.quantiles :
-            QUANTILES.append(self.col.get_flows_quantile(quantile))
+            QUANTILES.append(self.col.get_flows_quantile(quantile)[0,::])
 
         # Formatage des dates
         n_dates = len(times)
@@ -224,12 +226,12 @@ class Compute(QtCore.QObject):
         for i in range(n_dates):
             times_string[i,0] = times[i].strftime('%y/%m/%d %H:%M:%S')
 
-        for l in range(self.col.temps_solve.shape[1]):
+        for l in range(self.col.temps_solve.shape[0]):
 
-            temp = self.col.temps_solve[:,l] #température à la lème profondeur
+            temp = self.col.temps_solve[l,:] #température à la lème profondeur
             QUANTILES = []
             for quantile in self.quantiles :
-                QUANTILES.append(self.col.get_temps_quantile(quantile)[:,l])
+                QUANTILES.append(self.col.get_temps_quantile(quantile)[l,:])
 
             # Création du dataframe
             np_temps_quantiles = np.zeros((n_dates,len(QUANTILES)+1))
@@ -275,7 +277,7 @@ class Compute(QtCore.QObject):
         
         temps = self.col.temps_solve
         times = self.col.times_solve
-        flows = self.col.flows_solve
+        flows = self.col.flows_solve[0,::]
         advective_flux = self.col.get_advec_flows_solve()
         conductive_flux = self.col.get_conduc_flows_solve()
         depths = self.col.get_depths_solve()
@@ -295,7 +297,7 @@ class Compute(QtCore.QObject):
         ## Profils de températures
 
         # Création du dataframe
-        np_temps_solve = np.concatenate((times_string, temps), axis=1)
+        np_temps_solve = np.concatenate((times_string, temps.T), axis=1)
         df_temps_solve = pd.DataFrame(np_temps_solve, columns=['Date Heure, GMT+01:00']+[f'Température (K) pour la profondeur {depth:.4f} m' for depth in depths])
         # Sauvegarde sous forme d'un fichier csv
         temps_solve_file = os.path.join(resultsDir, 'solved_temperatures.csv')
@@ -305,7 +307,7 @@ class Compute(QtCore.QObject):
         ## Flux d'énergie advectifs
 
         # Création du dataframe
-        np_advective_flux = np.concatenate((times_string, advective_flux), axis=1)
+        np_advective_flux = np.concatenate((times_string, advective_flux.T), axis=1)
         df_advective_flux = pd.DataFrame(np_advective_flux, columns=['Date Heure, GMT+01:00']+[f'Flux advectif (W/m2) pour la profondeur {depth:.4f} m' for depth in depths])
         # Sauvegarde sous forme d'un fichier csv
         advective_flux_file = os.path.join(resultsDir, 'advective_flux.csv')
@@ -315,7 +317,7 @@ class Compute(QtCore.QObject):
         ## Flux d'énergie conductifs
 
         # Création du dataframe
-        np_conductive_flux = np.concatenate((times_string, conductive_flux), axis=1)
+        np_conductive_flux = np.concatenate((times_string, conductive_flux.T), axis=1)
         df_conductive_flux = pd.DataFrame(np_conductive_flux, columns=['Date Heure, GMT+01:00']+[f'Flux conductif (W/m2) pour la profondeur {depth:.4f} m' for depth in depths])
         # Sauvegarde sous forme d'un fichier csv
         conductive_flux_file = os.path.join(resultsDir, 'conductive_flux.csv')
@@ -324,7 +326,7 @@ class Compute(QtCore.QObject):
         ## Flux d'énergie totaux
 
         # Création du dataframe
-        np_total_flux = np.concatenate((times_string, advective_flux+conductive_flux), axis=1)
+        np_total_flux = np.concatenate((times_string, advective_flux.T+conductive_flux.T), axis=1)
         df_total_flux = pd.DataFrame(np_total_flux, columns=['Date Heure, GMT+01:00']+[f"Flux d'énergie total (W/m2) pour la profondeur {depth:.4f} m" for depth in depths])
         # Sauvegarde sous forme d'un fichier csv
         total_flux_file = os.path.join(resultsDir, 'total_flux.csv')
