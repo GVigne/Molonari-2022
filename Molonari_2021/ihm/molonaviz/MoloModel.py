@@ -197,3 +197,10 @@ class HeatFluxesModel(MoloModel):
     
     def get_total_flow(self):
         return self.total
+
+class ParamsDistributionModel(MoloModel):
+    def __init__(self, queries):
+        super().__init__(queries)
+    
+    def update_df(self):
+        pass

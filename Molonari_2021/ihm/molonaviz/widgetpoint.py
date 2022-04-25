@@ -65,7 +65,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_path,select_notice,select_infos = self.build_infos_queries()
 
         #Installation image
-        # select_path.exec()
+        select_path.exec()
         select_path.next()
         self.labelSchema.setPixmap(QPixmap(select_path.value(0))) 
         self.labelSchema.setAlignment(QtCore.Qt.AlignHCenter)
@@ -74,7 +74,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         # self.labelSchema.setSizePolicy(QtWidgets.QSizePolicy.Ignored,QtWidgets.QSizePolicy.Ignored)
         
         #Notice
-        # select_notice.exec()
+        select_notice.exec()
         select_notice.next()
         self.plainTextEditNotice.setPlainText(select_notice.value(0))
         
@@ -88,7 +88,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Setup the Combo box and which will be used to display the parameters
         """
         select_depths_layers = self.build_layers_query()
-        # select_depths_layers.exec()
+        select_depths_layers.exec()
         while select_depths_layers.next():
             self.comboBoxSelectLayer.addItem(select_depths_layers.value(0))
     
@@ -360,7 +360,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
 
-        # self.pressuremodel.exec()
+        self.pressuremodel.exec()
 
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
@@ -372,7 +372,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox2.addWidget(self.graphtemp)
         vbox2.addWidget(self.toolbarTemp)
 
-        # self.tempmodel.exec()
+        self.tempmodel.exec()
     
     def setResultsPlots(self):
         """
@@ -433,7 +433,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.tempmap_view)
         vbox.addWidget(self.toolbarDepth)
 
-        # self.tempmap_model.exec()
+        self.tempmap_model.exec()
 
     def plotFluxes(self):
         #Plot the heat fluxes
@@ -474,7 +474,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.waterflux_view)
         vbox.addWidget(self.toolbarWaterFlux)
 
-        # self.waterflux_model.exec()
+        self.waterflux_model.exec()
     
     def plotHistos(self):
         pass
@@ -547,6 +547,15 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         )
     
+    def build_quantiles(self):
+        """
+        Build and return the quantiles values
+        """
+        return QSqlQuery(f"""
+                SELECT Quantile.Quantile FROM Quantile    
+        """
+        ) 
+    
     def build_data_queries(self, full_query=False, field=""):
         """
         Build and return ONE AND ONLY ONE of the following queries:
@@ -610,11 +619,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             return True
     def build_result_queries(self,result_type ="",option=""):
         """
-        Return a list of queries according to the user's wish. The list will either be of length 1 (the model was not computed before), or more than one: in this case, there are as many queries as there are quantiles, and they are ordered in the following way:
-        1) default model
-        2) quantile 0.05
-        3) quantile 0.5
-        4) quantile 0.95
+        Return a list of queries according to the user's wish. The list will either be of length 1 (the model was not computed before), or more than one: in this case, there are as many queries as there are quantiles: the first query corresponds to the default model (quantile 0)
         """
         computation_type = self.computation_type()
         if computation_type is None:
@@ -623,7 +628,16 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             return [self.define_result_queries(result_type=result_type,option=option, quantile=0)]
         else:
             #This could be enhanced by going in the database and seeing which quantiles are available. For now, these available quantiles will be hard-coded
-            return [self.define_result_queries(result_type=result_type,option=option, quantile=i) for i in [0,0.05,0.5,0.95]]
+            select_quantiles = self.build_quantiles()
+            select_quantiles.exec()
+            result = []
+            while select_quantiles.next():
+                if select_quantiles.value(0) ==0:
+                    #Default model should always be the first one
+                    result.insert(0,self.define_result_queries(result_type=result_type,option=option, quantile=select_quantiles.value(0)))
+                else:
+                    result.append(self.define_result_queries(result_type=result_type,option=option, quantile=select_quantiles.value(0)))
+            return result
     
     def define_result_queries(self,result_type ="",option="",quantile = 0):
         """
