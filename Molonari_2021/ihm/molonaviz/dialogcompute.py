@@ -173,7 +173,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 permeability = query_test.value(1)
                 sediThermCon = query_test.value(2)
                 porosity = query_test.value(3)
-                layer = query_test.value(4)
+                solVolThermCap = query_test.value(4)
+                layer = query_test.value(5)
                 #Find the depthBed
                 query_new = QSqlQuery()
                 query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
@@ -184,7 +185,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 self.tableWidget.setItem(i, 1, QTableWidgetItem(permeability))
                 self.tableWidget.setItem(i, 2, QTableWidgetItem(porosity))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem(sediThermCon))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
+                self.tableWidget.setItem(i, 4, QTableWidgetItem(solVolThermCap))
                 i+=1
             db_point.close()
             return  
@@ -204,7 +205,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
             query_new.first()
             depth_bed = query_new.value(2)
-            #Insert the values
+            #Insert the values into the table
             self.tableWidget.setItem(i, 0, QTableWidgetItem(depth_bed))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(permeability))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(porosity))
@@ -326,90 +327,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         return nb_iter, priors, nb_cells, quantiles
     
-    '''
-    def writeSQL(self, df: pd.DataFrame):
-        """
-        Write the given Pandas dataframe into the SQL database
-        """
-        self.sql = "molonari_slqdb.sqlite"
-        #self.con = QSqlDatabase.addDatabase("QSQLITE", connectionName = "qsldatabase")
-        #self.con.setDatabaseName(self.sql)
-        # Remove the previous measures table (if so)
-        dropTableQuery = QSqlQuery() 
-
-        dropTableQuery.exec("DROP TABLE IF EXISTS LastParameters")
-        
-        dropTableQuery.finish()
-        
-        # Create the table（LastParameters） for storing the measures (layer, Depth_bed, -log10K_best, lambda_s_best, n_best, Cap)
-        createTableQuery = QSqlQuery()
-        createTableQuery.exec(
-            """
-            CREATE TABLE IF NOT EXISTS LastParameters (
-                Layer INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                Depth_bed FLOAT,
-                -log10K_best FLOAT,
-                lambda_s_best FLOAT,
-                n_best FLOAT,
-                Cap FLOAT           
-            )
-            """
-        )
-        # Construct the dynamic insert SQL request and execute it
-        insertDataQuery = QSqlQuery()
-        insertDataQuery.prepare(
-            """
-            INSERT INTO LastParameters (
-                Depth_bed,
-                -log10K_best,
-                lambda_s_best,
-                n_best,
-                Cap
-            )
-            VALUES (?, ?, ?, ?, ?)
-            """
-        )
-
-        for i in range(df.shape[0]):
-            val = tuple(df.iloc[i])
-            insertDataQuery.addBindValue(str(val[0]))
-            insertDataQuery.addBindValue(str(val[1]))
-            insertDataQuery.addBindValue(str(val[2]))
-            insertDataQuery.addBindValue(str(val[3]))
-            insertDataQuery.addBindValue(str(val[4]))
-            insertDataQuery.exec()
-    
-    def readSQL(self):
-        """
-        Read the SQL database and display measures
-        """
-        #print("Tables in the SQL Database:", self.con.tables())
-        
-        # Read the database and print its content using SELECT
-        selectDataQuery = QSqlQuery()
-        
-        selectDataQuery.exec("SELECT -log10K_best, lambda_s_best, n_best, Cap, Depth_bed FROM LastParameters join Layer on Layer.ID = LastParameters.Layer")
-        while selectDataQuery.next():
-            print(selectDataQuery.value(0))
-            print(selectDataQuery.value(1))
-            print(selectDataQuery.value(2))
-            print(selectDataQuery.value(3))
-            print(selectDataQuery.value(4))
-      
-        selectDataQuery.finish()
-        
-        # Re-Load the table directly in a QSqlTableModel
-        model = QSqlTableModel()
-        model.setTable("LastParameters")
-        model.setEditStrategy(QSqlTableModel.OnFieldChange)
-        model.select()
-        
-        # Set the model to the GUI table view
-        self.tableWidget.setModel(model)
-        
-        # Prevent from editing the table
-        # self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-    '''
     def run(self):        
         if self.groupBoxMCMC.isChecked():
             self.done(1)
@@ -419,7 +336,29 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         '''
         SQL : INSERT INTO Layer (DepthBed) VALUES (1) WHERE id = layer
         '''
+        #Open the database
+        db_point = QSqlDatabase.addDatabase("QSQLITE")
+        db_point.setDatabaseName(r"C:\Users\fujia\Documents\GitHub\Molonari-2022\Molonari_2021\studies\study_2022\molonari_study_2022 .sqlite")
+        if not db_point.open():
+            print("Error: Cannot open databse")
             
+        #Find the id related to the SamplingPoint
+        query_test = QSqlQuery()
+        query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = {self.pointName}")
+        
+        #Find the bestParameter related to the id found
+        query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {point_id}")
+        
+        query_test.exec_(f"""UPDATE BestParameters SET log10KBest={best_params_dict["moinslog10K"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
+        query_test.exec_(f"""UPDATE BestParameters SET LambdaSBest={best_params_dict["n"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
+        query_test.exec_(f"""UPDATE BestParameters SET NBest={best_params_dict["lambda_s"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
+        query_test.exec_(f"""UPDATE BestParameters SET rhos_cs={best_params_dict["rhos_cs"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
+        
+        query_new = QSqlQuery()
+        query_new.exec_(f"""UPDATE Layer SET DepthBed={self.tableWidget.item(id,0).text()} WHERE id = {layer}""")
+        
+        db_point.close()
+               
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     mainWin = DialogCompute(1)
