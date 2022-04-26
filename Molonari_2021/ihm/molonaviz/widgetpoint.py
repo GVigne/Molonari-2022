@@ -78,9 +78,15 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         #Notice
         select_notice.exec()
         select_notice.next()
-        self.plainTextEditNotice.setPlainText(select_notice.value(0))
-        
+        try:
+            file = open(select_notice.value(0))
+            notice = file.read()
+            self.plainTextEditNotice.setPlainText(notice)
+        except Exception:
+            self.plainTextEditNotice.setPlainText("No notice was found")
+            
         #Infos
+        select_infos.exec()
         self.infosModel = QSqlQueryModel()
         self.infosModel.setQuery(select_infos)
         self.tableViewInfos.setModel(self.infosModel)
@@ -771,4 +777,5 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)
     mainWin.show()
+    mainWin.setInfoTab()
     sys.exit(app.exec_())

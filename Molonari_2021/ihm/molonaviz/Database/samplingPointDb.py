@@ -30,7 +30,7 @@ class SamplingPointDb():
             Longitude       REAL,
             Latitude        REAL,
             Implentation    DATETIME,
-            LastTransfert   DATETIME,
+            LastTransfer    DATETIME,
             DeltaH          REAL,
             RiverBed        REAL,
             Shaft           INTEGER REFERENCES Shaft (id),
