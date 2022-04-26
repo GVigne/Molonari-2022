@@ -175,7 +175,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>1223</width>
-                 <height>326</height>
+                 <height>313</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -236,7 +236,7 @@
              <x>0</x>
              <y>0</y>
              <width>1245</width>
-             <height>156</height>
+             <height>152</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -307,7 +307,7 @@
              <x>0</x>
              <y>0</y>
              <width>1245</width>
-             <height>294</height>
+             <height>287</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -347,7 +347,7 @@
              <x>0</x>
              <y>0</y>
              <width>1245</width>
-             <height>293</height>
+             <height>287</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -475,21 +475,21 @@
                    </widget>
                   </item>
                   <item row="0" column="1">
-                   <widget class="QLabel" name="label_5">
+                   <widget class="QLabel" name="labelRMSETherm1">
                     <property name="text">
                      <string>RMSE: </string>
                     </property>
                    </widget>
                   </item>
                   <item row="1" column="1">
-                   <widget class="QLabel" name="label_6">
+                   <widget class="QLabel" name="labelRMSETherm2">
                     <property name="text">
                      <string>RMSE: </string>
                     </property>
                    </widget>
                   </item>
                   <item row="2" column="1">
-                   <widget class="QLabel" name="label_7">
+                   <widget class="QLabel" name="labelRMSETherm3">
                     <property name="text">
                      <string>RMSE: </string>
                     </property>
@@ -629,7 +629,7 @@
             <x>0</x>
             <y>0</y>
             <width>1245</width>
-            <height>559</height>
+            <height>546</height>
            </rect>
           </property>
           <property name="sizePolicy">

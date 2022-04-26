@@ -55,7 +55,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         self.pointDir = self.point.getPointDir()
         self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName("Dummy_database/DirectModel.sqlite")
+        self.con.setDatabaseName("Dummy_database/RawMeasures.sqlite")
         self.con.open()
         self.point.name="P034" #Needs to be changed
 
@@ -119,16 +119,24 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         select_quantiles = self.build_global_RMSE_query()
         select_quantiles.exec()
-        i=0
+        i=1
         while select_quantiles.next():
-            if select_quantiles.value(1) !="0":
+            if select_quantiles.value(1) !=0:
                 #Value 0 is already hardcoded in the .ui file
                 text_checkbox = f"Quantile {select_quantiles.value(1)}"
-            quantile_checkbox = QtWidgets.QCheckBox(text_checkbox)
-            quantile_checkbox.stateChanged.connect(self.refreshTempDepthView)
-            self.gridLayoutQuantiles.addWidget(quantile_checkbox,i,0)
-            self.gridLayoutQuantiles.addWidget(QtWidgets.QLabel(f"RMSE: {select_quantiles.value(0)}"),i,1)
-            i +=1
+                quantile_checkbox = QtWidgets.QCheckBox(text_checkbox)
+                quantile_checkbox.stateChanged.connect(self.refreshTempDepthView)
+                self.gridLayoutQuantiles.addWidget(quantile_checkbox,i,0)
+                self.gridLayoutQuantiles.addWidget(QtWidgets.QLabel(f"RMSE: {select_quantiles.value(0)}"),i,1)
+                i +=1
+
+        select_RMSE_therm = self.build_therm_RMSE()
+        select_RMSE_therm.exec()
+        select_RMSE_therm.next()
+        self.labelRMSETherm1.setText(f"RMSE: {select_RMSE_therm.value(0)}")
+        self.labelRMSETherm2.setText(f"RMSE: {select_RMSE_therm.value(1)}")
+        self.labelRMSETherm3.setText(f"RMSE: {select_RMSE_therm.value(2)}")
+
 
     def refreshTempDepthView(self):
         """
@@ -138,14 +146,15 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         quantiles = []
         for i in range (self.gridLayoutQuantiles.count()):
             checkbox = self.gridLayoutQuantiles.itemAt(i).widget()
-            if checkbox.isChecked():
-                txt = checkbox.text()
-                #A bit ugly but it works
-                if txt == "Modèle direct":
-                    quantiles.append(0)
-                else:
-                    #txt is "Quantile ... "
-                    quantiles.append(float(txt[8:]))
+            if isinstance(checkbox, QtWidgets.QCheckBox):
+                if checkbox.isChecked():
+                    txt = checkbox.text()
+                    #A bit ugly but it works
+                    if txt == "Modèle direct":
+                        quantiles.append(0)
+                    else:
+                        #txt is "Quantile ... "
+                        quantiles.append(float(txt[8:]))
         depth_id = 0
         if self.radioButtonTherm1.isChecked():
             depth_id = 1
@@ -589,7 +598,21 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         return QSqlQuery(f"""
                 SELECT RMSE.RMSET, Quantile.Quantile FROM RMSE 
                 JOIN Quantile
-                ON RMSE.QuantileID = Quantile.id     
+                ON RMSE.Quantile = Quantile.id     
+        """
+        )
+    
+    def build_therm_RMSE(self):
+        """
+        Build and return the RMSE for the three thermometers.
+        """
+        return QSqlQuery(f"""
+        SELECT Temp1RMSE, Temp2RMSE, Temp3RMSE
+                FROM RMSE 
+                JOIN Quantile
+                ON RMSE.Quantile = Quantile.id
+                WHERE RMSE.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                AND Quantile.Quantile = 0;
         """
         )
     
