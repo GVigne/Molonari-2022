@@ -247,11 +247,13 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.currentdata == "raw":
             print("Please clean-up your processed data. Click again on the raw data box")
         else:
-            dlg = DialogCleanup()
+            dlg = DialogCleanup(self.point.name,self.pointDir)
             res = dlg.exec_()
+            #print(self.pointDir)
             if res == QtWidgets.QDialog.Accepted:
-                script = dlg.getScript()
+                script,scriptpartiel = dlg.getScript()
                 print("Cleaning data...")
+
                 try :
                     self.dftemp, self.dfpress = self.point.cleanup(script, self.dftemp, self.dfpress)
                     print("Data successfully cleaned !...")
@@ -262,9 +264,17 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                     self.graphpress.update_(self.dfpress)
                     self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
                     print("Plots successfully updated")
+                    
+                    # Save the modified text
+                    with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
+                        file.write(scriptpartiel)
+                    print("Script successfully saved")
+                    
+                    
                 except Exception as e :
                     print(e, "==> Clean-up aborted")
                     displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
+                    self.cleanup()
     
 
     def compute(self):
