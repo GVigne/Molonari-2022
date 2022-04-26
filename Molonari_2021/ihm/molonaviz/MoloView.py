@@ -84,7 +84,8 @@ class MoloView1D(MoloView):
     
     def plot_data(self):
         for index, (label, data) in enumerate(self.y.items()):
-            self.axes.plot(self.x, data, label=label)
+            if len(self.x) == len(data):
+                self.axes.plot(self.x, data, label=label)
         self.axes.legend(loc='best')
         self.axes.set_ylabel(self.ylabel)
 
@@ -139,12 +140,14 @@ class MoloView2D(MoloView):
         return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])
 
     def plot_data(self):
-        image = self.axes.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
-        plt.colorbar(image)
-        self.axes.xaxis_date()
-        self.axes.set_title(self.title)
-        self.axes.set_ylabel(self.ylabel)
-        self.axes.set_xlabel(self.xlabel)
+        if self.cmap.shape[0] ==self.x.shape[0] and self.cmap.shape[1] ==self.y.shape[0]:
+            #View is not empty and should display something
+            image = self.axes.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
+            plt.colorbar(image)
+            self.axes.xaxis_date()
+            self.axes.set_title(self.title)
+            self.axes.set_ylabel(self.ylabel)
+            self.axes.set_xlabel(self.xlabel)
 
 class PressureView(MoloView1D):
     """
@@ -172,13 +175,12 @@ class UmbrellaView(MoloView1D):
     """
     Concrete class for the umbrellas plots.
     """
-    def __init__(self, molomodel: MoloModel, date, time_dependent=True, title="", ylabel="Profondeur en m", xlabel="Température en K"):
+    def __init__(self, molomodel: MoloModel, time_dependent=False, title="", ylabel="Profondeur en m", xlabel="Température en K", nb_dates =10):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
-        self.date = date
+        self.nb_dates = nb_dates
     
     def retrieve_data(self):
-        self.x,self.y = self.model.get_depth_by_temp(self.date)
-        self.y = {self.date:self.y}
+        self.x,self.y = self.model.get_depth_by_temp(self.nb_dates)
 
 class TempDepthView(MoloView1D):
     """
@@ -187,9 +189,8 @@ class TempDepthView(MoloView1D):
         - the first one is a depth corresponding to a thermometer
         - a list of values representing the quantiles. If this list is empty, then nothing will be displayed
     """
-    def __init__(self, molomodel: MoloModel,depth, time_dependent=True, title="", ylabel="Température en K", xlabel="",options=[0,[]]):
+    def __init__(self, molomodel: MoloModel, time_dependent=True, title="", ylabel="Température en K", xlabel="",options=[0,[]]):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
-        self.depth = depth
         self.options = options
     
     def update_options(self,options):
@@ -199,7 +200,7 @@ class TempDepthView(MoloView1D):
         thermo_depth = self.options[0]
         self.x = self.model.get_dates()
         for quantile in self.options[1]:
-            self.y[f"Température à la profondeur {self.depth} - quantile {quantile}"] = self.model.get_temp_by_date(thermo_depth, quantile)
+            self.y[f"Température à la profondeur {thermo_depth} - quantile {quantile}"] = self.model.get_temp_by_date(thermo_depth, quantile)
 
 class WaterFluxView(MoloView1D):
     """
@@ -209,10 +210,12 @@ class WaterFluxView(MoloView1D):
         super().__init__(molomodel, time_dependent, title, ylabel, xlabel)
     
     def retrieve_data(self):
-       self.x = self.model.get_dates()
-       all_flows = self.model.get_water_flow()
-       self.y = {f"Quantile {key}":value for index, (key,value) in enumerate(all_flows.items()) if key!=0}
-       self.y["Modèle direct"] = all_flows[0] 
+        self.x = self.model.get_dates()
+        all_flows = self.model.get_water_flow()
+        if all_flows != {}:
+            #The model is not empty so the view should display something
+            self.y = {f"Quantile {key}":value for index, (key,value) in enumerate(all_flows.items()) if key!=0}
+            self.y["Modèle direct"] = all_flows[0] 
 
 class TempMapView(MoloView2D):
     """
@@ -223,8 +226,8 @@ class TempMapView(MoloView2D):
     
     def retrieve_data(self):
         self.cmap = self.model.get_temperatures_cmap(0)
-        self.x = self.model.get_depths()
-        self.y = self.model.get_dates()
+        self.x = self.model.get_dates() 
+        self.y = self.model.get_depths()
 
 class AdvectiveFlowView(MoloView2D):
     """

@@ -114,17 +114,19 @@ class WaterFluxModel(MoloModel):
     def update_df(self):
         #Initialize data structures
         self.queries[0].next()
-        self.dates.append(self.queries[0].value(0))
-        self.flows[self.queries[0].value(2)] = [self.queries[0].value(1)]
-        while self.queries[0].next():
-            self.dates.append(self.queries[0].value(0)) #Dates
-            self.flows[self.queries[0].value(2)].append(self.queries[0].value(1)) #Flow
-        for i in range(1,len(self.queries)):
-            self.queries[i].next()
-            self.flows[self.queries[i].value(2)] = [self.queries[i].value(1)]
-            #Add the other flows for the different quantiles if they exist
-            while self.queries[i].next():
-                self.flows[self.queries[i].value(2)].append(self.queries[i].value(1))
+        if self.queries[0].value(0) is not None and self.queries[0].value(2) is not None:
+            #There is at least a valid query so the model should not be empty
+            self.dates.append(self.queries[0].value(0))
+            self.flows[self.queries[0].value(2)] = [self.queries[0].value(1)]
+            while self.queries[0].next():
+                self.dates.append(self.queries[0].value(0)) #Dates
+                self.flows[self.queries[0].value(2)].append(self.queries[0].value(1)) #Flow
+            for i in range(1,len(self.queries)):
+                self.queries[i].next()
+                self.flows[self.queries[i].value(2)] = [self.queries[i].value(1)]
+                #Add the other flows for the different quantiles if they exist
+                while self.queries[i].next():
+                    self.flows[self.queries[i].value(2)].append(self.queries[i].value(1))
     
     def get_water_flow(self):
         """
@@ -134,6 +136,10 @@ class WaterFluxModel(MoloModel):
     
     def get_dates(self):
         return np.array(self.dates)
+    
+    def reset_data(self):
+        self.flows = {}
+        self.dates=[]
 
 class SolvedTemperatureModel(MoloModel):
     """
@@ -141,11 +147,11 @@ class SolvedTemperatureModel(MoloModel):
     """
     def __init__(self, queries):
         super().__init__(queries)
-    
-    def update_df(self):
         self.dates = []
         self.data = {}
         self.depths = []
+    
+    def update_df(self):
         while self.queries[0].next():
             self.dates.append(self.queries[0].value(0))
         self.dates = np.array(self.dates)
@@ -156,15 +162,15 @@ class SolvedTemperatureModel(MoloModel):
         for i in range(2,len(self.queries)):
             query = self.queries[i]
             query.next()
-            array_data = [np.float64(query.value(2))]
-            quantile = query.value(3)
+            array_data = [np.float64(query.value(0))]
+            quantile = query.value(1)
             while query.next():
-                array_data.append(np.float64(query.value(2)))
+                array_data.append(np.float64(query.value(0)))
             array_data = np.array(array_data)
             nb_elems = array_data.shape[0]
-            x = len(self.depths) #One hundred cells
-            y = nb_elems//x
-            array_data = np.transpose(array_data.reshape(x,y))#Now this is the color map with y-axis being the depth and x-axis being the time
+            y = len(self.depths) #100 active cells
+            x = nb_elems//y
+            array_data = array_data.reshape(x,y)#Now this is the color map with y-axis being the depth and x-axis being the time
             self.data[quantile] = array_data
 
     
@@ -172,7 +178,10 @@ class SolvedTemperatureModel(MoloModel):
         """
         Given a quantile, return the associated heat map.
         """
-        return self.data[quantile]
+        try:
+            return self.data[quantile]
+        except Exception:
+            return []
     
     def get_depths(self):
         return self.depths
@@ -180,17 +189,36 @@ class SolvedTemperatureModel(MoloModel):
     def get_dates(self):
         return self.dates
     
-    def get_depth_by_temp(self,date, quantile):
+    def get_depth_by_temp(self,nb_dates):
         """
-        Return two lists: the temperature and depth for given date and quantile. The date must be in the database format (YYYY:mm:dd:hh:mm:ss)
+        Return a list and a dictionnary:
+        -the list corresponds to the depths array
+        -the dictionnary has as many keys as nb_dates: these are equally spaced dates. The values are the temperature values.
         """
-        return self.array_data[quantile][:,np.where(self.dates==date)[0][0]],self.depths
+        try:
+            n = self.dates.shape[0]
+            step = n // nb_dates
+            result = {}
+            for i in range(nb_dates):
+                date = self.dates[i*step]
+                result[date] = self.data[0][np.where(self.dates==date)[0][0],:]
+            return self.depths,result
+        except Exception:
+            return [], {}
     
     def get_temp_by_date(self,depth,quantile):
         """
         Return the temperatures for a given depth and quantile.
         """
-        return self.array_data[quantile][np.where(self.depths == depth)[0][0],:]
+        try:
+            return self.data[quantile][:,np.where(self.depths == depth)[0][0]]
+        except Exception:
+            return []
+    
+    def reset_data(self):
+        self.dates = []
+        self.data = {}
+        self.depths = []
     
 class HeatFluxesModel(MoloModel):
     """
@@ -198,22 +226,26 @@ class HeatFluxesModel(MoloModel):
     """
     def __init__(self, queries):
         super().__init__(queries)
-
-    def update_df(self):
         self.dates = []
         self.array_data = []
         self.depths = []
-        while self.queries[0].next():
-            self.dates.append(self.queries[0].value(0))
-            self.array_data.append([np.float64(self.queries[0].value(1)),np.float64(self.queries[0].value(2)),np.float64(self.queries[0].value(3))]) #Advective, conductive, total
-            self.depths.append(np.float64(self.queries[0].value(4)))
-        self.dates = np.array(self.dates)
-        self.array_data = np.array(self.array_data)
-        self.depths = np.array(self.depths)
 
-        self.advective = self.build_picture(self.array_data[:,0],nb_cells =len(self.depths))
-        self.conductive = self.build_picture(self.array_data[:,1],nb_cells =len(self.depths))
-        self.total = self.build_picture(self.array_data[:,2],nb_cells =len(self.depths))
+    def update_df(self):
+        try:
+            while self.queries[0].next():
+                self.dates.append(self.queries[0].value(0))
+                self.array_data.append([np.float64(self.queries[0].value(1)),np.float64(self.queries[0].value(2)),np.float64(self.queries[0].value(3))]) #Advective, conductive, total
+                self.depths.append(np.float64(self.queries[0].value(4)))
+            self.dates = np.array(self.dates)
+            self.array_data = np.array(self.array_data)
+            self.depths = np.array(self.depths)
+
+            self.advective = self.build_picture(self.array_data[:,0],nb_cells =len(self.depths))
+            self.conductive = self.build_picture(self.array_data[:,1],nb_cells =len(self.depths))
+            self.total = self.build_picture(self.array_data[:,2],nb_cells =len(self.depths))
+        except Exception:
+            #Empty query or invalid query: then revert any changes done. The model is empty: nothing will be displayed.
+            self.reset_data()
 
     def build_picture(self,flow, nb_cells):
         """
@@ -238,6 +270,14 @@ class HeatFluxesModel(MoloModel):
     
     def get_total_flow(self):
         return self.total
+    
+    def reset_data(self):
+        self.dates = []
+        self.array_data = []
+        self.depths = []
+        self.advective = []
+        self.conductive = []
+        self.total = []
 
 class ParamsDistributionModel(MoloModel):
     def __init__(self, queries):

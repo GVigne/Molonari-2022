@@ -33,8 +33,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.study = study
         self.computeEngine = Compute(self.point)
 
-        #Base initialisation: the database is almost empty!
+        #This should already be done in the .ui file
         self.checkBoxRaw_Data.setChecked(True)
+        self.checkBoxDirectModel.setChecked(True)
+        self.radioButtonTherm1.setChecked(True)
 
         # Link every button to their function
         self.comboBoxSelectLayer.currentTextChanged.connect(self.changeDisplayedParams)
@@ -53,7 +55,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         self.pointDir = self.point.getPointDir()
         self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName("Dummy_database/RawMeasures.sqlite")
+        self.con.setDatabaseName("Dummy_database/DirectModel.sqlite")
         self.con.open()
         self.point.name="P034" #Needs to be changed
 
@@ -98,7 +100,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_depths_layers = self.build_layers_query()
         select_depths_layers.exec()
         while select_depths_layers.next():
-            self.comboBoxSelectLayer.addItem(select_depths_layers.value(0))
+            self.comboBoxSelectLayer.addItem(str(select_depths_layers.value(0)))
     
     def changeDisplayedParams(self,layer):
         """
@@ -117,9 +119,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_quantiles.exec()
         i=0
         while select_quantiles.next():
-            if select_quantiles.value(1) =="0":
-                text_checkbox = "Modèle direct"
-            else:
+            if select_quantiles.value(1) !="0":
+                #Value 0 is already hardcoded in the .ui file
                 text_checkbox = f"Quantile {select_quantiles.value(1)}"
             quantile_checkbox = QtWidgets.QCheckBox(text_checkbox)
             quantile_checkbox.stateChanged.connect(self.refreshTempDepthView)
@@ -413,7 +414,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Display the results in the corresponding tabs.
         """
         if self.computation_type() is not None:
-            self.plotFluxes()
+            # self.plotFluxes()
             self.plotTemperatureMap()
             self.plotHistos()  
         else:
@@ -445,11 +446,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_depths = self.build_depths()
         select_dates = self.build_dates()
         self.tempmap_model = SolvedTemperatureModel([select_dates,select_depths]+select_tempmap)
-        date = "" #TO DO
-        depth = ""#TO DO
-        self.umbrella_view = UmbrellaView(self.tempmap_model, date)
+        self.umbrella_view = UmbrellaView(self.tempmap_model)
         self.tempmap_view = TempMapView(self.tempmap_model)
-        self.depth_view = TempDepthView(self.tempmap_model,depth,title=f"Température à la profondeur {depth} m")
+        
+        sel_depth = self.build_thermo_depth(1)
+        sel_depth.exec()
+        sel_depth.next()
+        options = [sel_depth.value(0), [0]] #First thermometer, direct model
+        self.depth_view = TempDepthView(self.tempmap_model, options=options)
         
         self.toolbarUmbrella = NavigationToolbar(self.umbrella_view, self)
         vbox = QtWidgets.QVBoxLayout()
@@ -466,7 +470,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.toolbarDepth = NavigationToolbar(self.depth_view, self)
         vbox = QtWidgets.QVBoxLayout()
         self.groupBoxTempDepth.setLayout(vbox)
-        vbox.addWidget(self.tempmap_view)
+        vbox.addWidget(self.depth_view)
         vbox.addWidget(self.toolbarDepth)
 
         self.tempmap_model.exec()
@@ -474,6 +478,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def plotFluxes(self):
         #Plot the heat fluxes
         select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") #This is a list
+    
         self.fluxes_model = HeatFluxesModel(select_heatfluxes)
         self.advective_view = AdvectiveFlowView(self.fluxes_model)
         self.conductive_view = ConductiveFlowView(self.fluxes_model)
@@ -597,7 +602,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Build and return all the depths values
         """
         return QSqlQuery(f"""
-                SELECT Depth.Depth FROM Depth    
+                SELECT Depth.Depth FROM Depth  
+                ORDER BY Depth.Depth  
         """
         )
         
@@ -606,7 +612,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Build and return all the dates
         """
         return QSqlQuery(f"""
-                SELECT Date.Date FROM Date    
+                SELECT Date.Date FROM Date 
+                ORder by Date.Date   
         """
         )
     
@@ -615,7 +622,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Given an integer (1,2 or 3), return the associated depth of the thermometer.
         """
         if id in [1,2,3]:
-            field = f"Depth{id}ID"
+            field = f"Depth{id}"
             return QSqlQuery(f"""
                 SELECT Depth.Depth FROM Depth
                 JOIN RMSE
@@ -642,6 +649,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                             FROM RawMeasuresTemp, RawMeasuresPress
                             WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
                                 AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY RawMeasuresTemp.Date
                             """
                 )
             elif field =="Temp":
@@ -649,11 +657,13 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                             FROM RawMeasuresTemp, RawMeasuresPress
                             WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
                                 AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY RawMeasuresTemp.Date
                             """
                 )
             elif field =="Pressure":
                 return QSqlQuery(f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.Tension FROM RawMeasuresPress
                         WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        ORDER BY RawMeasuresPress.Date
                         """
                 )
         else:
@@ -662,18 +672,21 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        ORDER BY CleanedMeasures.Date
                             """
                 )
             elif field =="Temp":
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        ORDER BY CleanedMeasures.Date
                             """
                 )
             elif field =="Pressure":
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
                         FROM CleanedMeasures
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        ORDER BY CleanedMeasures.Date
                             """
                 )
     def computation_type(self):
@@ -726,7 +739,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             ON WaterFlow.Quantile = Quantile.id
                 WHERE Quantile.Quantile = {quantile}
                 AND WaterFlow.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
-                ORDER BY Date.Dat
+                ORDER BY Date.Date
                 """
             )
         elif result_type =="2DMap":
@@ -740,7 +753,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             ON TemperatureAndHeatFlows. Quantile = Quantile.id
                 WHERE Quantile.Quantile = {quantile}
                 AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
-                ORDER BY Date.Date    
+                ORDER BY Date.Date, Depth.Depth   
                     """ #Column major: order by date
             )
             elif option=="HeatFlows":

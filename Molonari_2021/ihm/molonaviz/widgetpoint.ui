@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1289</width>
-    <height>726</height>
+    <height>713</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -82,7 +82,14 @@
       </spacer>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBoxSelectLayer"/>
+      <widget class="QComboBox" name="comboBoxSelectLayer">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QTableView" name="tableViewParams">
@@ -167,8 +174,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>1221</width>
-                 <height>299</height>
+                 <width>1223</width>
+                 <height>326</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -209,6 +216,9 @@
          <property name="text">
           <string>Show Raw Data</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -225,8 +235,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1247</width>
-             <height>217</height>
+             <width>1245</width>
+             <height>156</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -296,8 +306,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1247</width>
-             <height>292</height>
+             <width>1245</width>
+             <height>294</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -336,8 +346,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1247</width>
-             <height>291</height>
+             <width>1245</width>
+             <height>293</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -390,8 +400,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1247</width>
-             <height>292</height>
+             <width>1245</width>
+             <height>487</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -415,13 +425,24 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>720</width>
-                     <height>139</height>
+                     <width>726</width>
+                     <height>376</height>
                     </rect>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_5">
                     <item row="0" column="0">
-                     <layout class="QGridLayout" name="gridLayoutQuantiles"/>
+                     <layout class="QGridLayout" name="gridLayoutQuantiles">
+                      <item row="0" column="0">
+                       <widget class="QCheckBox" name="checkBoxDirectModel">
+                        <property name="text">
+                         <string>Modèle direct</string>
+                        </property>
+                        <property name="checked">
+                         <bool>true</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
                     </item>
                    </layout>
                   </widget>
@@ -447,6 +468,9 @@
                    <widget class="QRadioButton" name="radioButtonTherm1">
                     <property name="text">
                      <string>Thermometer 1</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -475,7 +499,7 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QGroupBox" name="groupBoxTempMap">
+              <widget class="QGroupBox" name="groupBoxTempDepth">
                <property name="contextMenuPolicy">
                 <enum>Qt::DefaultContextMenu</enum>
                </property>
@@ -500,8 +524,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>1247</width>
-             <height>291</height>
+             <width>1245</width>
+             <height>87</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -515,7 +539,7 @@
                 <string/>
                </property>
               </widget>
-              <widget class="QGroupBox" name="groupBoxTempDepth">
+              <widget class="QGroupBox" name="groupBoxTempMap">
                <property name="title">
                 <string/>
                </property>
@@ -604,8 +628,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1247</width>
-            <height>556</height>
+            <width>1245</width>
+            <height>559</height>
            </rect>
           </property>
           <property name="sizePolicy">
