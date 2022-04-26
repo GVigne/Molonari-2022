@@ -130,7 +130,39 @@ class Compute(QtCore.QObject):
 
         params_file = os.path.join(resultsDir, 'params.csv')
         df_params.to_csv(params_file, index=True)
-    
+        
+        '''
+        SQL : INSERT INTO Layer (DepthBed) VALUES (1) WHERE id = layer
+        '''
+        #Open the database
+        db_point = QSqlDatabase.addDatabase("QSQLITE")
+        db_point.setDatabaseName(r"C:\Users\fujia\Documents\GitHub\Molonari-2022\Molonari_2021\studies\study_2022\molonari_study_2022 .sqlite")
+        if not db_point.open():
+            print("Error: Cannot open databse")
+            
+        #Find the id related to the SamplingPoint
+        query_test = QSqlQuery()
+        query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = (SELECT id FROM SamplingPoint WHERE PointName = {self.point.getName()})")
+        query_test.first()
+        self.point_id = query_test.value(0)
+        
+        #Find the bestParameter related to the id found
+        query_test.exec_(f"SELECT Layer FROM BestParameters WHERE PointKey = {self.point_id}") # Return 1,2,3
+        query_test.first()
+        while True:
+            l = query_test.value(0)
+            query_de_ins = QSqlQuery()
+            query_de_ins.exec_(f"DELETE FROM BestParameters WHERE PointKey = {self.point_id} AND Layer = {l} ")
+            query_de_ins.exe_(f"""
+                              INSERT INTO BestParameters
+                              VALUES {params_dict["moinslog10K"],params_dict["n"],params_dict["lambda_s"],params_dict["rhos_cs"],l,self.point_id}
+                              """)
+            if not (query_test.next()): break
+        
+        query_new = QSqlQuery()
+        query_new.exec_(f"""UPDATE Layer SET DepthBed={self.tableWidget.item(id,0).text()} WHERE id = {layer}""")
+        
+        db_point.close()   
   
     def saveBestParams(self, resultsDir: str):
         """

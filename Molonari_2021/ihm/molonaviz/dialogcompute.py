@@ -20,6 +20,18 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         self.pointName = pointName
         
+        #Open the database
+        db_point = QSqlDatabase.addDatabase("QSQLITE")
+        db_point.setDatabaseName(r"C:\Users\fujia\Documents\GitHub\Molonari-2022\Molonari_2021\studies\study_2022\molonari_study_2022 .sqlite")
+        if not db_point.open():
+            print("Error: Cannot open databse")
+            
+        #Find the id related to the SamplingPoint
+        query_test = QSqlQuery()
+        query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = {self.pointName}")
+        query_test.first()
+        point_id = query_test.value(0)
+        
         self.setupUi(self)
 
         self.setMouseTracking(True)
@@ -145,16 +157,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                     self.tableWidget.hideRow(k)
                 else:
                     self.tableWidget.showRow(k)
-        #Open the database
-        db_point = QSqlDatabase.addDatabase("QSQLITE")
-        db_point.setDatabaseName(r"C:\Users\fujia\Documents\GitHub\Molonari-2022\Molonari_2021\studies\study_2022\molonari_study_2022 .sqlite")
-        if not db_point.open():
-            print("Error: Cannot open databse")
-        #Find the id related to the SamplingPoint
-        query_test = QSqlQuery()
-        query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = {self.pointName}")
-        query_test.first()
-        point_id = query_test.value(0)
+        
         #Find the bestParameter related to the id found
 
         query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {point_id}")
@@ -332,32 +335,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.done(1)
         else:
             self.done(10)
-            
-        '''
-        SQL : INSERT INTO Layer (DepthBed) VALUES (1) WHERE id = layer
-        '''
-        #Open the database
-        db_point = QSqlDatabase.addDatabase("QSQLITE")
-        db_point.setDatabaseName(r"C:\Users\fujia\Documents\GitHub\Molonari-2022\Molonari_2021\studies\study_2022\molonari_study_2022 .sqlite")
-        if not db_point.open():
-            print("Error: Cannot open databse")
-            
-        #Find the id related to the SamplingPoint
-        query_test = QSqlQuery()
-        query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = {self.pointName}")
-        
-        #Find the bestParameter related to the id found
-        query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {point_id}")
-        
-        query_test.exec_(f"""UPDATE BestParameters SET log10KBest={best_params_dict["moinslog10K"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
-        query_test.exec_(f"""UPDATE BestParameters SET LambdaSBest={best_params_dict["n"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
-        query_test.exec_(f"""UPDATE BestParameters SET NBest={best_params_dict["lambda_s"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
-        query_test.exec_(f"""UPDATE BestParameters SET rhos_cs={best_params_dict["rhos_cs"]} WHERE PointKey = {point_id} AND Layer = {i+1}""")
-        
-        query_new = QSqlQuery()
-        query_new.exec_(f"""UPDATE Layer SET DepthBed={self.tableWidget.item(id,0).text()} WHERE id = {layer}""")
-        
-        db_point.close()
                
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
