@@ -56,6 +56,7 @@ class MoloView1D(MoloView):
         self.time_dependent = time_dependent
 
     def on_update(self):
+        self.axes.clear()
         self.retrieve_data()
         self.setup_x()
         self.plot_data()
@@ -111,6 +112,7 @@ class MoloView2D(MoloView):
         self.cmap = []
     
     def on_update(self):
+        self.axes.clear()
         self.retrieve_data()
         self.setup_x()
         self.plot_data()

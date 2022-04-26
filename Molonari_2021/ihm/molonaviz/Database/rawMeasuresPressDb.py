@@ -26,7 +26,7 @@ class RawMeasuresPressDb():
             Date        DATETIME    NOT NULL
                                 UNIQUE,
             TempBed     REAL,
-            Pressure    REAL,
+            Tension    REAL,
             PointKey   INTEGER
         );
         """

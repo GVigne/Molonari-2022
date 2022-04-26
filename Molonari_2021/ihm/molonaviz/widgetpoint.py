@@ -4,7 +4,6 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery
 import pandas as pd
-from sympy import true
 from pandasmodel import PandasModel
 from dialogcleanup import DialogCleanup
 from dialogcompute import DialogCompute
@@ -34,6 +33,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.study = study
         self.computeEngine = Compute(self.point)
 
+        #Base initialisation: the database is almost empty!
+        self.checkBoxRaw_Data.setChecked(True)
+
         # Link every button to their function
         self.comboBoxSelectLayer.currentTextChanged.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.toggled.connect(self.refreshTempDepthView)
@@ -48,12 +50,12 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.tabWidget.setCurrentIndex(3)
 
         #TO REMOVE
-        self.currentdata ="processed"
+
         self.pointDir = self.point.getPointDir()
         self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName("molonari_slqdb.sqlite")
+        self.con.setDatabaseName("Dummy_database/RawMeasures.sqlite")
         self.con.open()
-        self.point.name="Point034" #Needs to be changed
+        self.point.name="P034" #Needs to be changed
 
         self.setupComboBoxLayers()
         self.setupCheckboxesQuantiles()
@@ -166,15 +168,18 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
     def checkbox(self):
         """
-        Change the type of data displayed (raw or processed) when the checkbox changes state.
+        Refresh type of data displayed (raw or processed) when the checkbox changes state.
         """
-        if self.checkBoxRaw_Data.isChecked():
-            self.currentdata = "raw"
-        else :
-            self.currentdata = "processed"
         self.setPressureAndTemperatureModels()
-        self.setDataPlots()
 
+        select_pressure = self.build_data_queries(field ="Pressure")
+        self.pressuremodel.new_queries([select_pressure])
+        self.pressuremodel.exec()
+
+        select_temp = self.build_data_queries(field ="Temp")
+        self.tempmodel.new_queries([select_temp])
+        self.tempmodel.exec()
+        
     def reset(self):
         #Needs to be adapted!
         return
@@ -381,9 +386,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.groupBoxPress.setLayout(vbox)
         vbox.addWidget(self.graphpress)
         vbox.addWidget(self.toolbarPress)
-
+        
         self.pressuremodel.exec()
-
+      
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
         self.tempmodel = TemperatureDataModel([select_temp])
@@ -395,6 +400,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox2.addWidget(self.toolbarTemp)
 
         self.tempmodel.exec()
+      
     
     def setResultsPlots(self):
         """
@@ -621,12 +627,12 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Build and return ONE AND ONLY ONE of the following queries:
         -if full_query is True, then extract the Date, Pressure and all Temperatures (this is for the Data part)
         -if field is not "", then it MUST be either "Temp" or "Pressure". Extract the Date and the corresponding field (this is for the Plot part): either all the temperatures or just the pressure.
-        Theses queries take into account the actual value of self.currentdata to make to correct request (to either RawMeasuresTemp or CleanedMeasures)
+        Theses queries take into account the actual state of checkBoxRaw_Data to make to correct request (to either RawMeasuresTemp or CleanedMeasures)
         """
-        if self.currentdata=="raw":
+        if self.checkBoxRaw_Data.isChecked():
             #Raw data
             if full_query:
-                return QSqlQuery(f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Pressure
+                return QSqlQuery(f"""SELECT RawMeasuresTemp.Date, RawMeasuresTemp.Temp1, RawMeasuresTemp.Temp2, RawMeasuresTemp.Temp3, RawMeasuresTemp.Temp4, RawMeasuresPress.TempBed, RawMeasuresPress.Tension
                             FROM RawMeasuresTemp, RawMeasuresPress
                             WHERE RawMeasuresTemp.Date = RawMeasuresPress.Date
                                 AND RawMeasuresPress.PointKey=RawMeasuresTemp.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
@@ -640,11 +646,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                             """
                 )
             elif field =="Pressure":
-                return QSqlQuery(f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.Pressure FROM RawMeasuresPress
+                return QSqlQuery(f"""SELECT RawMeasuresPress.Date,RawMeasuresPress.Tension FROM RawMeasuresPress
                         WHERE RawMeasuresPress.PointKey= (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
                         """
                 )
-        elif self.currentdata == "processed":
+        else:
             #Display cleaned measures
             if full_query:
                 return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure

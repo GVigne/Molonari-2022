@@ -2,6 +2,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QObject
 import numpy as np
 
+
 class MoloModel(QObject):
     """
     Abstract class representing a model onto which one or several views may be subscribed.
@@ -13,6 +14,10 @@ class MoloModel(QObject):
         super(MoloModel, self).__init__()
         self.queries = queries
         self.df= None
+    
+    def new_queries(self,queries):
+        self.queries = queries
+        self.reset_data()
     
     def exec(self):
         """
@@ -34,6 +39,12 @@ class MoloModel(QObject):
         Subscribe the given view to the MoloModel.
         """
         self.dataChanged.connect(view.on_update)
+    
+    def reset_data(self):
+        """
+        Reinitialise all data: this is called when self.queries are updated.
+        """
+        pass
 
 class PressureDataModel(MoloModel):
     """
@@ -49,10 +60,19 @@ class PressureDataModel(MoloModel):
         self.array_data = np.array(self.array_data)
 
     def get_pressure(self):
-        return self.array_data[:,1]
+        try:
+            return self.array_data[:,1]
+        except Exception:
+            return []
     
     def get_dates(self):
-        return self.array_data[:,0]
+        try:
+            return self.array_data[:,0]
+        except Exception:
+            return []
+    
+    def reset_data(self):
+        self.array_data = []
 
 class TemperatureDataModel(MoloModel):
     """
@@ -68,10 +88,19 @@ class TemperatureDataModel(MoloModel):
         self.array_data = np.array(self.array_data)
 
     def get_temperatures(self):
-        return [self.array_data[:, i] for i in range(1,6)]
+        try:
+            return [self.array_data[:, i] for i in range(1,6)]
+        except Exception:
+            return []
     
     def get_dates(self):
-        return self.array_data[:,0]
+        try:
+            return self.array_data[:,0]
+        except Exception:
+            return []
+    
+    def reset_data(self):
+        self.array_data = []
 
 class WaterFluxModel(MoloModel):
     """
