@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets, QtCore, uic
 from PyQt5.QtGui import QPixmap
 import pandas as pd
 from pandasmodel import PandasModel
-from dialogcleanup import DialogCleanup
+from dialogcleanupmain import DialogCleanupMain
 from dialogcompute import DialogCompute
 from point import Point
 from study import Study
@@ -182,7 +182,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.currentdata == "raw":
             print("Please clean-up your processed data. Click again on the raw data box")
         else:
-            dlg = DialogCleanup(self.point.name,self.pointDir)
+            dlg = DialogCleanupMain(self.point.name,self.pointDir,self.study)
             res = dlg.exec_()
             #print(self.pointDir)
             if res == QtWidgets.QDialog.Accepted:
