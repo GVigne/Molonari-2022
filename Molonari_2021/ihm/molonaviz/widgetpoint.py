@@ -40,9 +40,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         # Link every button to their function
         self.comboBoxSelectLayer.currentTextChanged.connect(self.changeDisplayedParams)
-        self.radioButtonTherm1.toggled.connect(self.refreshTempDepthView)
-        self.radioButtonTherm2.toggled.connect(self.refreshTempDepthView)
-        self.radioButtonTherm3.toggled.connect(self.refreshTempDepthView)      
+        self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
+        self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
+        self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)      
         self.pushButtonReset.clicked.connect(self.reset)
         self.pushButtonCleanUp.clicked.connect(self.cleanup)
         self.pushButtonCompute.clicked.connect(self.compute)
@@ -115,6 +115,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         Display as many checkboxes as there are quantiles in the database, along with the associated RMSE.
         """
+        self.checkBoxDirectModel.stateChanged.connect(self.refreshTempDepthView)
+
         select_quantiles = self.build_global_RMSE_query()
         select_quantiles.exec()
         i=0
@@ -135,7 +137,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         #Needs to be adapted!
         quantiles = []
         for i in range (self.gridLayoutQuantiles.count()):
-            checkbox = self.gridLayoutQuantiles.itemAt(i,0).widget()
+            checkbox = self.gridLayoutQuantiles.itemAt(i).widget()
             if checkbox.isChecked():
                 txt = checkbox.text()
                 #A bit ugly but it works
@@ -154,6 +156,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_thermo_depth = self.build_thermo_depth(depth_id)
         select_thermo_depth.exec()
         select_thermo_depth.next()
+
         self.depth_view.update_options([select_thermo_depth.value(0),quantiles])
         self.depth_view.on_update() #Refresh the view
 
@@ -414,7 +417,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Display the results in the corresponding tabs.
         """
         if self.computation_type() is not None:
-            # self.plotFluxes()
+            self.plotFluxes()
             self.plotTemperatureMap()
             self.plotHistos()  
         else:
@@ -478,8 +481,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     def plotFluxes(self):
         #Plot the heat fluxes
         select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") #This is a list
+        select_depths = self.build_depths()
+        select_dates = self.build_dates()
     
-        self.fluxes_model = HeatFluxesModel(select_heatfluxes)
+        self.fluxes_model = HeatFluxesModel([select_dates,select_depths]+select_heatfluxes)
         self.advective_view = AdvectiveFlowView(self.fluxes_model)
         self.conductive_view = ConductiveFlowView(self.fluxes_model)
         self.totalflux_view = TotalFlowView(self.fluxes_model)
@@ -764,6 +769,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             ON TemperatureAndHeatFlows.Depth = Depth.id
                 WHERE TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
                 AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
+                ORDER BY Date.Date, Depth.Depth
                     """
             )
         elif result_type =="Umbrella":

@@ -195,6 +195,7 @@ class TempDepthView(MoloView1D):
     
     def update_options(self,options):
         self.options = options
+        self.y = {} #Refresh the plots
 
     def retrieve_data(self):
         thermo_depth = self.options[0]

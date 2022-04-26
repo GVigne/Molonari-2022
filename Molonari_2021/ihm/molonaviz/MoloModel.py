@@ -234,11 +234,14 @@ class HeatFluxesModel(MoloModel):
         try:
             while self.queries[0].next():
                 self.dates.append(self.queries[0].value(0))
-                self.array_data.append([np.float64(self.queries[0].value(1)),np.float64(self.queries[0].value(2)),np.float64(self.queries[0].value(3))]) #Advective, conductive, total
-                self.depths.append(np.float64(self.queries[0].value(4)))
             self.dates = np.array(self.dates)
-            self.array_data = np.array(self.array_data)
+            while self.queries[1].next():
+                self.depths.append(np.float64(self.queries[1].value(0)))
             self.depths = np.array(self.depths)
+
+            while self.queries[2].next():
+                self.array_data.append([np.float64(self.queries[2].value(1)),np.float64(self.queries[2].value(2)),np.float64(self.queries[2].value(3))]) #Advective, conductive, total
+            self.array_data = np.array(self.array_data)
 
             self.advective = self.build_picture(self.array_data[:,0],nb_cells =len(self.depths))
             self.conductive = self.build_picture(self.array_data[:,1],nb_cells =len(self.depths))
@@ -247,14 +250,14 @@ class HeatFluxesModel(MoloModel):
             #Empty query or invalid query: then revert any changes done. The model is empty: nothing will be displayed.
             self.reset_data()
 
-    def build_picture(self,flow, nb_cells):
+    def build_picture(self,flow, nb_cells=100):
         """
-        Given a 1D numpy array, convert it into a 100*nb_cells picture. Used to convert data from the database into a 2D map with respect to the number of cells. 
+        Given a 1D numpy array, convert it into a rectangular picture. Used to convert data from the database into a 2D map with respect to the number of cells. 
         """
         nb_elems = flow.shape[0]
-        x = nb_cells #One hundred cells
-        y = nb_elems//x
-        return np.transpose(flow.reshape(x,y))#Now this is the color map with y-axis being the depth and x-axis being the time
+        y = nb_cells #One hundred cells
+        x = nb_elems//y
+        return flow.reshape(x,y)#Now this is the color map with y-axis being the depth and x-axis being the time
     
     def get_depths(self):
         return self.depths
