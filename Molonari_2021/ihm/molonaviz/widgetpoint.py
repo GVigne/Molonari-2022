@@ -15,8 +15,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
-from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel
-from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView
+from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
+from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, PermeabilityView, PorosityView, CapacityView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -37,9 +37,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.checkBoxRaw_Data.setChecked(True)
         self.checkBoxDirectModel.setChecked(True)
         self.radioButtonTherm1.setChecked(True)
-
+        
         # Link every button to their function
-        self.comboBoxSelectLayer.currentTextChanged.connect(self.changeDisplayedParams)
+        self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
         self.radioButtonTherm1.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm2.clicked.connect(self.refreshTempDepthView)
         self.radioButtonTherm3.clicked.connect(self.refreshTempDepthView)      
@@ -99,17 +99,29 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         select_depths_layers = self.build_layers_query()
         select_depths_layers.exec()
+        first_layer = True
         while select_depths_layers.next():
+            if first_layer:
+                select_params = self.build_params_query(select_depths_layers.value(0))
+                self.paramsModel = QSqlQueryModel()
+                self.paramsModel.setQuery(select_params)
+                self.tableViewParams.setModel(self.paramsModel)
+                first_layer = False
             self.comboBoxSelectLayer.addItem(str(select_depths_layers.value(0)))
     
     def changeDisplayedParams(self,layer):
         """
-        Display in the table view the parameters corresponding to the given layer.
+        Display in the table view the parameters corresponding to the given layer, and update histograms.
         """
         select_params = self.build_params_query(layer)
         self.paramsModel = QSqlQueryModel()
         self.paramsModel.setQuery(select_params)
         self.tableViewParams.setModel(self.paramsModel)
+        
+        select_params = self.build_params_distribution(layer)
+        self.paramsDistributionModel.new_queries([select_params])
+        self.paramsDistributionModel.exec() #Refresh the model
+
     
     def setupCheckboxesQuantiles(self):
         """
@@ -397,13 +409,22 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             print("Model successfully created !")
 
     def refreshbins(self):
-        #Needs to be adapted!
-        return
-        if self.MCMCiscomputed:
+        try:
             bins = self.horizontalSliderBins.value()
-            self.histos.refresh(bins)
-        else :
-            print("Please run the MCMC first")
+            self.logk_view.update_bins(bins)
+            self.logk_view.on_update()
+
+            self.permeability_view.update_bins(bins)
+            self.permeability_view.on_update()
+
+            self.porosity_view.update_bins(bins)
+            self.porosity_view.on_update()
+
+            self.capacity_view.update_bins(bins)
+            self.capacity_view.on_update()
+        except Exception:
+            #The views don't exist yet: computations have not been made. The button should be inactive
+            pass
 
     def setDataPlots(self):
         #Pressure :
@@ -462,6 +483,19 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             vbox = QtWidgets.QVBoxLayout()
             vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
             self.groupBoxTempDepth.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxLog10K.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxPermeability.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxPorosity.setLayout(vbox)
+            vbox = QtWidgets.QVBoxLayout()
+            vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
+            self.groupBoxCapacity.setLayout(vbox)     
+            
 
     def plotTemperatureMap(self):
         select_tempmap = self.build_result_queries(result_type="2DMap",option="Temperature") #This is a list of temperatures for all quantiles
@@ -542,17 +576,41 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.waterflux_model.exec()
     
     def plotHistos(self):
-        pass
+        select_params = self.build_params_distribution(self.comboBoxSelectLayer.currentText())
+        self.paramsDistributionModel = ParamsDistributionModel([select_params])
 
-    # def histos(self, dfallparams):
-    #     self.histos = MplCanvasHisto(dfallparams)
-    #     self.toolbarhistos = NavigationToolbar(self.histos, self)
-    #     self.vboxhistos.addWidget(self.histos)
-    #     self.vboxhistos.addWidget(self.toolbarhistos)
+        self.logk_view = Log10KView(self.paramsDistributionModel)
+        self.permeability_view = PermeabilityView(self.paramsDistributionModel)
+        self.porosity_view = PorosityView(self.paramsDistributionModel)
+        self.capacity_view = CapacityView(self.paramsDistributionModel)
+
+        self.toolbarLog10k = NavigationToolbar(self.logk_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxLog10K.setLayout(vbox)
+        vbox.addWidget(self.logk_view)
+        vbox.addWidget(self.toolbarLog10k)
+
+        self.toolbarPermeability = NavigationToolbar(self.permeability_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxPermeability.setLayout(vbox)
+        vbox.addWidget(self.permeability_view)
+        vbox.addWidget(self.toolbarPermeability)
+
+        self.toolbarPorosity = NavigationToolbar(self.porosity_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxPorosity.setLayout(vbox)
+        vbox.addWidget(self.porosity_view)
+        vbox.addWidget(self.toolbarPorosity)
+
+        self.toolbarCapacity = NavigationToolbar(self.capacity_view, self)
+        vbox = QtWidgets.QVBoxLayout()
+        self.groupBoxCapacity.setLayout(vbox)
+        vbox.addWidget(self.capacity_view)
+        vbox.addWidget(self.toolbarCapacity)
+
+        self.paramsDistributionModel.exec()
 
     def label_update(self):
-        #Needs to be adapted?
-        return
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
     
     def build_infos_queries(self):
@@ -672,6 +730,27 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 WHERE SamplingPoint.Name = "{self.point.name}"
             """
             ) 
+    
+    def build_params_distribution(self,layer):
+        """
+        Given a layer (DepthBed), return the distribution for the 4 types of parameters.
+        """
+        return QSqlQuery(f"""
+            SELECT log10K,
+            LambdaS,
+            N,
+            Cap
+                FROM ParametersDistribution
+                JOIN Point
+                ON ParametersDistribution.PointKey = Point.id
+                JOIN SamplingPoint
+                ON Point.SamplingPoint = SamplingPoint.id
+                JOIN Layer
+                ON ParametersDistribution.Layer = Layer.id
+                WHERE Layer.DepthBed = {layer}
+                AND SamplingPoint.Name ="{self.point.name}";
+        
+        """)
     
     def build_data_queries(self, full_query=False, field=""):
         """

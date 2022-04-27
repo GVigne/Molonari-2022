@@ -149,6 +149,30 @@ class MoloView2D(MoloView):
             self.axes.set_ylabel(self.ylabel)
             self.axes.set_xlabel(self.xlabel)
 
+class MoloViewHisto(MoloView):
+    """
+    Abstract class to display histograms
+    """
+    def __init__(self, molomodel: MoloModel, bins=60, color ='green', title=""):
+        super().__init__(molomodel)
+        self.bins = bins
+        self.data = []
+        self.color = color
+        self.title = title
+    
+    def update_bins(self,bins):
+        self.bins = bins
+    
+    def on_update(self):
+        self.axes.clear()
+        self.retrieve_data()
+        self.plot_data()
+        self.draw()
+    
+    def plot_data(self):
+        self.axes.hist(self.data, edgecolor='black', bins=self.bins, alpha=.3, density=True, color=self.color)
+        self.axes.set_title(self.title)
+
 class PressureView(MoloView1D):
     """
     Concrete class to display the Pressure in "Data arrays and plots" tab.
@@ -265,3 +289,43 @@ class TotalFlowView(MoloView2D):
         self.cmap = self.model.get_total_flow()
         self.x = self.model.get_dates()
         self.y = self.model.get_depths()
+
+class Log10KView(MoloViewHisto):
+    """
+    Concrete class to display the distribution of the -Log10K paramter
+    """
+    def __init__(self, molomodel: MoloModel, bins=60, color='green', title="Histogramme a posteriori des -log10K"):
+        super().__init__(molomodel, bins, color, title)
+    
+    def retrieve_data(self):
+        self.data = self.model.get_log10k()
+
+class PorosityView(MoloViewHisto):
+    """
+    Concrete class to display the distribution of the porosity paramter
+    """
+    def __init__(self, molomodel: MoloModel, bins=60, color='blue', title="Histogramme a posteriori des n"):
+        super().__init__(molomodel, bins, color, title)
+    
+    def retrieve_data(self):
+        self.data = self.model.get_porosity()
+
+class PermeabilityView(MoloViewHisto):
+    """
+    Concrete class to display the distribution of the permeability paramter
+    """
+    def __init__(self, molomodel: MoloModel, bins=60, color='orange', title="Histogramme a posteriori des lambda_s"):
+        super().__init__(molomodel, bins, color, title)
+    
+    def retrieve_data(self):
+        self.data = self.model.get_permeability()
+
+class CapacityView(MoloViewHisto):
+    """
+    Concrete class to display the distribution of the capacity paramter
+    """
+    def __init__(self, molomodel: MoloModel, bins=60, color='pink', title="Histogramme a posteriori des rho_s * c_s"):
+        super().__init__(molomodel, bins, color, title)
+    
+    def retrieve_data(self):
+        self.data = self.model.get_capacity()

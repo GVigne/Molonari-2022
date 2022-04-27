@@ -283,8 +283,45 @@ class HeatFluxesModel(MoloModel):
         self.total = []
 
 class ParamsDistributionModel(MoloModel):
+    """
+    A model to display the information about the parameters distribution.
+    """
     def __init__(self, queries):
         super().__init__(queries)
+        self.log10k = []
+        self.porosity = []
+        self.permeability = []
+        self.capacity = []
     
     def update_df(self):
-        pass
+        try:
+            while self.queries[0].next():
+                self.log10k.append(self.queries[0].value(0))
+                self.permeability.append(self.queries[0].value(1))
+                self.porosity.append(self.queries[0].value(2))
+                self.capacity.append(self.queries[0].value(3))
+            self.log10k = np.array(self.log10k)
+            self.permeability = np.array(self.permeability)
+            self.porosity = np.array(self.porosity)
+            self.capacity = np.array(self.capacity)
+        except Exception:
+            #Empty query or invalid query: then revert any changes done. The model is empty: nothing will be displayed.
+            self.reset_data()
+
+    def get_log10k(self):
+        return self.log10k
+
+    def get_permeability(self):
+        return self.permeability
+    
+    def get_porosity(self):
+        return self.porosity
+    
+    def get_capacity(self):
+        return self.capacity
+
+    def reset_data(self):
+        self.log10k = []
+        self.porosity = []
+        self.permeability = []
+        self.capacity = []
