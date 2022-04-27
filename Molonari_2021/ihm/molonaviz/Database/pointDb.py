@@ -64,3 +64,13 @@ class PointDb():
         insertQuery.finish()
         selectQuery.finish()
         
+    def getIdByName(self, name):
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.prepare("SELECT id FROM Point where Name = :name")
+        selectQuery.bindValue(":name", name)
+        selectQuery.exec_()
+        
+        selectQuery.next()
+        id = int(selectQuery.value(0))
+        selectQuery.finish()
+        return id
