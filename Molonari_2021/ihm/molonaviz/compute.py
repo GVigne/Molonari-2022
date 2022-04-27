@@ -136,7 +136,7 @@ class Compute(QtCore.QObject):
         '''
         #Open the database
         db_point = QSqlDatabase.addDatabase("QSQLITE")
-        db_point.setDatabaseName(r"C:\Users\fujia\Documents\GitHub\Molonari-2022\Molonari_2021\studies\study_2022\molonari_study_2022 .sqlite")
+        db_point.setDatabaseNamedb_point.setDatabaseName(r".\..\..\studies\study_2022\molonari_study_2022 .sqlite")
         if not db_point.open():
             print("Error: Cannot open databse")
             
