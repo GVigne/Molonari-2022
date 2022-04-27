@@ -5,7 +5,14 @@ from .params import Param, Prior, ParamsPriors
 
 
 class Layer:
-    def __init__(self, name: str, zLow: float, moinslog10K: float, n: float, lambda_s: float, rhos_cs: float):
+    def __init__(self,
+        name: str,
+        zLow: float,
+        moinslog10K: float,
+        n: float,
+        lambda_s: float,
+        rhos_cs: float
+        ):
         self.name = name
         self.zLow = zLow
         self.params = Param(moinslog10K, n, lambda_s, rhos_cs)
@@ -13,6 +20,9 @@ class Layer:
     def __repr__(self) -> str:
         return self.name + f" : ends at {self.zLow} m. " + self.params.__repr__()
 
+    @classmethod
+    def from_dict(cls, monolayer_dict):
+        return cls(**monolayer_dict)
 
 class LayerPriors(ParamsPriors):
     '''Rassemble tout les priors relatfifs aux params d'une couche'''

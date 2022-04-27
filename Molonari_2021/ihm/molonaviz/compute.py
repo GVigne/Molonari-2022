@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 from PyQt5 import QtCore
 
-from pyheatmy22 import *
+from pyheatmy import *
 from point import Point
 
 
@@ -286,6 +286,16 @@ class Compute(QtCore.QObject):
         times = self.col.get_times_solve()
         flows_for_insertion = self.col.flows_solve
         
+        try:
+            params = self.col.get_all_params()
+        except:
+            params = []
+        
+        try:
+            quantiles = self.col.get_quantiles()
+        except:
+            quantiles = []
+        
         ## Formatage des dates
         n_dates = len(times)
         times_string = np.zeros((n_dates,1))
@@ -353,4 +363,6 @@ class Compute(QtCore.QObject):
         self.mainDb.dateDb.insert(times)
         self.mainDb.depthDb.insert(depths)
         self.mainDb.pointDb.insert()
+        self.mainDb.quantileDb.insert(quantiles)
+        
         # self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)

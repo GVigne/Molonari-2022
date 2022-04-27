@@ -28,6 +28,24 @@ class QuantileDb():
         createQuery.finish()
         
     
-    def insert(self):
-        pass
+    def insert(self, quantiles):
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO Quantile (
+            Quantile
+        )
+        VALUES (?)
+        """
+        )
+        
+        # We insert the fictional quantile 0 corresponding to the direct modele
+        insertQuery.addBindValue(str(0))
+        insertQuery.exec_()
+        
+        for quantile in quantiles:
+            insertQuery.addBindValue(str(quantile))
+            insertQuery.exec_()
+            
+        insertQuery.finish()
     

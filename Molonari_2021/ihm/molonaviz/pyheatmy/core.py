@@ -5,11 +5,10 @@ from numbers import Number
 import sys
 
 import numpy as np
+import matplotlib.pyplot as plt
 from tqdm import trange
 from scipy.interpolate import interp1d
 
-
-from scipy.interpolate import interp1d
 from .lagrange import Lagrange
 from .params import Param, ParamsPriors, Prior, PARAM_LIST
 from .state import State
@@ -135,6 +134,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         H_init = self._dH[0] - self._dH[0] * self._z_solve / self._real_z[-1]
         # fixe toutes les charges de l'aquifère à 0 (à tout temps)
         H_aq = np.zeros(len(self._times))
+
         H_riv = self._dH  # self.dH contient déjà les charges de la rivière à tout temps, stocke juste dans une variable locale
 
         # crée les températures initiales (t=0) sur toutes les profondeurs (milieu des cellules)
@@ -142,6 +142,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             T_init = np.array([self.lagr(z) for z in self._z_solve])
         elif self.inter_mode == 'linear':
             T_init = self.linear(self._z_solve)
+
         T_riv = self._T_riv
         T_aq = self._T_aq
 
@@ -346,7 +347,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
             RHO_W
             * C_W
             * self._flows
-            * self.temps_solve
+            * (self.temps_solve - 273.15)
         )
     advec_flows_solve = property(get_advec_flows_solve)
 # récupération des flux advectifs = masse volumnique*capacité calorifique*débit spécifique*température
@@ -411,9 +412,18 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         if isinstance(quantile, Number):
             quantile = [quantile]
 
+        def conv(layer):
+            name, prof, priors = layer
+            if isinstance(priors, dict):
+                return (name, prof,
+                        [Prior(*args) for args in (priors[lbl]
+                                                   for lbl in PARAM_LIST)])
+            else:
+                return layer
+
         if not isinstance(all_priors, AllPriors):
             all_priors = AllPriors(
-                [LayerPriors(*args) for args in (layer for layer in all_priors)])
+                [LayerPriors(*conv(layer)) for layer in all_priors])
 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz/2 + np.array([k*dz for k in range(nb_cells)])
@@ -445,7 +455,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         _flows = np.zeros(
             (nb_iter + 1, nb_cells, len(self._times)), np.float32)
 
-        for _ in trange(1000, desc="Init Mcmc ", file=sys.stdout):
+        for _ in trange(10, desc="Init Mcmc ", file=sys.stdout):
             init_layers = all_priors.sample()
             self.compute_solve_transi(init_layers, nb_cells, verbose=False)
             self._states.append(
@@ -526,7 +536,7 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
         if not isinstance(all_priors, AllPriors):
             all_priors = AllPriors(
-                [LayerPriors(*conv(args)) for args in (layer for layer in all_priors)])
+                [LayerPriors(*conv(layer)) for layer in all_priors])
 
         dz = self._real_z[-1] / nb_cells
         _z_solve = dz/2 + np.array([k*dz for k in range(nb_cells)])
@@ -679,8 +689,14 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @ compute_mcmc.needed
     def get_all_params(self):
-        # retourne tous les couples de paramètres par lesquels est passé la MCMC
-        return [[layer.params for layer in state.layers] for state in self._states]
+        n_layers = len(self._layersList)
+        n_params = len(self._layersList[0].params)
+        n_states = len(self._states)
+        res = np.empty((n_layers, n_states, n_params))
+        for i in range(n_layers):
+            for j, state in enumerate(self._states):
+                res[i][j] = np.array(state.layers[i].params)
+        return res
 
     all_params = property(get_all_params)
 
@@ -736,6 +752,10 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
 
     all_acceptance_ratio = property(get_all_acceptance_ratio)
 
+    @ compute_mcmc.needed
+    def get_quantiles(self):
+        return self._quantiles_temps.keys()
+
     # erreur si pas déjà éxécuté compute_mcmc, sinon l'attribut pas encore affecté à une valeur
     @ compute_mcmc.needed
     def get_temps_quantile(self, quantile):
@@ -746,7 +766,6 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
     @ compute_mcmc.needed
     def get_flows_quantile(self, quantile):
         return self._quantiles_flows[quantile]
-        # retourne les valeurs des débits spécifiques en fonction du temps selon le quantile demand
 
     @ compute_mcmc.needed
     def get_RMSE_quantile(self, quantile):
@@ -764,3 +783,71 @@ class Column:  # colonne de sédiments verticale entre le lit de la rivière et 
         total_RMSE = np.sqrt(np.sum(list_RMSE**2) / nb_sensors)
 
         return np.append(list_RMSE, total_RMSE)
+
+    def plot_CALC_results(self, nt=3000, fontsize=15):
+
+        time_array = np.array([(self._times[j+1] - self._times[j]).total_seconds()
+                              for j in range(len(self._times) - 1)])
+        K_offset = 273.15
+        nb_cells = len(self._z_solve)
+        n_sens = len(self.depth_sensors)-1
+        dz = self._real_z[-1] / nb_cells
+
+        """Plots des profils de température"""
+
+        fig, ax = plt.subplots(2, 3, sharey=False, figsize=(22, 14))
+        fig.suptitle("Résultats calcul : simulateur de données",
+                     fontsize=fontsize+6)
+        ax[0, 0].plot(self._T_riv[:nt][:nt]-K_offset, label="Triv")
+        for i in range(n_sens):
+            ax[0, 0].plot(self._T_measures[:nt, i] -
+                          K_offset, label="T{}".format(i+1))
+        ax[0, 0].plot(self._T_aq[:nt]-K_offset, label="Taq")
+        ax[0, 0].legend(fontsize=fontsize)
+        ax[0, 0].grid()
+        ax[0, 0].set_xlabel("t", fontsize=fontsize)
+        ax[0, 0].set_ylabel("T (°C)", fontsize=fontsize)
+        ax[0, 0].set_title("Température mesurées", fontsize=fontsize)
+
+        for i in range(nt):
+            ax[0, 1].plot(self._temps[:nt, i]-K_offset, -self._z_solve)
+        ax[0, 1].set_ylabel("depth", fontsize=fontsize)
+        ax[0, 1].set_xlabel("T (°C)", fontsize=fontsize)
+        ax[0, 1].grid()
+        ax[0, 1].set_title(
+            "Evolution du profil de température", fontsize=fontsize)
+
+        """Plots des frises"""
+
+        im0 = ax[0, 2].imshow(self._temps[:, :nt]-K_offset,
+                              aspect='auto', cmap='Spectral_r')
+        ax[0, 2].set_xlabel("t", fontsize=fontsize)
+        ax[0, 2].set_ylabel("z (m)", fontsize=fontsize)
+        cbar0 = fig.colorbar(im0, ax=ax[0, 2], shrink=1, location='right')
+        cbar0.set_label('Température (°C)', fontsize=fontsize)
+        ax[0, 2].set_title("Frise température MD", fontsize=fontsize)
+
+        im1 = ax[1, 0].imshow(self.get_conduc_flows_solve()[
+                              :, :nt], aspect='auto', cmap='Spectral_r')
+        ax[1, 0].set_xlabel("t", fontsize=fontsize)
+        ax[1, 0].set_ylabel("z (m)", fontsize=fontsize)
+        cbar1 = fig.colorbar(im1, ax=ax[1, 0], shrink=1, location='right')
+        cbar1.set_label('Flux conductif (W/m²)', fontsize=fontsize)
+        ax[1, 0].set_title("Frise Flux conductif MD", fontsize=fontsize)
+
+        im2 = ax[1, 1].imshow(self.get_advec_flows_solve()[
+                              :, :nt], aspect='auto', cmap='Spectral_r')
+        ax[1, 1].set_xlabel("t", fontsize=fontsize)
+        ax[1, 1].set_ylabel("z (m)", fontsize=fontsize)
+        cbar2 = fig.colorbar(im2, ax=ax[1, 1], shrink=1, location='right')
+        cbar2.set_label('Flux conductif (W/m²)', fontsize=fontsize)
+        ax[1, 1].set_title("Frise Flux advectif MD", fontsize=fontsize)
+
+        im3 = ax[1, 2].imshow(self.get_flows_solve()[:, :nt],
+                              aspect='auto', cmap='Spectral_r')
+        ax[1, 2].set_xlabel("t", fontsize=fontsize)
+        ax[1, 2].set_ylabel("z (m)", fontsize=fontsize)
+        cbar3 = fig.colorbar(im3, ax=ax[1, 2], shrink=1, location='right')
+        cbar3.set_label('water flow (m/s)', fontsize=fontsize)
+        ax[1, 2].set_title("Frise Flux d'eau MD", fontsize=fontsize)
+        # retourne les valeurs des débits spécifiques en fonction du temps selon le quantile demand

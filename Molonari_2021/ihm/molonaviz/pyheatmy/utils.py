@@ -4,14 +4,16 @@ from numba import njit
 
 from .solver import solver, tri_product
 
+#LAMBDA_W = 0 # test du cas purement advectif
 LAMBDA_W = 0.6071
 RHO_W = 1000
 C_W = 4185
+ALPHA = 0.4
 
 
 @njit
 def compute_T(
-    moinslog10K, n, lambda_s, rhos_cs, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq, alpha=0.3
+    moinslog10K, n, lambda_s, rhos_cs, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq, alpha=ALPHA
 ):
     """ Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an homogeneous column.
 
@@ -138,8 +140,8 @@ def compute_T(
 
 
 @njit
-def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=0.3):
-    """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an homogeneous column.
+def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
+    """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for  an homogeneous column.
 
     Parameters
     ----------
@@ -265,7 +267,7 @@ def compute_H(moinslog10K, Ss, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, al
 
 @njit
 def compute_T_stratified(
-    moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq, alpha=0.3
+    moinslog10K_list, n_list, lambda_s_list, rhos_cs_list, all_dt, dz, H_res, H_riv, H_aq, T_init, T_riv, T_aq, alpha=ALPHA
 ):
     """ Computes T(z, t) by solving the heat equation : dT/dt = ke Delta T + ae nabla H nabla T, for an heterogeneous column.
 
@@ -395,7 +397,7 @@ def compute_T_stratified(
 
 
 @njit
-def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=0.3):
+def compute_H_stratified(moinslog10K_list, Ss_list, all_dt, isdtconstant, dz, H_init, H_riv, H_aq, alpha=ALPHA):
     """ Computes H(z, t) by solving the diffusion equation : Ss dH/dT = K Delta H, for an heterogeneous column.
 
     Parameters
