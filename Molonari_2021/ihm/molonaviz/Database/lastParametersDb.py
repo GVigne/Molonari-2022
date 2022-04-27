@@ -1,6 +1,6 @@
 from PyQt5.QtSql import QSqlQuery
 
-class BestParametersDb():
+class LastParametersDb():
     def __init__(self, con) -> None:
         self.con = con
     
@@ -24,6 +24,7 @@ class BestParametersDb():
             log10KBest         REAL,
             LambdaSBest         REAL,
             NBest           REAL,
+            Cap             REAL,
             Layer           INTEGER REFERENCES Layer (id),
             PointKey        INTEGER REFERENCES Point (id)
         );
