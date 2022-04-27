@@ -52,12 +52,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.tabWidget.setCurrentIndex(3)
 
         #TO REMOVE
-
         self.pointDir = self.point.getPointDir()
         self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName("Dummy_database/RawMeasures.sqlite")
+        self.con.setDatabaseName("Dummy_database/MCMC.sqlite")
         self.con.open()
-        self.point.name="P034" #Needs to be changed
 
         self.setupComboBoxLayers()
         self.setupCheckboxesQuantiles()
@@ -904,6 +902,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
 if __name__ == '__main__':
     p = Point()
+    p.name="P034"
     s = Study()
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)
