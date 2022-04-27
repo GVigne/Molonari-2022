@@ -372,3 +372,5 @@ class Compute(QtCore.QObject):
         self.mainDb.temperatureAndHeatFlowsDb.insert_quantile_0(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)
         if len(quantiles) > 1:
             self.mainDb.temperatureAndHeatFlowsDb.insert_quantiles(self.col, quantiles, self.point)
+            
+        self.mainDb.rmseDb.insert(self.col, quantiles, self.point)

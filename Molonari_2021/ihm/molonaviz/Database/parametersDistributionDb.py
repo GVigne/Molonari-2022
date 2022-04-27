@@ -35,7 +35,7 @@ class ParametersDistributionDb():
         createQuery.finish()
         
     
-    def insert(self, params):
+    def insert(self, params, point):
         self.con.transaction()
         
         insertQuery = QSqlQuery(self.con)
