@@ -650,11 +650,12 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             
     def getScript(self):
         try:
-            with open('saved_text.txt', 'r') as f:
+            # with open('saved_text.txt', 'r') as f:
+            #     sample_text = f.read()
+            #     f.close()
+            with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt")) as f:
                 sample_text = f.read()
                 f.close()
-            # with open(os.path.join(pointDir,"script_"+name+".txt")) as f:
-            #     sample_text = f.read()
         except:
             print("No saved script, show sample script")
             with open(os.path.join(os.path.dirname(__file__),"sample_text.txt")) as f:
@@ -666,7 +667,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         return(script)
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
-        scriptDir = "script.py"
+        scriptDir = self.pointDir + "/script.py"
         sys.path.append(self.pointDir) # TODO uncomment
 
         with open(scriptDir, "w") as f:
@@ -676,7 +677,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # There are different error in the script, sometimes it will cause the import step to fail, in this case we still have to remove the scripy.py file.
         try:
             from script import fonction
-            print("imported?")
         except Exception as e:
             print(e)
             raise e
@@ -718,7 +718,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             # self.cleanup()
 
     def editScript(self):
-        dig = DialogScript()
+        dig = DialogScript(self.name, self.pointDir)
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
 
@@ -734,19 +734,21 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
     # Define the selectMethod function and edit thhe sample_text.txt
     def openScript(self):
         try: 
-            with open('saved_text.txt', 'r') as file:
+            with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt")) as file:
+            # with open('saved_text.txt', 'r') as file:
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
         except FileNotFoundError:
-            with open('sample_text.txt', 'r') as file:
+            # with open('sample_text.txt', 'r') as file:
+            with open(os.path.join(os.path.dirname(__file__),"sample_text.txt")) as file:
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
         return data
     
     def saveScript(self, data):
-        with open('saved_text.txt', 'w') as file:
+        with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt"), 'w') as file:
             file.writelines( data )
             file.close()
     
@@ -851,7 +853,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         ## END OF SCRIPT CODE
 
         self.df_selected = pd.DataFrame(columns=self.varList)
-        self.df_selected.to_csv("selected_points.csv")
+        self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
         self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
@@ -867,7 +869,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
             self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
             self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
-            self.df_selected.to_csv("selected_points.csv")
+            self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
             
         self.previsualizeCleaning()
 
@@ -878,7 +880,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         nan_values.fill(np.nan)
         self.df_selected[self.varName()] = nan_values
         self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
-        self.df_selected.to_csv("selected_points.csv")
+        self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
 
         obj = self.buttonGroupMethod.button(3)
         self.selectMethod(obj)
@@ -887,11 +889,11 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=self.varList)
-        self.df_selected.to_csv("selected_points.csv")
+        self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
         # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         try:
-            os.remove("saved_text.txt")
+            os.remove(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt"))
         except FileNotFoundError:
             pass
         self.filter_dic = dict.fromkeys(self.varList[1:],False)

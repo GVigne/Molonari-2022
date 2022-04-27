@@ -107,7 +107,8 @@ class Point(object):
         # On convertie les dates au format yy/mm/dd HH:mm:ss
         convertDates(dftemp)
         convertDates(dfpress)
-
+        self.dftemp_raw = dftemp
+        self.dfpress_raw = dfpress
         # On vérifie qu'on a le même deltaT pour les deux fichiers
         # La référence sera l'écart entre les deux premières lignes pour chaque fichier 
         # --> Demander à l'utilisateur de vérifier que c'est ok

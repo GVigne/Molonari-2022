@@ -1,6 +1,5 @@
 ####### DO NOT TOUCH #######
 # MODULES 
-print("Enter script")
 import sys, os
 import numpy as np
 import pandas as pd
@@ -13,21 +12,21 @@ from scipy.signal import savgol_filter
 intercept = self.df_Calibration.loc[0,"Intercept"]
 dUdH = self.df_Calibration.loc[0,"dUdH"]
 dUdT = self.df_Calibration.loc[0,"dUdT"]
-
 df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
 df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
-print("Gets pression")
+
 # TIMES - DATES
 
 df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
+
 varList = list(df_loaded.columns)
 
 lower_limit = max(df_loaded[["t_stream"]].first_valid_index(),df_loaded[["charge_diff"]].first_valid_index(),df_loaded[["t4"]].first_valid_index())
 upper_limit = min(df_loaded[["t_stream"]].last_valid_index(),df_loaded[["charge_diff"]].last_valid_index(),df_loaded[["t4"]].last_valid_index())
 # df_cleaned = df_loaded.copy().loc[lower_limit:upper_limit,:]
 df_cleaned = df_loaded.copy().dropna()
-print("Gets TIMES")
+
 # METHODS
 # t_stream
 
@@ -43,7 +42,7 @@ print("Gets TIMES")
 
 # MANUAL SELECTED POINTS
 try:
-    selected_df = pd.read_csv("selected_points.csv")
+    selected_df = pd.read_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
 
     for i in varList[1:]:
         df_var = selected_df[["date",i]].dropna()
