@@ -1,4 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
+from .pointDb import PointDb
 
 class LastParametersDb():
     def __init__(self, con) -> None:
@@ -34,7 +35,7 @@ class LastParametersDb():
         createQuery.finish()
         
     
-    def insert(self, layers):
+    def insert(self, layers, point):
         self.con.transaction()
 
         insertQuery = QSqlQuery(self.con)
@@ -51,7 +52,7 @@ class LastParametersDb():
         VALUES (?, ?, ?, ?, ?, ?)
         """
         )
-        
+        point_id = PointDb(self.con).getIdByName(point.name)
         
         for i in range(len(layers)): # on parcourt les layers
             insertQuery.addBindValue(str(layers[i].params[0]))
@@ -59,7 +60,7 @@ class LastParametersDb():
             insertQuery.addBindValue(str(layers[i].params[1]))
             insertQuery.addBindValue(str(layers[i].params[3]))
             insertQuery.addBindValue(str(i+1))
-            insertQuery.addBindValue(str(1))
+            insertQuery.addBindValue(str(point_id))
             insertQuery.exec_()
             
         insertQuery.finish()

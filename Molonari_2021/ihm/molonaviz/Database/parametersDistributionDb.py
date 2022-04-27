@@ -1,4 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
+from .pointDb import PointDb
 
 class ParametersDistributionDb():
     def __init__(self, con) -> None:
@@ -51,7 +52,7 @@ class ParametersDistributionDb():
         VALUES (?, ?, ?, ?, ?, ?)
         """
         )
-        
+        point_id = PointDb(self.con).getIdByName(point.name)
         
         for i in range(len(params)): # on parcourt les layers
             for k in range(len(params[i])):
@@ -61,7 +62,7 @@ class ParametersDistributionDb():
                 insertQuery.addBindValue(str(params[i][k, 3]))
                 insertQuery.addBindValue(str(i))
                 insertQuery.addBindValue(str(params[i][k, 3]))
-                insertQuery.addBindValue(str(1))
+                insertQuery.addBindValue(str(point_id))
                 insertQuery.exec_()
             
         insertQuery.finish()
