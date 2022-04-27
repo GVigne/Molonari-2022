@@ -62,7 +62,7 @@ class PointDb():
         
     def getIdByName(self, name):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.prepare("SELECT id FROM Point where Name = :name")
+        selectQuery.prepare("SELECT id FROM SamplingPoint where Name = :name")
         selectQuery.bindValue(":name", name)
         selectQuery.exec_()
         

@@ -369,6 +369,6 @@ class Compute(QtCore.QObject):
         self.mainDb.layerDb.insert(layers)
         self.mainDb.lastParametersDb.insert(layers)
         
-        self.mainDb.temperatureAndHeatFlowsDb.insert_quantile_0(temps, advective_flux, conductive_flux, flows_for_insertion)
+        self.mainDb.temperatureAndHeatFlowsDb.insert_quantile_0(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)
         if len(quantiles) > 1:
-            self.mainDb.temperatureAndHeatFlowsDb.insert_quantiles(self.col, quantiles)
+            self.mainDb.temperatureAndHeatFlowsDb.insert_quantiles(self.col, quantiles, self.point)

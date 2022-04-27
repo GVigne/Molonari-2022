@@ -1,5 +1,6 @@
 from PyQt5.QtSql import QSqlQuery
 from .quantileDb import QuantileDb
+from .pointDb import PointDb
 
 class TemperatureAndHeatFlowsDb():
     def __init__(self, con) -> None:
@@ -37,7 +38,7 @@ class TemperatureAndHeatFlowsDb():
         createQuery.finish()
         
     
-    def insert_quantile_0(self, temps, advective_flux, conductive_flux, flows):
+    def insert_quantile_0(self, temps, advective_flux, conductive_flux, flows, point):
         self.con.transaction()
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
@@ -55,7 +56,7 @@ class TemperatureAndHeatFlowsDb():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         )
-        # point_id = PointDb.getIdByName(point.name)
+        point_id = PointDb(self.con).getIdByName(point.name)
         
         for k in range(temps.shape[0]):
             for i in range(temps.shape[1]):
@@ -65,7 +66,7 @@ class TemperatureAndHeatFlowsDb():
                 insertQuery.addBindValue(str(advective_flux[k, i]))
                 insertQuery.addBindValue(str(conductive_flux[k, i]))
                 insertQuery.addBindValue(str(flows[k, i]))
-                insertQuery.addBindValue(str(1))
+                insertQuery.addBindValue(str(point_id))
                 insertQuery.addBindValue(str(1))
             
                 insertQuery.exec_()
@@ -75,7 +76,7 @@ class TemperatureAndHeatFlowsDb():
         self.con.commit()
         
     
-    def insert_quantiles(self, col, quantiles):
+    def insert_quantiles(self, col, quantiles, point):
         self.con.transaction()
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
@@ -93,7 +94,7 @@ class TemperatureAndHeatFlowsDb():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         )
-        # point_id = PointDb.getIdByName(point.name)
+        point_id = PointDb(self.con).getIdByName(point.name)
         
         for quantile in quantiles:
             if quantile > 0:
@@ -112,7 +113,7 @@ class TemperatureAndHeatFlowsDb():
                         insertQuery.addBindValue(str(1))
                         insertQuery.addBindValue(str(1))
                         insertQuery.addBindValue(str(flows[k, i]))
-                        insertQuery.addBindValue(str(1))
+                        insertQuery.addBindValue(str(point_id))
                         insertQuery.addBindValue(str(quantile_id))
                     
                         insertQuery.exec_()
