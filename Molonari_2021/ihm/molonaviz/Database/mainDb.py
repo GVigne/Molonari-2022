@@ -7,6 +7,7 @@ from .dateDb import DateDb
 from .depthDb import DepthDb
 from .laboDb import LaboDb
 from .layerDb import LayerDb
+from .newDatesDb import NewDatesDb
 from .parametersDistributionDb import ParametersDistributionDb
 from .pointDb import PointDb
 from .pressureSensorDb import PressureSensorDb
@@ -33,6 +34,7 @@ class MainDb():
         self.depthDb = DepthDb(self.con)
         self.laboDb = LaboDb(self.con)
         self.layerDb = LayerDb(self.con)
+        self.newDatesDb = NewDatesDb(self.con)
         self.parametersDistribution = ParametersDistributionDb(self.con)
         self.pointDb = PointDb(self.con)
         self.pressureSensorDb = PressureSensorDb(self.con)
@@ -62,6 +64,7 @@ class MainDb():
         self.dateDb.create()
         self.quantileDb.create()
         self.layerDb.create()
+        self.newDatesDb.create()
         self.lastParametersDb.create()
         self.depthDb.create()
         self.parametersDistribution.create()

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogCleanup</class>
+ <widget class="QDialog" name="DialogCleanup">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>706</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Edit script</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please write below your Python code to clean-up your data. You may use the following predefined variables: &lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;df_loaded &lt;/span&gt;is the dataframe with the raw data from both sensors. Tension values have been already changed to Charge_diff values.&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;df_cleaned &lt;/span&gt;is the exit dataframe with NaN values where there is an outlier and with the updated values if the signal has been filtered.&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;varList &lt;/span&gt;is the list of names for each column in df_loaded. &lt;/p&gt;&lt;p&gt;- The DataFrames &lt;span style=&quot; font-weight:600;&quot;&gt;df_ZH&lt;/span&gt;, &lt;span style=&quot; font-weight:600;&quot;&gt;df_Pressure&lt;/span&gt;, and &lt;span style=&quot; font-weight:600;&quot;&gt;df_Calibration&lt;/span&gt; are input to this script and can be got from the .csv files. To use this script outside Molonaviz, these DataFrames must have the correct column names, without extra columns, and the correct format for dates.&lt;/p&gt;&lt;p&gt;Please do not touch the predifined functions and just use the space dedicated to the user's customized functions. Filtering is always made after all the data has been cleaned.&lt;/p&gt;&lt;p&gt;Press &lt;span style=&quot; font-weight:600;&quot;&gt;OK &lt;/span&gt;to save and run the code, or press &lt;span style=&quot; font-weight:600;&quot;&gt;Cancel&lt;/span&gt; to ignore the changes.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#d00003;&quot;&gt;Warning: &lt;/span&gt;If the script fails to run, modifications won't be saved since the last update. It is advisable to edit the code in another application and test it here.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="scaledContents">
+      <bool>false</bool>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPlainTextEdit" name="plainTextEdit">
+     <property name="plainText">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>DialogCleanup</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>DialogCleanup</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

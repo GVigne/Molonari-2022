@@ -5,7 +5,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtSql import QSqlQueryModel, QSqlDatabase, QSqlQuery
 import pandas as pd
 from pandasmodel import PandasModel
-from dialogcleanup import DialogCleanup
+from dialogcleanupmain import DialogCleanupMain
 from dialogcompute import DialogCompute
 from point import Point
 from study import Study
@@ -15,6 +15,7 @@ from usefulfonctions import *
 from dialogreset import DialogReset
 from MoloModel import  PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
 from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
+from Database.newDatesDb import NewDatesDb
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -263,34 +264,39 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if self.currentdata == "raw":
             print("Please clean-up your processed data. Click again on the raw data box")
         else:
-            dlg = DialogCleanup(self.point.name,self.pointDir)
+            dlg = DialogCleanupMain(self.point.name,self.pointDir,self.study)
             res = dlg.exec_()
             #print(self.pointDir)
             if res == QtWidgets.QDialog.Accepted:
-                script,scriptpartiel = dlg.getScript()
-                print("Cleaning data...")
+                dlg.mainDb.newDatesDb.insert(dlg.df_cleaned)
+                dlg.mainDb.cleanedMeasuresDb.update(dlg.df_cleaned,dlg.pointKey)
 
-                try :
-                    self.dftemp, self.dfpress = self.point.cleanup(script, self.dftemp, self.dfpress)
-                    print("Data successfully cleaned !...")
+                # script,scriptpartiel = dlg.getScript()
+                # print("Cleaning data...")
+
+                # try :
+                #     self.dftemp, self.dfpress = self.point.cleanup(script, self.dftemp, self.dfpress)
+                #     print("Data successfully cleaned !...")
                     
-                    #On actualise les modèles
-                    self.currentTemperatureModel.setData(self.dftemp)
-                    self.currentPressureModel.setData(self.dfpress)
-                    self.graphpress.update_(self.dfpress)
-                    self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
-                    print("Plots successfully updated")
+                #     #On actualise les modèles
+                #     self.currentTemperatureModel.setData(self.dftemp)
+                #     self.currentPressureModel.setData(self.dfpress)
+                #     #self.tableViewTemp.resizeColumnsToContents()
+                #     #self.tableViewPress.resizeColumnsToContents()
+                #     self.graphpress.update_(self.dfpress)
+                #     self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
+                #     print("Plots successfully updated")
                     
-                    # Save the modified text
-                    with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
-                        file.write(scriptpartiel)
-                    print("Script successfully saved")
+                #     # Save the modified text
+                #     with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
+                #         file.write(scriptpartiel)
+                #     print("Script successfully saved")
                     
                     
-                except Exception as e :
-                    print(e, "==> Clean-up aborted")
-                    displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
-                    self.cleanup()
+                # except Exception as e :
+                #     print(e, "==> Clean-up aborted")
+                #     displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
+                #     self.cleanup()
     
 
     def compute(self):
