@@ -367,5 +367,6 @@ class Compute(QtCore.QObject):
         self.mainDb.quantileDb.insert(quantiles)
         self.mainDb.parametersDistributionDb.insert(params)
         self.mainDb.layerDb.insert(layers)
+        self.mainDb.lastParametersDb.insert(layers)
         
         # self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)
