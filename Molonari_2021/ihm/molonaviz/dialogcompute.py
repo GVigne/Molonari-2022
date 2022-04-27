@@ -28,7 +28,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             
         #Find the id related to the SamplingPoint
         query_test = QSqlQuery()
-        query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = {self.pointName}")
+        print(query_test.exec_(f"""SELECT Point.id FROM Point,SamplingPoint WHERE SamplingPoint.Name = "{self.pointName}" AND Point.SamplingPoint = SamplingPoint.id"""))
         query_test.first()
         self.point_id = query_test.value(0)
         
@@ -47,7 +47,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         # spinBoxNLayersDirect
         self.spinBoxNLayersDirect.setRange(0, 10)
         self.spinBoxNLayersDirect.setSingleStep(1)
-        self.spinBoxNLayersDirect.setValue(3)
+        self.spinBoxNLayersDirect.setValue(1)
         # self.spinBoxNLayersDirect.setWrapping(True)
 
         self.MCMCLineEdits = [self.lineEditMaxIterMCMC, 
@@ -60,6 +60,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         # Show the default table
         self.showdb()
+        
+        db_point.close()
 
         self.pushButtonRun.clicked.connect(self.run)
 
@@ -97,6 +99,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setHorizontalHeaderItem(4, item4)
         item4.setText('SolVolThermCap (J/m^3/K)')
         item4.setToolTip('Solid Volumetric Thermal Capacity: heat capacity of a sample of the substance divided by the volume of the sample')
+        
+        
     
     #Find the values related to point_id in different tables
     def searchTable(tableName = None, point_id = None):
@@ -141,6 +145,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setRowCount(10)
         self.tableWidget.setColumnCount(5)
         
+        '''
         for i in range(row):
     
             self.tableWidget.setItem(i, 1, QTableWidgetItem("1e-5"))
@@ -151,7 +156,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 0, QTableWidgetItem("21"))
         self.tableWidget.setItem(1, 0, QTableWidgetItem("31"))
         self.tableWidget.setItem(2, 0, QTableWidgetItem("46"))
-        
+        '''
         for k in range(10):
                 if k > row - 1:
                     self.tableWidget.hideRow(k)
@@ -170,50 +175,53 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             i = 0
             while i<row:
                 #Read the data
-                query_test.exec_(f"SELECT 1 FROM ParametersDistribution WHERE PointKey = {point_id} AND Layer = {i+1}")
+                query_test.exec_(f"SELECT * FROM ParametersDistribution WHERE PointKey = {self.point_id} AND Layer = {i+1}")
+            
                 if not query_test.first():
                     break
                 permeability = query_test.value(1)
                 sediThermCon = query_test.value(2)
                 porosity = query_test.value(3)
-                solVolThermCap = query_test.value(4)
-                layer = query_test.value(5)
+                #solVolThermCap = query_test.value(4)
+                solVolThermCap = 5e6
+                #layer = query_test.value(5)
+                layer = query_test.value(4)
                 #Find the depthBed
                 query_new = QSqlQuery()
                 query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
                 query_new.first()
                 depth_bed = query_new.value(2)
                 #Insert the values
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(depth_bed))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(permeability))
-                self.tableWidget.setItem(i, 2, QTableWidgetItem(porosity))
-                self.tableWidget.setItem(i, 3, QTableWidgetItem(sediThermCon))
-                self.tableWidget.setItem(i, 4, QTableWidgetItem(solVolThermCap))
-                i+=1
-            db_point.close()
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(depth_bed)))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(permeability)))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(porosity)))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(sediThermCon)))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(str(solVolThermCap)))
+            i+=1
             return  
         
         i = 0
         while i<row:
             #Read the data
-            query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {point_id} AND Layer = {i+1}")
+            query_test.exec_(f"SELECT * FROM BestParameters WHERE PointKey = {self.point_id} AND Layer = {i+1}")
             if not query_test.first():
                 break
             permeability = query_test.value(1)
             sediThermCon = query_test.value(2)
             porosity = query_test.value(3)
-            layer = query_test.value(4)
+            solVolThermCap = query_test.value(4)
+            layer = query_test.value(5)
             #Find the depthBed
             query_new = QSqlQuery()
-            query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
+            query_new.exec_(f"SELECT DepthBed FROM Layer WHERE id = {layer}")
             query_new.first()
-            depth_bed = query_new.value(2)
+            depth_bed = query_new.value(0)
             #Insert the values into the table
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(depth_bed))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(permeability))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(porosity))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(sediThermCon))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(depth_bed)))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(permeability)))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(porosity)))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(sediThermCon)))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(str(solVolThermCap)))
             i+=1  
         '''
         if not (self.searchTable(tableName = "BestParameters",point_id = point_id)):
@@ -221,7 +229,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 print("Error, point not found")
         '''
                                      
-        db_point.close()
+        
          
     #    self.readSQL()
     
@@ -338,6 +346,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    mainWin = DialogCompute(1)
+    mainWin = DialogCompute("Point034")
     mainWin.show()
     sys.exit(app.exec_())
