@@ -42,7 +42,7 @@ class NewDatesDb():
         """
         )
         
-        df = df['date'] 
+        df = df.apply(lambda x: x['date'].strftime("%Y:%m:%d:%H:%M:%S"), axis=1)
         for ind in df.index:
             insertQuery.addBindValue(str(df[ind]))            
             insertQuery.exec_()
