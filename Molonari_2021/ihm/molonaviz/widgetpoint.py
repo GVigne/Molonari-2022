@@ -209,46 +209,49 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         select_temp = self.build_data_queries(field ="Temp")
         self.tempmodel.new_queries([select_temp])
         self.tempmodel.exec()
-        
-    def reset(self):
-        #Needs to be adapted!
-        return
+
+    def deleteComputations(self):
         dlg = DialogReset()
         res = dlg.exec_()
         if res == QtWidgets.QDialog.Accepted:
-            print("Resetting data...")
-            self.point.processData(self.study.getSensorDir())
-            self.point.reset()
-            #On actualise les modèles
-            if self.checkBoxRaw_Data.isChecked():
-                self.dfpress = pd.read_csv(self.PressureDir, skiprows=1)
-                self.dftemp = pd.read_csv(self.TemperatureDir, skiprows=1)
-            else:
-                self.dfpress = readCSVWithDates(self.PressureDir)
-                self.dftemp = readCSVWithDates(self.TemperatureDir)   
-            self.currentTemperatureModel.setData(self.dftemp)
-            self.currentPressureModel.setData(self.dfpress)
-            self.graphpress.update_(self.dfpress)
-            self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
+            pointname = self.point.getName()
+            deleteTableQuery = QSqlQuery()
+            deleteTableQuery.exec_("DELETE FROM WaterFlow WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+            deleteTableQuery.exec_("DELETE FROM RMSE WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+            deleteTableQuery.exec_("DELETE FROM TemperatureAndHeatFlows WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+
+            deleteTableQuery.exec_("DELETE FROM Date WHERE (SELECT count(*) FROM RMSE)==0")
+            deleteTableQuery.exec_("DELETE FROM Depth WHERE (SELECT count(*) FROM RMSE)==0")
 
             self.directmodeliscomputed = False
             self.MCMCiscomputed = False
-            ##Clear des layouts :
-            clearLayout(self.vboxwaterdirect)
-            clearLayout(self.vboxwaterMCMC)
-            clearLayout(self.vboxfluxesdirect)
-            clearLayout(self.vboxfluxesMCMC)
-            clearLayout(self.vboxfrisetempdirect)
-            clearLayout(self.vboxfrisetempMCMC)
-            clearLayout(self.vboxintertempdirect)
-            clearLayout(self.vboxintertempMCMC)
-            clearLayout(self.vboxsolvedtempdirect)
-            clearLayout(self.vboxsolvedtempMCMC)
-            clearLayout(self.vboxhistos)
-            self.tableViewBestParams.setModel(PandasModel())
+            '''
+            clearLayout(self.groupBoxWaterFlux)
+            clearLayout(self.groupBoxAdvectiveFlux)
+            clearLayout(self.groupBoxConductiveFlux)
+            clearLayout(self.groupBoxTotalFlux)
+            clearLayout(self.gridLayoutQuantiles)
+            clearLayout(self.labelRMSETherm1)
+            clearLayout(self.labelRMSETherm2)
+            clearLayout(self.labelRMSETherm3)
+            clearLayout(self.tableViewDataArray)'''
 
-            self.setResultsPlots()
-            print("Data successfully reset !")
+    def deleteCleaned(self):
+        dlg = DialogReset()
+        res = dlg.exec_()
+        if res == QtWidgets.QDialog.Accepted:
+
+            pointname = self.point.getName()
+            deleteTableQuery = QSqlQuery()
+            deleteTableQuery.exec_("DELETE FROM CleanedMeasures WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+            #clearLayout(self.tableViewDataArray)
+
+
+
+    def reset(self):
+        self.deleteComputations()
+        self.deleteCleaned
+
             
 
 

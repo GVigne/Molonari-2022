@@ -404,17 +404,30 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         msgBox = displayConfirmationMessage(title, message)
         
         if msgBox == QtWidgets.QMessageBox.Ok:
+
             point = self.treeViewDataPoints.selectedIndexes()[0].data(QtCore.Qt.UserRole)
             if point == None:
                 point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
             pointname = point.getName()
-            pointItem = self.pointModel.findItems(pointname)[0]
+
+            if not self.SQL_is_enabled:
+                deleteTableQuery = QSqlQuery(self.con)
+                deleteTableQuery.exec_("DELETE FROM CleanedMeasures WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+                deleteTableQuery.exec_("DELETE FROM RawMeasuresTemp WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+                deleteTableQuery.exec_("DELETE FROM RawMeasuresPress WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+                deleteTableQuery.exec_("DELETE FROM Point WHERE SamplingPoint=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+                deleteTableQuery.exec_("DELETE FROM DirectParameters WHERE PointKey=(SELECT id FROM Point WHERE SamplingPoint=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"'))")
+                deleteTableQuery.exec_("DELETE FROM BestParameters WHERE PointKey=(SELECT id FROM Point WHERE SamplingPoint=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"'))")
+                deleteTableQuery.exec_("DELETE FROM ParametersDistribution WHERE PointKey=(SELECT id FROM Point WHERE SamplingPoint=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"'))")
+                deleteTableQuery.exec_("DELETE FROM WaterFlows WHERE PointKey=(SELECT id FROM Point WHERE SamplingPoint=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"'))")
+                deleteTableQuery.exec_("DELETE FROM SamplingPoint WHERE name='"+pointname+"'")
             
-            point.delete() #supprime le dossier du rootDir
-
-            pointIndex = self.pointModel.indexFromItem(pointItem)
-            self.pointModel.removeRow(pointIndex.row()) #supprime l'item du model
-
+            else:
+                pointItem = self.pointModel.findItems(pointname)[0]
+                point.delete() #supprime le dossier du rootDir
+                pointIndex = self.pointModel.indexFromItem(pointItem)
+                self.pointModel.removeRow(pointIndex.row()) #supprime l'item du model
+            
             #On ferme la fenêtre associée au point qu'on enlève
             openedSubWindows = self.mdi.subWindowList()
             for subWin in openedSubWindows:
