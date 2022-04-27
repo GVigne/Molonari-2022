@@ -293,9 +293,9 @@ class Compute(QtCore.QObject):
             params = []
         
         try:
-            quantiles = self.col.get_quantiles()
+            quantiles = [0] + self.col.get_quantiles()
         except:
-            quantiles = []
+            quantiles = [0]
         
         ## Formatage des dates
         n_dates = len(times)
@@ -369,4 +369,6 @@ class Compute(QtCore.QObject):
         self.mainDb.layerDb.insert(layers)
         self.mainDb.lastParametersDb.insert(layers)
         
-        self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows_for_insertion)
+        self.mainDb.temperatureAndHeatFlowsDb.insert_quantile_0(temps, advective_flux, conductive_flux, flows_for_insertion)
+        if len(quantiles) > 1:
+            self.mainDb.temperatureAndHeatFlowsDb.insert_quantiles(self.col, quantiles)

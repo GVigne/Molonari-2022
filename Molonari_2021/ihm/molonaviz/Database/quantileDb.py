@@ -39,13 +39,19 @@ class QuantileDb():
         """
         )
         
-        # We insert the fictional quantile 0 corresponding to the direct modele
-        insertQuery.addBindValue(str(0))
-        insertQuery.exec_()
-        
         for quantile in quantiles:
             insertQuery.addBindValue(str(quantile))
             insertQuery.exec_()
             
         insertQuery.finish()
     
+    def getIdByQuantile(self, quantile):
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.prepare("SELECT id FROM Quantile where Quantile = :quantile")
+        selectQuery.bindValue(":quantile", quantile)
+        selectQuery.exec_()
+        
+        selectQuery.next()
+        id = int(selectQuery.value(0))
+        selectQuery.finish()
+        return id
