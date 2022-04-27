@@ -9,14 +9,12 @@ from dialogcleanup import DialogCleanup
 from dialogcompute import DialogCompute
 from point import Point
 from study import Study
-from mplcanvas import MplCanvas, MplCanvasHisto, MplCanvaHeatFluxes, MplTempbydepth
 from compute import Compute
-import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
-from MoloModel import MoloModel, PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
-from MoloView import MoloView,MoloView1D,MoloView2D,PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, PermeabilityView, PorosityView, CapacityView
+from MoloModel import  PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
+from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, PermeabilityView, PorosityView, CapacityView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -441,7 +439,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         #Temperatures :
         select_temp = self.build_data_queries(field ="Temp")
         self.tempmodel = TemperatureDataModel([select_temp])
-        self.graphtemp = TemperatureView(self.tempmodel, time_dependent=True,ylabel="Pression différentielle (m)")
+        self.graphtemp = TemperatureView(self.tempmodel, time_dependent=True,ylabel="Température en K")
         self.toolbarTemp = NavigationToolbar(self.graphtemp, self)
         vbox2 = QtWidgets.QVBoxLayout()
         self.groupBoxTemp.setLayout(vbox2)
@@ -681,7 +679,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             JOIN BestParameters ON Layer.id = BestParameters.Layer
             JOIN Point ON BestParameters.PointKey = Point.id
             JOIN SamplingPoint ON Point.SamplingPoint = SamplingPoint.id
-            WHERE SamplingPoint.Name ="{self.point.name}"       
+            WHERE SamplingPoint.Name ="{self.point.name}"     
+            ORDER BY Layer.DepthBed
         """
         )
     
@@ -702,7 +701,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         return QSqlQuery(f"""
                 SELECT RMSE.RMSET, Quantile.Quantile FROM RMSE 
                 JOIN Quantile
-                ON RMSE.Quantile = Quantile.id     
+                ON RMSE.Quantile = Quantile.id
+                ORDER BY Quantile.Quantile
         """
         )
     
@@ -725,7 +725,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         Build and return the quantiles values
         """
         return QSqlQuery(f"""
-                SELECT Quantile.Quantile FROM Quantile    
+                SELECT Quantile.Quantile FROM Quantile
+                ORDER BY Quantile.Quantile  
         """
         ) 
     
@@ -920,27 +921,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 ORDER BY Date.Date, Depth.Depth
                     """
             )
-        elif result_type =="Umbrella":
-            return QSqlQuery(f"""SELECT TemperatureAndHeatFlows.Temperature, Depth.Depth FROM TemperatureAndHeatFlows
-            JOIN Depth
-            ON TemperatureAndHeatFlows.Depth = Depth.id
-                WHERE TemperatureAndHeatFlows.Date = (SELECT Date.id FROM Date WHERE Date.Date = "{option}") 
-                AND TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
-                AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
-            """) 
-        elif result_type =="TempPerDepth":
-            return QSqlQuery(f"""
-            SELECT Date.Date, TemperatureAndHeatFlows.Temperature FROM TemperatureAndHeatFlows
-            JOIN Date
-            ON TemperatureAndHeatFlows.Date = Date.id
-                WHERE TemperatureAndHeatFlows.Depth = (SELECT Depth.id from Depth where Depth.Depth = {option})
-                AND TemperatureAndHeatFlows.Quantile = (SELECT Quantile.id FROM Quantile WHERE Quantile.Quantile = {quantile})
-                AND  TemperatureAndHeatFlows.PointKey = (SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.name = "{self.point.name}"))
-            """)
 
 if __name__ == '__main__':
     p = Point()
-    p.name="P034"
+    p.name="P034" #This was a test point
     s = Study()
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)

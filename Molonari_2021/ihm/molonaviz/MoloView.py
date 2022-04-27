@@ -205,6 +205,20 @@ class UmbrellaView(MoloView1D):
     
     def retrieve_data(self):
         self.x,self.y = self.model.get_depth_by_temp(self.nb_dates)
+    
+    def plot_data(self):
+        """
+        This function needs to be overloaded for the umbrellas, as the plot function must be like plot(temps, depth) with depths being fixed.
+        """
+        for index, (label, data) in enumerate(self.y.items()):
+            if len(self.x) == len(data):
+                self.axes.plot( data,self.x, label=label)
+        self.axes.legend(loc='best')
+        self.axes.set_ylabel(self.ylabel)
+
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_title(self.title)
+        self.axes.grid(True)
 
 class TempDepthView(MoloView1D):
     """
