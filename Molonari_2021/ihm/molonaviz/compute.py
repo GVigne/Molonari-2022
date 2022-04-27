@@ -352,4 +352,5 @@ class Compute(QtCore.QObject):
 
         self.mainDb.dateDb.insert(times)
         self.mainDb.depthDb.insert(depths)
+        self.mainDb.pointDb.insert()
         # self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)

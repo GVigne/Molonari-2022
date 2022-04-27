@@ -22,12 +22,8 @@ class PointDb():
         CREATE TABLE Point (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
             SamplingPoint   INTEGER REFERENCES SamplingPoint (id),
-            IncertK         REAL,
-            IncertLambda    REAL,
-            IncertN         REAL,
-            IncertRho       REAL,
             IncertT         REAL,
-            IncertPressure  REAL
+            n_discr  REAL
         );
 
         """
@@ -36,5 +32,42 @@ class PointDb():
         
     
     def insert(self):
-        pass
+        insertQuery = QSqlQuery(self.con)
+        
+        insertQuery.prepare(
+            """
+            INSERT INTO Point (
+                SamplingPoint,
+                IncertT,
+                n_discr
+            )
+            VALUES (?, ?, ?)
+            """
+        )
+    
+        
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.exec_("SELECT id FROM SamplingPoint")
+        
+        while selectQuery.next():
+            id = int(selectQuery.value(0))
+            insertQuery.addBindValue(id)
+            insertQuery.addBindValue("0")
+            insertQuery.addBindValue("100")
+            
+            insertQuery.exec_()
+            
+        insertQuery.finish()
+        selectQuery.finish()
+        
+    def getIdByName(self, name):
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.prepare("SELECT id FROM Point where Name = :name")
+        selectQuery.bindValue(":name", name)
+        selectQuery.exec_()
+        
+        selectQuery.next()
+        id = int(selectQuery.value(0))
+        selectQuery.finish()
+        return id
         
