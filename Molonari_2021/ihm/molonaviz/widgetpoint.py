@@ -55,6 +55,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.con.setDatabaseName("Dummy_database/MCMC.sqlite")
         self.con.open()
 
+        self.setInfoTab()
+        self.setWidgetInfos()
         self.setupComboBoxLayers()
         self.setupCheckboxesQuantiles()
         self.setPressureAndTemperatureModels()
@@ -98,10 +100,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         first_layer = True
         while select_depths_layers.next():
             if first_layer:
-                select_params = self.build_params_query(select_depths_layers.value(0))
-                self.paramsModel = QSqlQueryModel()
-                self.paramsModel.setQuery(select_params)
-                self.tableViewParams.setModel(self.paramsModel)
+                self.changeDisplayedParams(select_depths_layers.value(0))
                 first_layer = False
             self.comboBoxSelectLayer.addItem(str(select_depths_layers.value(0)))
     
@@ -114,9 +113,13 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.paramsModel.setQuery(select_params)
         self.tableViewParams.setModel(self.paramsModel)
         
-        select_params = self.build_params_distribution(layer)
-        self.paramsDistributionModel.new_queries([select_params])
-        self.paramsDistributionModel.exec() #Refresh the model
+        try:
+            select_params = self.build_params_distribution(layer)
+            self.paramsDistributionModel.new_queries([select_params])
+            self.paramsDistributionModel.exec() #Refresh the model
+        except Exception:
+            #self.paramsDistributionModel is not initialised yet. This "feature" can only occur if there were no histograms (for instance only cleaned measures) and we switch to a database with histograms (example: via the update_all_models method)
+            pass
 
     
     def setupCheckboxesQuantiles(self):
@@ -611,6 +614,43 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
     def label_update(self):
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
+    
+    def update_all_models(self):
+        """
+        Update all existing models. This should only be called after reset, cleanup or compute.
+        """
+
+        self.setInfoTab()
+
+        self.comboBoxSelectLayer.clear()
+        self.setupComboBoxLayers()
+
+        self.setPressureAndTemperatureModels()
+        
+        select_pressure = self.build_data_queries(field ="Pressure")
+        self.pressuremodel.new_queries([select_pressure])
+        
+        select_temp = self.build_data_queries(field ="Temp")
+        self.tempmodel.new_queries([select_temp])
+
+        select_tempmap = self.build_result_queries(result_type="2DMap",option="Temperature") #This is a list of temperatures for all quantiles
+        select_depths = self.build_depths()
+        select_dates = self.build_dates()
+        self.tempmap_model.new_queries([select_dates,select_depths]+select_tempmap)
+
+        select_heatfluxes= self.build_result_queries(result_type="2DMap",option="HeatFlows") #This is a list
+        select_depths = self.build_depths()
+        select_dates = self.build_dates()
+        self.fluxes_model.new_queries([select_dates,select_depths]+select_heatfluxes)
+
+        select_waterflux= self.build_result_queries(result_type="WaterFlux") #This is already a list
+        self.waterflux_model.new_queries(select_waterflux)
+
+        self.pressuremodel.exec()
+        self.tempmodel.exec()
+        self.tempmap_model.exec()
+        self.fluxes_model.exec()
+        self.waterflux_model.exec()
     
     def build_infos_queries(self):
         """

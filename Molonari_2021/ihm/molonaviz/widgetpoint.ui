@@ -25,6 +25,9 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEditSensor">
+       <property name="text">
+        <string/>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
