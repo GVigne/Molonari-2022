@@ -285,6 +285,7 @@ class Compute(QtCore.QObject):
         depths = self.col.get_depths_solve()
         times = self.col.get_times_solve()
         flows_for_insertion = self.col.flows_solve
+        layers = self.col._layersList
         
         try:
             params = self.col.get_all_params()
@@ -365,5 +366,6 @@ class Compute(QtCore.QObject):
         self.mainDb.pointDb.insert()
         self.mainDb.quantileDb.insert(quantiles)
         self.mainDb.parametersDistributionDb.insert(params)
+        self.mainDb.layerDb.insert(layers)
         
         # self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)
