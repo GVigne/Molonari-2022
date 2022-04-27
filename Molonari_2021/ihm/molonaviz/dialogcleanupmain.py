@@ -23,6 +23,7 @@ from matplotlib.ticker import MaxNLocator
 
 from dialogcleanpoints import DialogCleanPoints
 from dialogscript import DialogScript
+from Database.mainDb import MainDb
 
 # Load "UI" (user interface) XML file produced by QtDesigner
 # and construct an object which inherits from the global parent class (PyQt5.QtWidgets.QDialog)
@@ -217,7 +218,7 @@ def convertDates(df: pd.DataFrame):
     raise ValueError("Cannot convert dates: No known formats match your data!")
 
 
-class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
+class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
     """
     Dialog class that inherits from BOTH :
      - the QtDesigner generated_class: UI_TemperatureViewer 
@@ -230,10 +231,12 @@ class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
         """
         # Call the constructor of parent classes (super)
         super(DialogCleanupMain, self).__init__()
+        QtWidgets.QDialog.__init__(self)
         # Configure the initial values of graphical controls 
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
+        self.pointDir = pointDir
         # Connect the buttons
 
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
@@ -269,28 +272,27 @@ class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
         self.con.setDatabaseName(self.sqlfile)
         if not self.con.open():
             print("Cannot open SQL database")
-        # self.con = QSqlDatabase.addDatabase("QSQLITE")
-        # self.con.setDatabaseName(self.sql)
-        # if not self.con.open():
-        #     displayCriticalMessage(f"{str(self.con.lastError().databaseText())}", "Cannot open SQL database")
+        self.mainDb = MainDb(self.con)
+        self.name = name
+        self.samplingPointDb = self.mainDb.samplingPointDb
+        try:
+            self.pointKey = self.samplingPointDb.getIdByname(self.name)
+        except TypeError as e:
+            displayCriticalMessage(f"{str(e)}", "Point not found in the database. Update the database to use this feature.")
+            raise e
+        else:
+            # Create data models and associate to corresponding viewers
 
-        # self.rawCon = QSqlDatabase.addDatabase("QSQLITE") #Creates the connection with a database
-        # self.rawCon.setDatabaseName("molonari_raw.sqlite") #The database is self.sql
-        # if not self.rawCon.open(): #Try to open the connection. If it fails, returns error
-        #     displayCriticalMessage(self.rawCon.lastError().databaseText(), "There was an error opening the database")
-        #     sys.exit(1)
+            self.getDF()
+            
+            self.comboBoxRawVar.addItems(self.varList[1:])
+            self.varName = self.comboBoxRawVar.currentText
+            self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
 
-        # Create data models and associate to corresponding viewers
+            self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
+            self.filter_dic = dict.fromkeys(self.varList[1:],False)
 
-        self.getDF()
-        # self.comboBoxRawVar.addItems(self.varList[1:])
-        # self.varName = self.comboBoxRawVar.currentText
-        # self.comboBoxRawVar.currentIndexChanged.connect(self.plotPrevisualizedVar)
-
-        # self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
-        # self.filter_dic = dict.fromkeys(self.varList[1:],False)
-
-        # self.plotPrevisualizedVar()
+            self.plotPrevisualizedVar()
 
         
         
@@ -665,7 +667,7 @@ class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
         scriptDir = "script.py"
-        # sys.path.append(self.pointDir) # TODO uncomment
+        sys.path.append(self.pointDir) # TODO uncomment
 
         with open(scriptDir, "w") as f:
             f.write(script)
@@ -674,7 +676,9 @@ class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
         # There are different error in the script, sometimes it will cause the import step to fail, in this case we still have to remove the scripy.py file.
         try:
             from script import fonction
+            print("imported?")
         except Exception as e:
+            print(e)
             raise e
         finally:
             os.remove(scriptDir)
@@ -807,25 +811,36 @@ class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
         self.plotPrevisualizedVar()
 
     def getDF(self):
+        def getPressureSensorByname(bd, name):
+            selectQuery = QSqlQuery(bd.con)
+            selectQuery.prepare("SELECT PressureSensor FROM SamplingPoint where Name = :name")
+            selectQuery.bindValue(":name", name)
+            selectQuery.exec_()
+            
+            selectQuery.next()
+            id = int(selectQuery.value(0))
+            selectQuery.finish()
+            return id
+
         "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
-        self.df_ZH = self.load_pandas(self.con, "SELECT Date, Temp1, Temp2, Temp3, Temp4, PointKey FROM RawMeasuresTemp", ["date", "t1", "t2", "t3", "t4","PointKey"])
-        print(self.df_ZH)
-        # convertDates(self.df_ZH)
+        self.df_ZH = self.load_pandas(self.con, f'SELECT Date, Temp1, Temp2, Temp3, Temp4 FROM RawMeasuresTemp WHERE PointKey = {self.pointKey}', ["date", "t1", "t2", "t3", "t4"])
+        convertDates(self.df_ZH)
         # Uncomment if original data is in Fahrenheit
         # self.df_ZH[["t1","t2","t3","t4"]] = self.df_ZH[["t1","t2","t3","t4"]].apply(lambda x: (x-32)/1.8, axis=1) 
-        self.df_Pressure = self.load_pandas(self.con, "SELECT date, tension, t_stream FROM Pressure", ["date", "tension", "t_stream"])
+        self.df_Pressure = self.load_pandas(self.con, f'SELECT Date, Pressure, TempBed FROM RawMeasuresPress WHERE PointKey = {self.pointKey}', ["date", "tension", "t_stream"])
         convertDates(self.df_Pressure)
         # Uncomment if original data is in Fahrenheit
         # self.df_Pressure[["t_stream"]] = self.df_Pressure[["t_stream"]].apply(lambda x: (x-32)/1.8, axis=1) 
-        
-        self.df_Calibration = self.load_pandas(self.con, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
+        idPressureSensor = getPressureSensorByname(self.samplingPointDb,self.name)
+        # self.df_Calibration = self.load_pandas(self.con, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
+        self.df_Calibration = self.load_pandas(self.con, f'SELECT Name, Intercept, [Du/Dh], [Du/Dt] FROM PressureSensor WHERE id = {idPressureSensor}', ["Name", "Intercept", "dUdH", "dUdT"])
 
-        # self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+        self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
 
         ## CODE NOW IN THE SCRIPT
-        # intercept = float(df_Calibration.iloc[2][list(df_Calibration.columns)[-1]])
-        # dUdH = float(df_Calibration.iloc[3][list(df_Calibration.columns)[-1]])
-        # dUdT = float(df_Calibration.iloc[4][list(df_Calibration.columns)[-1]])
+        # intercept = self.df_Calibration.loc[0,"Intercept"]
+        # dUdH = self.df_Calibration.loc[0,"dUdH"]
+        # dUdT = self.df_Calibration.loc[0,"dUdT"]
 
         # df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUdT-intercept)/dUdH
         # df_Pressure.drop(labels="tension",axis=1,inplace=True)
@@ -835,12 +850,8 @@ class DialogCleanupMain(From_DialogCleanUpMain[0], From_DialogCleanUpMain[1]):
         # self.df_cleaned = self.df_loaded.copy().dropna()
         ## END OF SCRIPT CODE
 
-        # self.df_selected = pd.DataFrame(columns=self.varList)
-        # self.df_selected.to_csv("selected_points.csv")
-        print("----")
-        print(self.df_ZH)
-        print(self.df_Pressure)
-        print(self.df_Calibration)
+        self.df_selected = pd.DataFrame(columns=self.varList)
+        self.df_selected.to_csv("selected_points.csv")
 
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
         self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
