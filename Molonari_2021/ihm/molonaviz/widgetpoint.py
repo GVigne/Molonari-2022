@@ -55,6 +55,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.con.setDatabaseName("Dummy_database/MCMC.sqlite")
         self.con.open()
 
+        self.setInfoTab()
+        self.setWidgetInfos()
         self.setupComboBoxLayers()
         self.setupCheckboxesQuantiles()
         self.setPressureAndTemperatureModels()

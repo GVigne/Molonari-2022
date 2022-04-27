@@ -9,7 +9,7 @@ class SubWindow(QtWidgets.QMdiSubWindow):
         QtWidgets.QMdiSubWindow.__init__(self)
         
         self.name = point.getName() #on donne à la subWindow le nom du point associé
-        wdg = WidgetPoint(point, study)
+        wdg = WidgetPoint(point, study) #This automatically displays the plots
         self.wdg = wdg
     
     def getName(self):
@@ -17,9 +17,6 @@ class SubWindow(QtWidgets.QMdiSubWindow):
     
     def setPointWidget(self):
         self.setWidget(self.wdg)
-        self.wdg.setInfoTab()
-        self.wdg.setWidgetInfos()
-        self.wdg.setPressureAndTemperatureModels()
     
     def closeEvent(self, event):
         event.accept()
