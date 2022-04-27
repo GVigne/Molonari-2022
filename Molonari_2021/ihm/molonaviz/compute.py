@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 from PyQt5 import QtCore
 
-from pyheatmy import *
+from pyheatmy22 import *
 from point import Point
 
 
@@ -41,13 +41,14 @@ class Compute(QtCore.QObject):
     """
     MCMCFinished = QtCore.pyqtSignal()
 
-    def __init__(self, point: Point=None):
+    def __init__(self, db, point: Point=None):
         # Call constructor of parent classes
         super(Compute, self).__init__()
         self.thread = QtCore.QThread()
 
         self.point = point
         self.col = None
+        self.mainDb = db
     
     def setColumn(self, sensorDir: str):
         self.col = self.point.setColumn(sensorDir)
@@ -292,10 +293,10 @@ class Compute(QtCore.QObject):
         depths_file = os.path.join(resultsDir, 'depths.csv')
         df_depths.to_csv(depths_file, index=False)
 
-        ## Profils de températures
+        """## Profils de températures
 
         # Création du dataframe
-        np_temps_solve = np.concatenate((times_string, temps), axis=1)
+        np_temps_solve = np.concatenate((times_string, temps.T), axis=1)
         df_temps_solve = pd.DataFrame(np_temps_solve, columns=['Date Heure, GMT+01:00']+[f'Température (K) pour la profondeur {depth:.4f} m' for depth in depths])
         # Sauvegarde sous forme d'un fichier csv
         temps_solve_file = os.path.join(resultsDir, 'solved_temperatures.csv')
@@ -328,13 +329,15 @@ class Compute(QtCore.QObject):
         df_total_flux = pd.DataFrame(np_total_flux, columns=['Date Heure, GMT+01:00']+[f"Flux d'énergie total (W/m2) pour la profondeur {depth:.4f} m" for depth in depths])
         # Sauvegarde sous forme d'un fichier csv
         total_flux_file = os.path.join(resultsDir, 'total_flux.csv')
-        df_total_flux.to_csv(total_flux_file, index=False)
+        df_total_flux.to_csv(total_flux_file, index=False)"""
+        
+        self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows, self.point)
 
 
         ## Flux d'eau échangés entre la nappe et la rivière
 
         # Création du dataframe
-        np_flows = np.zeros((n_dates,1))
+        """np_flows = np.zeros((n_dates,1))
         for i in range(n_dates):
             np_flows[i,0] = flows[i]
         np_flows_solve = np.concatenate((times_string, np_flows), axis=1)
@@ -342,5 +345,5 @@ class Compute(QtCore.QObject):
         # Sauvegarde sous forme d'un fichier csv
         flows_solve_file = os.path.join(resultsDir, 'solved_flows.csv')
         df_flows_solve.to_csv(flows_solve_file, index=False)
-
+"""
 
