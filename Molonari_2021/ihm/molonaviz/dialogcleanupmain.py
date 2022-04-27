@@ -239,7 +239,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.setupUi(self)
         
         # Connect the buttons
-
+        self.pushButtonLoadRawData.clicked.connect(self.browseRawData)
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
         self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
         self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
@@ -565,6 +565,12 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Depths File")[0]
         if filePath:
             self.lineEditDepthFile.setText(filePath)
+    
+    def browseRawData(self):
+        """
+        Query the database to load the corresponding raw models.
+        """
+        pass
     
     def browseFileRawZH(self):
         """

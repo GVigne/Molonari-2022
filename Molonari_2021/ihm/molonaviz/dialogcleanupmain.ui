@@ -42,108 +42,7 @@
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <widget class="QLabel" name="rawDataLabel">
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-          <property name="text">
-           <string>Select raw ZH: </string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QPushButton" name="pushButtonBrowseRawZH">
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-          <property name="text">
-           <string>Browse</string>
-          </property>
-         </widget>
-        </item>
         <item row="6" column="3">
-         <widget class="QRadioButton" name="radioButtonZScore">
-          <property name="text">
-           <string>Z-score</string>
-          </property>
-          <attribute name="buttonGroup">
-           <string notr="true">buttonGroupMethod</string>
-          </attribute>
-         </widget>
-        </item>
-        <item row="3" column="3">
-         <widget class="QCheckBox" name="checkBoxChanges">
-          <property name="text">
-           <string>Show changes</string>
-          </property>
-         </widget>
-        </item>
-        <item row="18" column="3">
-         <widget class="QPushButton" name="pushButtonResetAll">
-          <property name="text">
-           <string>Reset all</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0" colspan="3">
-         <widget class="QComboBox" name="comboBoxRawVar"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="lineEditCalibrationFile"/>
-        </item>
-        <item row="1" column="2">
-         <widget class="QPushButton" name="pushButtonBrowseRauPressure">
-          <property name="text">
-           <string>Browse</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="lineEditRawZHFile">
-          <property name="autoFillBackground">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="7" column="3">
-         <widget class="QRadioButton" name="radioButtonIQR">
-          <property name="text">
-           <string>IQR</string>
-          </property>
-          <attribute name="buttonGroup">
-           <string notr="true">buttonGroupMethod</string>
-          </attribute>
-         </widget>
-        </item>
-        <item row="6" column="0" rowspan="13" colspan="3">
-         <layout class="QVBoxLayout" name="widgetRawData"/>
-        </item>
-        <item row="5" column="3">
-         <widget class="QLabel" name="labelMethod">
-          <property name="text">
-           <string>Outliers method:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Select raw Pressure:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="17" column="3">
-         <widget class="QPushButton" name="pushButtonResetVar">
-          <property name="text">
-           <string>Reset variable</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEditRawPressureFile"/>
-        </item>
-        <item row="8" column="3">
          <widget class="QRadioButton" name="radioButtonNone">
           <property name="text">
            <string>None</string>
@@ -153,50 +52,104 @@
           </attribute>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_5">
+        <item row="4" column="3">
+         <widget class="QRadioButton" name="radioButtonZScore">
           <property name="text">
-           <string>Select calibration:</string>
+           <string>Z-score</string>
           </property>
+          <attribute name="buttonGroup">
+           <string notr="true">buttonGroupMethod</string>
+          </attribute>
          </widget>
         </item>
-        <item row="2" column="2">
-         <widget class="QPushButton" name="pushButtonBrowseCalibration">
-          <property name="text">
-           <string>Browse</string>
-          </property>
-         </widget>
-        </item>
-        <item row="14" column="3">
-         <widget class="QPushButton" name="pushButtonEditCode">
-          <property name="text">
-           <string>Edit code</string>
-          </property>
-         </widget>
-        </item>
-        <item row="13" column="3">
-         <widget class="QPushButton" name="pushButtonSelectPoints">
-          <property name="text">
-           <string>Select points</string>
-          </property>
-         </widget>
-        </item>
-        <item row="12" column="3">
+        <item row="10" column="3">
          <widget class="QLabel" name="labelAdvanced">
           <property name="text">
            <string>Advanced:</string>
           </property>
          </widget>
         </item>
-        <item row="10" column="3">
+        <item row="5" column="3">
+         <widget class="QRadioButton" name="radioButtonIQR">
+          <property name="text">
+           <string>IQR</string>
+          </property>
+          <attribute name="buttonGroup">
+           <string notr="true">buttonGroupMethod</string>
+          </attribute>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="3">
+         <widget class="QComboBox" name="comboBoxRawVar"/>
+        </item>
+        <item row="8" column="3">
          <widget class="QCheckBox" name="checkBoxFilter">
           <property name="text">
            <string>Filter</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="0" colspan="2">
+        <item row="11" column="3">
+         <widget class="QPushButton" name="pushButtonSelectPoints">
+          <property name="text">
+           <string>Select points</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QCheckBox" name="checkBoxChanges">
+          <property name="text">
+           <string>Show changes</string>
+          </property>
+         </widget>
+        </item>
+        <item row="15" column="3">
+         <widget class="QPushButton" name="pushButtonResetVar">
+          <property name="text">
+           <string>Reset variable</string>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="3">
+         <widget class="QPushButton" name="pushButtonResetAll">
+          <property name="text">
+           <string>Reset all</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" rowspan="13" colspan="3">
+         <layout class="QVBoxLayout" name="widgetRawData"/>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="lineEditShowPoint">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="3">
+         <widget class="QPushButton" name="pushButtonEditCode">
+          <property name="text">
+           <string>Edit code</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3">
+         <widget class="QLabel" name="labelMethod">
+          <property name="text">
+           <string>Outliers method:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" colspan="2">
          <layout class="QVBoxLayout" name="widgetToolBar"/>
+        </item>
+        <item row="0" column="2">
+         <widget class="QPushButton" name="pushButtonLoadRawData">
+          <property name="text">
+           <string>Load Raw Data</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
