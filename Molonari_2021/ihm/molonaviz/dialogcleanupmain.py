@@ -117,7 +117,8 @@ def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
     msg.setIcon(QtWidgets.QMessageBox.Critical)
     msg.setText(mainMessage) ####
     msg.setInformativeText(infoMessage) ####
-    msg.exec() 
+    msg.exec()
+
 
 
 def loadCSV(path: str):
@@ -601,6 +602,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             self.getDF()
 
     def load_pandas(self,db, statement, cols):    
+        db.transaction()
         query = QSqlQuery(db)
         query.exec(statement)
         table = []
@@ -613,6 +615,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # for i in range(0, len(cols)) :
         #     df.columns.values[i] = cols[i]
         df.columns = cols
+        db.commit()
         return df
     
     def iqr(self,df_in, col_name):
@@ -668,7 +671,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
         scriptDir = self.pointDir + "/script.py"
-        sys.path.append(self.pointDir) # TODO uncomment
+        sys.path.append(self.pointDir) 
 
         with open(scriptDir, "w") as f:
             f.write(script)
@@ -701,7 +704,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         except Exception as e :
             raise e
         
-    def runScript(self, df_ZH, df_Pressure, df_Calibration):
+    def runScript(self, df_ZH, df_Pressure, df_Calibration,backupScript=None):
         df_ZH = df_ZH.copy()
         df_Pressure = df_Pressure.copy()
         df_Calibration = df_Calibration.copy()
@@ -715,7 +718,11 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         except Exception as e :
             print(e, "==> Clean-up aborted")
             displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
-            # self.cleanup()
+            if backupScript:
+                self.saveScript(backupScript)
+            self.editScript()
+            raise e
+            
 
     def editScript(self):
         dig = DialogScript(self.name, self.pointDir)
@@ -724,12 +731,16 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
             # Save the modified text
             try:
+                backupScript = self.openScript()
                 dig.updateScript()
-                self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+                self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration, backupScript) # TODO bug when file fails to run the first time the window is open
                 self.plotPrevisualizedVar()
+                print("Script successfully updated")
             except Exception as e:
+                print(e, "==> Clean-up aborted")
                 displayCriticalMessage("Error: Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ')
-                self.editScript()
+                
+                
     
     # Define the selectMethod function and edit thhe sample_text.txt
     def openScript(self):
@@ -814,6 +825,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
     def getDF(self):
         def getPressureSensorByname(bd, name):
+            bd.con.transaction()
             selectQuery = QSqlQuery(bd.con)
             selectQuery.prepare("SELECT PressureSensor FROM SamplingPoint where Name = :name")
             selectQuery.bindValue(":name", name)
@@ -822,6 +834,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             selectQuery.next()
             id = int(selectQuery.value(0))
             selectQuery.finish()
+            bd.con.commit()
             return id
 
         "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
@@ -837,7 +850,9 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # self.df_Calibration = self.load_pandas(self.con, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
         self.df_Calibration = self.load_pandas(self.con, f'SELECT Name, Intercept, [Du/Dh], [Du/Dt] FROM PressureSensor WHERE id = {idPressureSensor}', ["Name", "Intercept", "dUdH", "dUdT"])
 
-        self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+        self.mplPrevisualizeCurve = MplCanvasTimeCompare()
+        self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
+        self.widgetToolBar.addWidget(self.toolBar)
 
         ## CODE NOW IN THE SCRIPT
         # intercept = self.df_Calibration.loc[0,"Intercept"]
@@ -851,13 +866,15 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # self.varList = list(self.df_loaded.columns)
         # self.df_cleaned = self.df_loaded.copy().dropna()
         ## END OF SCRIPT CODE
+        try:    
+            self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
+        except:
+            self.editScript()
+        else:
+            self.df_selected = pd.DataFrame(columns=self.varList)
+            self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
 
-        self.df_selected = pd.DataFrame(columns=self.varList)
-        self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
-
-        self.mplPrevisualizeCurve = MplCanvasTimeCompare()
-        self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
-        self.widgetToolBar.addWidget(self.toolBar)
+            
 
     def selectPoints(self):
         dig = DialogCleanPoints()

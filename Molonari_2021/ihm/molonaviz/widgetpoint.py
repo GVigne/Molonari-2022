@@ -14,6 +14,7 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
+from Database.newDatesDb import NewDatesDb
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -186,32 +187,35 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             res = dlg.exec_()
             #print(self.pointDir)
             if res == QtWidgets.QDialog.Accepted:
-                script,scriptpartiel = dlg.getScript()
-                print("Cleaning data...")
+                dlg.mainDb.newDatesDb.insert(dlg.df_cleaned)
+                dlg.mainDb.cleanedMeasuresDb.update(dlg.df_cleaned,dlg.pointKey)
 
-                try :
-                    self.dftemp, self.dfpress = self.point.cleanup(script, self.dftemp, self.dfpress)
-                    print("Data successfully cleaned !...")
+                # script,scriptpartiel = dlg.getScript()
+                # print("Cleaning data...")
+
+                # try :
+                #     self.dftemp, self.dfpress = self.point.cleanup(script, self.dftemp, self.dfpress)
+                #     print("Data successfully cleaned !...")
                     
-                    #On actualise les modèles
-                    self.currentTemperatureModel.setData(self.dftemp)
-                    self.currentPressureModel.setData(self.dfpress)
-                    #self.tableViewTemp.resizeColumnsToContents()
-                    #self.tableViewPress.resizeColumnsToContents()
-                    self.graphpress.update_(self.dfpress)
-                    self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
-                    print("Plots successfully updated")
+                #     #On actualise les modèles
+                #     self.currentTemperatureModel.setData(self.dftemp)
+                #     self.currentPressureModel.setData(self.dfpress)
+                #     #self.tableViewTemp.resizeColumnsToContents()
+                #     #self.tableViewPress.resizeColumnsToContents()
+                #     self.graphpress.update_(self.dfpress)
+                #     self.graphtemp.update_(self.dftemp, dfpressure=self.dfpress)
+                #     print("Plots successfully updated")
                     
-                    # Save the modified text
-                    with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
-                        file.write(scriptpartiel)
-                    print("Script successfully saved")
+                #     # Save the modified text
+                #     with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
+                #         file.write(scriptpartiel)
+                #     print("Script successfully saved")
                     
                     
-                except Exception as e :
-                    print(e, "==> Clean-up aborted")
-                    displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
-                    self.cleanup()
+                # except Exception as e :
+                #     print(e, "==> Clean-up aborted")
+                #     displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
+                #     self.cleanup()
     
 
     def compute(self):

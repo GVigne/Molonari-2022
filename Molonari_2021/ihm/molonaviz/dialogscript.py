@@ -49,4 +49,4 @@ class DialogScript(QtWidgets.QDialog, From_DialogScript):
         # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
         with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt"), "w") as f:
             f.write(scriptpartiel)
-        print("Script successfully updated")
+        
