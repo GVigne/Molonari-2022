@@ -290,18 +290,18 @@ class ParamsDistributionModel(MoloModel):
         super().__init__(queries)
         self.log10k = []
         self.porosity = []
-        self.permeability = []
+        self.conductivity = []
         self.capacity = []
     
     def update_df(self):
         try:
             while self.queries[0].next():
                 self.log10k.append(self.queries[0].value(0))
-                self.permeability.append(self.queries[0].value(1))
+                self.conductivity.append(self.queries[0].value(1))
                 self.porosity.append(self.queries[0].value(2))
                 self.capacity.append(self.queries[0].value(3))
             self.log10k = np.array(self.log10k)
-            self.permeability = np.array(self.permeability)
+            self.conductivity = np.array(self.conductivity)
             self.porosity = np.array(self.porosity)
             self.capacity = np.array(self.capacity)
         except Exception:
@@ -311,8 +311,8 @@ class ParamsDistributionModel(MoloModel):
     def get_log10k(self):
         return self.log10k
 
-    def get_permeability(self):
-        return self.permeability
+    def get_conductivity(self):
+        return self.conductivity
     
     def get_porosity(self):
         return self.porosity
@@ -323,5 +323,5 @@ class ParamsDistributionModel(MoloModel):
     def reset_data(self):
         self.log10k = []
         self.porosity = []
-        self.permeability = []
+        self.conductivity = []
         self.capacity = []

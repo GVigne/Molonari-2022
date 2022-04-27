@@ -650,7 +650,7 @@
                 <string/>
                </property>
               </widget>
-              <widget class="QGroupBox" name="groupBoxPermeability">
+              <widget class="QGroupBox" name="groupBoxConductivity">
                <property name="contextMenuPolicy">
                 <enum>Qt::DefaultContextMenu</enum>
                </property>

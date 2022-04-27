@@ -14,7 +14,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from usefulfonctions import *
 from dialogreset import DialogReset
 from MoloModel import  PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
-from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, PermeabilityView, PorosityView, CapacityView
+from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -216,15 +216,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         if res == QtWidgets.QDialog.Accepted:
             pointname = self.point.getName()
             deleteTableQuery = QSqlQuery()
-            deleteTableQuery.exec_("DELETE FROM WaterFlow WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
-            deleteTableQuery.exec_("DELETE FROM RMSE WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
-            deleteTableQuery.exec_("DELETE FROM TemperatureAndHeatFlows WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+            #Careful: should have joins as WaterFlow.PointKey !=Samplingpoint.name
+            deleteTableQuery.exec_(f'DELETE FROM WaterFlow WHERE WaterFlow.PointKey=(SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.Name="{pointname}"))')
+            deleteTableQuery.exec_(f'DELETE FROM RMSE WHERE PointKey=(SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.Name="{pointname}"))')
+            deleteTableQuery.exec_(f'DELETE FROM TemperatureAndHeatFlows WHERE PointKey=(SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.Name="{pointname}"))')
 
             deleteTableQuery.exec_("DELETE FROM Date WHERE (SELECT count(*) FROM RMSE)==0")
             deleteTableQuery.exec_("DELETE FROM Depth WHERE (SELECT count(*) FROM RMSE)==0")
 
-            self.directmodeliscomputed = False
-            self.MCMCiscomputed = False
             '''
             clearLayout(self.groupBoxWaterFlux)
             clearLayout(self.groupBoxAdvectiveFlux)
@@ -240,19 +239,15 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         dlg = DialogReset()
         res = dlg.exec_()
         if res == QtWidgets.QDialog.Accepted:
-
             pointname = self.point.getName()
             deleteTableQuery = QSqlQuery()
-            deleteTableQuery.exec_("DELETE FROM CleanedMeasures WHERE PointKey=(SELECT id FROM SamplingPoint WHERE name='"+pointname+"')")
+            deleteTableQuery.exec_("DELETE FROM CleanedMeasures WHERE PointKey=(SELECT id FROM SamplingPoint WHERE SamplingPoint.Name='"+pointname+"')")
             #clearLayout(self.tableViewDataArray)
-
-
 
     def reset(self):
         self.deleteComputations()
-        self.deleteCleaned
-
-            
+        self.deleteCleaned()
+        self.update_all_models()
 
 
     def cleanup(self):
@@ -293,72 +288,73 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
     def compute(self):
         #Needs to be adapted! Especially self.onMCMCisFinished (when computations are done)
-        return
         
-        sensorDir = self.study.getSensorDir()
+        # sensorDir = self.study.getSensorDir()
 
-        dlg = DialogCompute(self.point.getName())
+        dlg = DialogCompute(self.point.name)
         res = dlg.exec()
 
         if res == 10 : #Direct Model
-            params, nb_cells = dlg.getInputDirectModel()
-            # compute = Compute(self.point)
-            # compute.computeDirectModel(params, nb_cells, sensorDir)
-            self.computeEngine.computeDirectModel(params, nb_cells, sensorDir)
+            print("Direct Model")
+            # params, nb_cells = dlg.getInputDirectModel()
+            # # compute = Compute(self.point)
+            # # compute.computeDirectModel(params, nb_cells, sensorDir)
+            # self.computeEngine.computeDirectModel(params, nb_cells, sensorDir)
 
-            self.setDataFrames('DirectModel')
-            self.comboBoxDepth.clear()
-            for depth in self.dfdepths.values.tolist():
-                self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
+            # self.setDataFrames('DirectModel')
+            # self.comboBoxDepth.clear()
+            # for depth in self.dfdepths.values.tolist():
+            #     self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
 
-            if self.directmodeliscomputed :
-                print('Direct Model is computed')
-                self.graphwaterdirect.update_(self.dfwater)
-                self.graphsolvedtempdirect.update_(self.dfsolvedtemp, self.dfdepths)
-                self.graphintertempdirect.update_(self.dfsolvedtemp, self.dfdepths)
-                self.graphfluxesdirect.update_(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-                self.parapluies.update_(self.dfsolvedtemp, self.dfdepths)
-                self.paramsModel.setData(self.dfparams)
-                print("Model successfully updated !")
+            # if self.directmodeliscomputed :
+            #     print('Direct Model is computed')
+            #     self.graphwaterdirect.update_(self.dfwater)
+            #     self.graphsolvedtempdirect.update_(self.dfsolvedtemp, self.dfdepths)
+            #     self.graphintertempdirect.update_(self.dfsolvedtemp, self.dfdepths)
+            #     self.graphfluxesdirect.update_(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
+            #     self.parapluies.update_(self.dfsolvedtemp, self.dfdepths)
+            #     self.paramsModel.setData(self.dfparams)
+            #     print("Model successfully updated !")
 
-            else :
+            # else :
+            #     print("Not direct")
+            #     #Flux d'eau
+            #     clearLayout(self.vboxwaterdirect)
+            #     self.plotWaterFlowsDirect(self.dfwater)
 
-                #Flux d'eau
-                clearLayout(self.vboxwaterdirect)
-                self.plotWaterFlowsDirect(self.dfwater)
+            #     #Flux d'énergie
+            #     clearLayout(self.vboxfluxesdirect)
+            #     self.plotFriseHeatFluxesDirect(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
 
-                #Flux d'énergie
-                clearLayout(self.vboxfluxesdirect)
-                self.plotFriseHeatFluxesDirect(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
+            #     #Frise de température
+            #     clearLayout(self.vboxfrisetempdirect)
+            #     self.plotFriseTempDirect(self.dfsolvedtemp, self.dfdepths)
+            #     #Parapluies
+            #     clearLayout(self.vboxsolvedtempdirect)
+            #     self.plotParapluies(self.dfsolvedtemp, self.dfdepths)
 
-                #Frise de température
-                clearLayout(self.vboxfrisetempdirect)
-                self.plotFriseTempDirect(self.dfsolvedtemp, self.dfdepths)
-                #Parapluies
-                clearLayout(self.vboxsolvedtempdirect)
-                self.plotParapluies(self.dfsolvedtemp, self.dfdepths)
-
-                #Température à l'interface
-                clearLayout(self.vboxintertempdirect)
-                self.plotInterfaceTempDirect(self.dfsolvedtemp, self.dfdepths)
+            #     #Température à l'interface
+            #     clearLayout(self.vboxintertempdirect)
+            #     self.plotInterfaceTempDirect(self.dfsolvedtemp, self.dfdepths)
                 
-                # Les paramètres utilisés
-                self.setParamsModel(self.dfparams)
+            #     # Les paramètres utilisés
+            #     self.setParamsModel(self.dfparams)
 
-                self.directmodeliscomputed = True
-                print("Model successfully created !")
+            #     self.directmodeliscomputed = True
+            #     print("Model successfully created !")
 
     
         if res == 1 : #MCMC
-            nb_iter, priors, nb_cells, quantiles = dlg.getInputMCMC()
-            self.nb_quantiles = len(quantiles)
-            with open(self.MCMCDir+"/nb_quantiles", "w") as f:
-                f.write(str(self.nb_quantiles))
-                f.close()
-            # compute = Compute(self.point)
-            # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
-            self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
-            self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
+            print("Not direct")
+            # nb_iter, priors, nb_cells, quantiles = dlg.getInputMCMC()
+            # self.nb_quantiles = len(quantiles)
+            # with open(self.MCMCDir+"/nb_quantiles", "w") as f:
+            #     f.write(str(self.nb_quantiles))
+            #     f.close()
+            # # compute = Compute(self.point)
+            # # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
+            # self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
+            # self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
 
     def onMCMCFinished(self):
         #Needs to be adapted!
@@ -416,8 +412,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.logk_view.update_bins(bins)
             self.logk_view.on_update()
 
-            self.permeability_view.update_bins(bins)
-            self.permeability_view.on_update()
+            self.conductivity_view.update_bins(bins)
+            self.conductivity_view.on_update()
 
             self.porosity_view.update_bins(bins)
             self.porosity_view.on_update()
@@ -490,7 +486,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.groupBoxLog10K.setLayout(vbox)
             vbox = QtWidgets.QVBoxLayout()
             vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
-            self.groupBoxPermeability.setLayout(vbox)
+            self.groupBoxConductivity.setLayout(vbox)
             vbox = QtWidgets.QVBoxLayout()
             vbox.addWidget(QtWidgets.QLabel("No model has been computed yet"),QtCore.Qt.AlignCenter)
             self.groupBoxPorosity.setLayout(vbox)
@@ -582,7 +578,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.paramsDistributionModel = ParamsDistributionModel([select_params])
 
         self.logk_view = Log10KView(self.paramsDistributionModel)
-        self.permeability_view = PermeabilityView(self.paramsDistributionModel)
+        self.conductivity_view = ConductivityView(self.paramsDistributionModel)
         self.porosity_view = PorosityView(self.paramsDistributionModel)
         self.capacity_view = CapacityView(self.paramsDistributionModel)
 
@@ -592,11 +588,11 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.logk_view)
         vbox.addWidget(self.toolbarLog10k)
 
-        self.toolbarPermeability = NavigationToolbar(self.permeability_view, self)
+        self.toolbarConductivity = NavigationToolbar(self.conductivity_view, self)
         vbox = QtWidgets.QVBoxLayout()
-        self.groupBoxPermeability.setLayout(vbox)
-        vbox.addWidget(self.permeability_view)
-        vbox.addWidget(self.toolbarPermeability)
+        self.groupBoxConductivity.setLayout(vbox)
+        vbox.addWidget(self.conductivity_view)
+        vbox.addWidget(self.toolbarConductivity)
 
         self.toolbarPorosity = NavigationToolbar(self.porosity_view, self)
         vbox = QtWidgets.QVBoxLayout()

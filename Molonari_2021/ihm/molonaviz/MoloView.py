@@ -324,15 +324,15 @@ class PorosityView(MoloViewHisto):
     def retrieve_data(self):
         self.data = self.model.get_porosity()
 
-class PermeabilityView(MoloViewHisto):
+class ConductivityView(MoloViewHisto):
     """
-    Concrete class to display the distribution of the permeability paramter
+    Concrete class to display the distribution of the conductivity paramter
     """
     def __init__(self, molomodel: MoloModel, bins=60, color='orange', title="Histogramme a posteriori des lambda_s"):
         super().__init__(molomodel, bins, color, title)
     
     def retrieve_data(self):
-        self.data = self.model.get_permeability()
+        self.data = self.model.get_conductivity()
 
 class CapacityView(MoloViewHisto):
     """
