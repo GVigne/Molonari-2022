@@ -36,6 +36,37 @@ class TemperatureAndHeatFlowsDb():
         createQuery.finish()
         
     
-    def insert(self):
-        pass
+    def insert(self, temps, advective_flux, conductive_flux, flows, point):
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO TemperatureAndHeatFlows (
+            Date,
+            Depth,
+            Temperature,
+            AdvectiveFlow,
+            ConductiveFlow,
+            TotalFlow,
+            PointKey,
+            Quantile
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        )
+        # point_id = PointDb.getIdByName(point.name)
+        
+        for k in range(temps.shape[0]):
+            for i in range(temps.shape[1]):
+                insertQuery.addBindValue(str(i))
+                insertQuery.addBindValue(str(k))
+                insertQuery.addBindValue(str(temps[k, i]))
+                insertQuery.addBindValue(str(advective_flux[k, i]))
+                insertQuery.addBindValue(str(conductive_flux[k, i]))
+                insertQuery.addBindValue(str(flows[k, i]))
+                insertQuery.addBindValue(str(1))
+                insertQuery.addBindValue(str(1))
+            
+                insertQuery.exec_()
+            
+        insertQuery.finish()
         

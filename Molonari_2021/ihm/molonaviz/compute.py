@@ -284,6 +284,7 @@ class Compute(QtCore.QObject):
         conductive_flux = self.col.get_conduc_flows_solve()
         depths = self.col.get_depths_solve()
         times = self.col.get_times_solve()
+        flows_for_insertion = self.col.flows_solve
         
         ## Formatage des dates
         n_dates = len(times)
@@ -350,3 +351,5 @@ class Compute(QtCore.QObject):
 
 
         self.mainDb.dateDb.insert(times)
+        self.mainDb.depthDb.insert(depths)
+        # self.mainDb.temperatureAndHeatFlowsDb.insert(temps, advective_flux, conductive_flux, flows_for_insertion, self.point)
