@@ -294,7 +294,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         sensorDir = self.study.getSensorDir()
 
-        dlg = DialogCompute()
+        dlg = DialogCompute(self.point.getName())
         res = dlg.exec()
 
         if res == 10 : #Direct Model

@@ -1,17 +1,36 @@
 import sys
 import os
+import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from math import log10
 from PyQt5.QtWidgets import QMainWindow, QApplication, QTableWidgetItem
+from queue import Queue
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
+
+#from mainwindow import mainWin
 
 From_DialogCompute = uic.loadUiType(os.path.join(os.path.dirname(__file__),"dialogcompute.ui"))[0]
 
 class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     
-    def __init__(self):
+    def __init__(self,pointName):
         # Call constructor of parent classes
         super(DialogCompute, self).__init__()
         QtWidgets.QDialog.__init__(self)
+        
+        self.pointName = pointName
+        
+        #Open the database
+        db_point = QSqlDatabase.addDatabase("QSQLITE")
+        db_point.setDatabaseName(r".\..\..\studies\study_2022\molonari_study_2022 .sqlite")
+        if not db_point.open():
+            print("Error: Cannot open databse")
+            
+        #Find the id related to the SamplingPoint
+        query_test = QSqlQuery()
+        print(query_test.exec_(f"""SELECT Point.id FROM Point,SamplingPoint WHERE SamplingPoint.Name = "{self.pointName}" AND Point.SamplingPoint = SamplingPoint.id"""))
+        query_test.first()
+        self.point_id = query_test.value(0)
         
         self.setupUi(self)
 
@@ -28,7 +47,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         # spinBoxNLayersDirect
         self.spinBoxNLayersDirect.setRange(0, 10)
         self.spinBoxNLayersDirect.setSingleStep(1)
-        self.spinBoxNLayersDirect.setValue(3)
+        self.spinBoxNLayersDirect.setValue(1)
         # self.spinBoxNLayersDirect.setWrapping(True)
 
         self.MCMCLineEdits = [self.lineEditMaxIterMCMC, 
@@ -41,6 +60,8 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         # Show the default table
         self.showdb()
+        
+        db_point.close()
 
         self.pushButtonRun.clicked.connect(self.run)
 
@@ -79,6 +100,38 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         item4.setText('SolVolThermCap (J/m^3/K)')
         item4.setToolTip('Solid Volumetric Thermal Capacity: heat capacity of a sample of the substance divided by the volume of the sample')
         
+        
+    
+    #Find the values related to point_id in different tables
+    def searchTable(tableName = None, point_id = None):
+        query_test.exec_(f"SELECT 1 FROM {tableName} WHERE PointKey = {point_id}")
+        if not (query_test.first()): 
+            return False
+        
+        i = 0
+        while i<row:
+            #Read the data
+            query_test.exec_(f"SELECT 1 FROM {tableName} WHERE PointKey = {point_id} AND Layer = {i+1}")
+            if not query_test.first():
+                break
+            permeability = query_test.value(1)
+            sediThermCon = query_test.value(2)
+            porosity = query_test.value(3)
+            layer = query_test.value(4)
+            #Find the depthBed
+            query_new = QSqlQuery()
+            query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
+            query_new.first()
+            depth_bed = query_new.value(2)
+            #Insert the values
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(depth_bed))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(permeability))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(porosity))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(sediThermCon))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
+            i+=1  
+        return True    
+    
     # Set the default table
     def showdb(self): 
         
@@ -92,6 +145,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setRowCount(10)
         self.tableWidget.setColumnCount(5)
         
+        '''
         for i in range(row):
     
             self.tableWidget.setItem(i, 1, QTableWidgetItem("1e-5"))
@@ -102,12 +156,82 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         self.tableWidget.setItem(0, 0, QTableWidgetItem("21"))
         self.tableWidget.setItem(1, 0, QTableWidgetItem("31"))
         self.tableWidget.setItem(2, 0, QTableWidgetItem("46"))
-        
+        '''
         for k in range(10):
                 if k > row - 1:
                     self.tableWidget.hideRow(k)
                 else:
                     self.tableWidget.showRow(k)
+        
+        #Find the bestParameter related to the id found
+        query_test = QSqlQuery()
+        query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {self.point_id}")
+        if not (query_test.first()): 
+            query_test.exec_(f"SELECT 1 FROM ParametersDistribution WHERE PointKey = {self.point_id}")
+            if not (query_test.first()): 
+                print("Error, point not found")
+                return
+        
+            i = 0
+            while i<row:
+                #Read the data
+                query_test.exec_(f"SELECT * FROM ParametersDistribution WHERE PointKey = {self.point_id} AND Layer = {i+1}")
+            
+                if not query_test.first():
+                    break
+                permeability = query_test.value(1)
+                sediThermCon = query_test.value(2)
+                porosity = query_test.value(3)
+                #solVolThermCap = query_test.value(4)
+                solVolThermCap = 5e6
+                #layer = query_test.value(5)
+                layer = query_test.value(4)
+                #Find the depthBed
+                query_new = QSqlQuery()
+                query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
+                query_new.first()
+                depth_bed = query_new.value(2)
+                #Insert the values
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(depth_bed)))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(permeability)))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(porosity)))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(sediThermCon)))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(str(solVolThermCap)))
+            i+=1
+            return  
+        
+        i = 0
+        while i<row:
+            #Read the data
+            query_test.exec_(f"SELECT * FROM BestParameters WHERE PointKey = {self.point_id} AND Layer = {i+1}")
+            if not query_test.first():
+                break
+            permeability = query_test.value(1)
+            sediThermCon = query_test.value(2)
+            porosity = query_test.value(3)
+            solVolThermCap = query_test.value(4)
+            layer = query_test.value(5)
+            #Find the depthBed
+            query_new = QSqlQuery()
+            query_new.exec_(f"SELECT DepthBed FROM Layer WHERE id = {layer}")
+            query_new.first()
+            depth_bed = query_new.value(0)
+            #Insert the values into the table
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(str(depth_bed)))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(permeability)))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(porosity)))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(sediThermCon)))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(str(solVolThermCap)))
+            i+=1  
+        '''
+        if not (self.searchTable(tableName = "BestParameters",point_id = point_id)):
+            if not (self.searchTable(tableName = "ParametersDistribution",point_id = point_id)):
+                print("Error, point not found")
+        '''
+                                     
+        
+         
+    #    self.readSQL()
     
     # Change the number of rows according to spinBoxNLayersDirect    
     def change_showdb(self): 
@@ -137,6 +261,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
 
        
     def setDefaultValues(self):
+        
+        # Direct model
+        #self.showdb()
         
         # MCMC
         self.lineEditMaxIterMCMC.setText('5000')
@@ -210,15 +337,15 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         quantiles = [float(quantile) for quantile in quantiles]
         
         return nb_iter, priors, nb_cells, quantiles
-
-    def run(self):
+    
+    def run(self):        
         if self.groupBoxMCMC.isChecked():
             self.done(1)
         else:
             self.done(10)
-            
+               
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    mainWin = DialogCompute()
+    mainWin = DialogCompute("Point034")
     mainWin.show()
     sys.exit(app.exec_())

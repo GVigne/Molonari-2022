@@ -4,6 +4,7 @@ from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 
 ############################# Create BDD
 
+print(os.path)
 if os.path.exists("molonari.sqlite"):
     os.remove("molonari.sqlite")
 
