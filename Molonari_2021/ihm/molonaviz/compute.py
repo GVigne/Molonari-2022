@@ -43,13 +43,15 @@ class Compute(QtCore.QObject):
     """
     MCMCFinished = QtCore.pyqtSignal()
 
-    def __init__(self, point: Point=None):
+    def __init__(self, db, point: Point=None):
         # Call constructor of parent classes
         super(Compute, self).__init__()
         self.thread = QtCore.QThread()
 
         self.point = point
         self.col = None
+        
+        self.mainDb = db
     
     def setColumn(self, sensorDir: str):
         self.col = self.point.setColumn(sensorDir)
@@ -281,6 +283,7 @@ class Compute(QtCore.QObject):
         advective_flux = self.col.get_advec_flows_solve()
         conductive_flux = self.col.get_conduc_flows_solve()
         depths = self.col.get_depths_solve()
+        times = self.col.get_times_solve()
         
         ## Formatage des dates
         n_dates = len(times)
@@ -346,3 +349,4 @@ class Compute(QtCore.QObject):
         df_flows_solve.to_csv(flows_solve_file, index=False)
 
 
+        self.mainDb.dateDb.insert(times)

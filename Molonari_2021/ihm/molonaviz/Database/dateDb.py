@@ -9,7 +9,7 @@ class DateDb():
         
         dropQuery.exec(
             """       
-            DROP TABLE Date
+            DROP TABLE NewDate
             """
         )
     
@@ -19,7 +19,7 @@ class DateDb():
         
         createQuery.exec_(
         """
-        CREATE TABLE Date (
+        CREATE TABLE NewDate (
             id             INTEGER  PRIMARY KEY AUTOINCREMENT,
             Date           DATETIME
         );
@@ -28,7 +28,32 @@ class DateDb():
         )
         createQuery.finish()
         
-    
-    def insert(self):
-        pass
+    def insert(self, times):
+        insertQuery = QSqlQuery(self.con)
         
+        insertQuery.prepare(
+            """
+            INSERT INTO NewDate (
+                Date
+            )
+            VALUES (?)
+            """
+        )
+    
+        for time in times:
+            insertQuery.addBindValue(str(time))
+            
+            insertQuery.exec_()
+            
+        insertQuery.finish()
+        
+    def getIdByDate(self, date):
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.prepare("SELECT id FROM NewDate where Date = :date")
+        selectQuery.bindValue(":date", date)
+        selectQuery.exec_()
+        
+        selectQuery.next()
+        id = int(selectQuery.value(0))
+        selectQuery.finish()
+        return id        
