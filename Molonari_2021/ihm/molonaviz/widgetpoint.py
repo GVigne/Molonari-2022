@@ -35,6 +35,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.checkBoxRaw_Data.setChecked(True)
         self.checkBoxDirectModel.setChecked(True)
         self.radioButtonTherm1.setChecked(True)
+
+        #Create all models: they are empty for now
+        self.pressuremodel = PressureDataModel([])
+        self.tempmodel = TemperatureDataModel([])
+        self.tempmap_model = SolvedTemperatureModel([])
+        self.fluxes_model = HeatFluxesModel([])
+        self.waterflux_model = WaterFluxModel([])
+        self.paramsdistr_model = ParamsDistributionModel([])
         
         # Link every button to their function
         self.comboBoxSelectLayer.textActivated.connect(self.changeDisplayedParams)
@@ -115,10 +123,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         try:
             select_params = self.build_params_distribution(layer)
-            self.paramsDistributionModel.new_queries([select_params])
-            self.paramsDistributionModel.exec() #Refresh the model
+            self.paramsdistr_model.new_queries([select_params])
+            self.paramsdistr_model.exec() #Refresh the model
         except Exception:
-            #self.paramsDistributionModel is not initialised yet. This "feature" can only occur if there were no histograms (for instance only cleaned measures) and we switch to a database with histograms (example: via the update_all_models method)
+            #self.paramsdistr_model is not initialised yet. This "feature" can only occur if there were no histograms (for instance only cleaned measures) and we switch to a database with histograms (example: via the update_all_models method)
             pass
 
     
@@ -574,12 +582,12 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
     def plotHistos(self):
         select_params = self.build_params_distribution(self.comboBoxSelectLayer.currentText())
-        self.paramsDistributionModel = ParamsDistributionModel([select_params])
+        self.paramsdistr_model = ParamsDistributionModel([select_params])
 
-        self.logk_view = Log10KView(self.paramsDistributionModel)
-        self.conductivity_view = ConductivityView(self.paramsDistributionModel)
-        self.porosity_view = PorosityView(self.paramsDistributionModel)
-        self.capacity_view = CapacityView(self.paramsDistributionModel)
+        self.logk_view = Log10KView(self.paramsdistr_model)
+        self.conductivity_view = ConductivityView(self.paramsdistr_model)
+        self.porosity_view = PorosityView(self.paramsdistr_model)
+        self.capacity_view = CapacityView(self.paramsdistr_model)
 
         self.toolbarLog10k = NavigationToolbar(self.logk_view, self)
         vbox = QtWidgets.QVBoxLayout()
@@ -605,7 +613,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         vbox.addWidget(self.capacity_view)
         vbox.addWidget(self.toolbarCapacity)
 
-        self.paramsDistributionModel.exec()
+        self.paramsdistr_model.exec()
 
     def label_update(self):
         self.labelBins.setText(str(self.horizontalSliderBins.value()))
@@ -621,7 +629,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.setupComboBoxLayers()
 
         self.setPressureAndTemperatureModels()
-        
+    
         select_pressure = self.build_data_queries(field ="Pressure")
         self.pressuremodel.new_queries([select_pressure])
         
@@ -862,7 +870,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         """
         computation_type = self.computation_type()
         if computation_type is None:
-            return None
+            return []
         elif not computation_type:
             return [self.define_result_queries(result_type=result_type,option=option, quantile=0)]
         else:
