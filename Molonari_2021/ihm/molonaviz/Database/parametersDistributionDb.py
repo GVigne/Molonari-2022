@@ -21,7 +21,7 @@ class ParametersDistributionDb():
         """
         CREATE TABLE ParametersDistribution (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            log10K          REAL,
+            log10K         REAL,
             LambdaS         REAL,
             N               REAL,
             Cap             REAL,

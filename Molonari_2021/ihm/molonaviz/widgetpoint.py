@@ -38,7 +38,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.directmodeliscomputed = len(os.listdir(self.directmodelDir) ) > 1
         self.MCMCiscomputed = len(os.listdir(self.MCMCDir)) > 1
 
-        self.computeEngine = Compute(self.mainDb, self.point)
+        self.computeEngine = Compute(self.point)
 
         # Link every button to their function
 
@@ -463,7 +463,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.dfsolvedtemp = readCSVWithDates(self.MCMCDir + "/solved_temperatures.csv")
             
             self.dfdepths = pd.read_csv(self.MCMCdepthsdir)
-            # self.mainDb.depthDb.insert(self.dfdepths)
+            self.mainDb.depthDb.insert(self.dfdepths)
             
             self.dfintertemp = readCSVWithDates(self.MCMCDir + "/MCMC_temps_quantiles.csv")
             #C'EST ICI QU'ON AJOUTE LE CHOIX DE LA PROFONDEUR ?
@@ -471,8 +471,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.dfadvec = readCSVWithDates(self.MCMCDir + "/advective_flux.csv")
             self.dfconduc = readCSVWithDates(self.MCMCDir + "/conductive_flux.csv")
             self.dftot = readCSVWithDates(self.MCMCDir + "/total_flux.csv")
-            
-            # self.mainDb.temperatureAndHeatFlowsDb.insert(self.solvedtemp, self.dfadvec, self.dfconduc, self.dftot)
             self.dfbestparams = pd.read_csv(self.MCMCDir + "/MCMC_best_params.csv")
             self.dfbestparams = self.dfbestparams[self.dfbestparams.columns[1:]].round(decimals=3)
             #print(self.dfbestparams)
