@@ -8,6 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 from MoloModel import MoloModel
+from usefulfonctions import date_to_mdates
 
 class MoloView(FigureCanvasQTAgg):
     """
@@ -67,20 +68,13 @@ class MoloView1D(MoloView):
         This method allows to apply changes to the data on the x-axis (for example, format a date).
         """
         if self.time_dependent:
-            self.x = self.format(self.x)
+            self.x = date_to_mdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
             self.axes.xaxis.set_major_formatter(formatter)
             self.axes.xaxis.set_major_locator(MaxNLocator(4))
             plt.setp(self.axes.get_xticklabels(), rotation = 15)
         else:
             pass
-    
-    def format(self,dates2convert):
-        """
-        Given a 1D array of strings representing dates, return the array converted to the matplotlib date format.
-        Here, we suppose that the dates are in format YYYY:mm:dd:hh:mm:ss
-        """
-        return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])
     
     def plot_data(self):
         for index, (label, data) in enumerate(self.y.items()):
@@ -124,20 +118,13 @@ class MoloView2D(MoloView):
         This method allows to apply changes to the data on the x-axis (for example, format a date).
         """
         if self.time_dependent:
-            self.x = self.format(self.x)
+            self.x = self.date_to_mdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
             self.axes.xaxis.set_major_formatter(formatter)
             self.axes.xaxis.set_major_locator(MaxNLocator(4))
             plt.setp(self.axes.get_xticklabels(), rotation = 15)
         else:
             pass
-
-    def format(self,dates2convert):
-        """
-        Given a 1D array of strings representing dates, return the array converted to the matplotlib date format.
-        Here, we suppose that the dates are in format YYYY:mm:dd:hh:mm:ss
-        """
-        return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])
 
     def plot_data(self):
         if self.cmap.shape[0] ==self.x.shape[0] and self.cmap.shape[1] ==self.y.shape[0]:

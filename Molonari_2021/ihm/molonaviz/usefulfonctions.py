@@ -1,3 +1,4 @@
+from csv import excel_tab
 import unicodedata
 import string
 import numpy as np
@@ -6,6 +7,8 @@ from PyQt5 import QtWidgets
 from datetime import datetime
 from traitlets.config.application import catch_config_error
 from errors import *
+import matplotlib.dates as mdates
+
 
 def clean_filename(filename: str, char_limit: int= 255, replace=' '):
 
@@ -145,3 +148,10 @@ def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
     msg.setText(mainMessage)
     msg.setInformativeText(infoMessage)
     msg.exec_() 
+
+def date_to_mdates(dates2convert):
+        """
+        Given a 1D array of strings representing dates, return the array converted to the matplotlib date format.
+        Here, we suppose that the dates are in format YYYY:mm:dd:hh:mm:ss
+        """
+        return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])

@@ -9,6 +9,7 @@ from scipy import stats
 from PyQt5 import QtWidgets, QtCore, uic
 # Import PyQt5.QtSql classes 
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel, QSqlQueryModel
+from usefulfonctions import date_to_mdates
 
 # Import matplolib backend for PyQt
 # https://www.pythonguis.com/tutorials/plotting-matplotlib/
@@ -226,7 +227,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
      - the UI base_class (here QDialog)
     This offers the possibility to access directly the graphical controls variables (i.e. self.editFile)
     """
-    def __init__(self,name,pointDir,study):
+    def __init__(self,name,pointDir,study,con):
         """
         Constructor
         """
@@ -237,7 +238,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
-        self.pointDir = pointDir
         # Connect the buttons
 
         self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
@@ -269,13 +269,16 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # # Connect to the SQL database and display a critical message in case of failure
         self.sqlfile = "molonari_" + study.name + ".sqlite"
         
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sqlfile)
-        if not self.con.open():
-            print("Cannot open SQL database")
+        self.con = con
+        # self.con = QSqlDatabase.addDatabase("QSQLITE")
+        # self.con.setDatabaseName(self.sqlfile)
+        # if not self.con.open():
+        #     print("Cannot open SQL database")
         self.mainDb = MainDb(self.con)
         self.name = name
         self.samplingPointDb = self.mainDb.samplingPointDb
+        path_to_script = self.get_Script_Name()
+        self.pointDir = os.path.dirname(path_to_script)
         try:
             self.pointKey = self.samplingPointDb.getIdByname(self.name)
         except TypeError as e:
@@ -301,8 +304,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         """
         Destructor
         """
-        # Close the SQL connection
-        self.con.close() ####
+        #Don't close the connection to the database as it is global.
+        pass
 
 
     def readCSV(self):
@@ -650,18 +653,25 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
         self.widgetRawData.addWidget(self.mplPrevisualizeCurve)
 
+    def get_Script_Name(self):
+        q = QSqlQuery(f'SELECT SamplingPoint.CleanupScript FROM SamplingPoint WHERE SamplingPoint.Name = "{self.name}"')
+        q.exec()
+        q.next()
+        return q.value(0)
             
     def getScript(self):
+        path_to_script = self.get_Script_Name()
         try:
             # with open('saved_text.txt', 'r') as f:
             #     sample_text = f.read()
             #     f.close()
-            with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt")) as f:
+            with open(path_to_script) as f:
                 sample_text = f.read()
                 f.close()
         except:
+            #Once again,this is too permisive: what if no script was found?
             print("No saved script, show sample script")
-            with open(os.path.join(os.path.dirname(__file__),"sample_text.txt")) as f:
+            with open(os.path.join(os.path.dirname(path_to_script),"sample_text.txt")) as f:
                 sample_text = f.read()
                 f.close()
         # scriptpartiel = plainTextEdit.toPlainText()
@@ -670,8 +680,10 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         return(script)
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
-        scriptDir = self.pointDir + "/script.py"
-        sys.path.append(self.pointDir) 
+        path_to_script = self.get_Script_Name()
+        pointDir = os.path.dirname(path_to_script)
+        scriptDir = os.path.join(pointDir,"script.py")
+        sys.path.append(pointDir) 
 
         with open(scriptDir, "w") as f:
             f.write(script)
@@ -742,17 +754,18 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
                 
                 
     
-    # Define the selectMethod function and edit thhe sample_text.txt
+    # Define the selectMethod function and edit the sample_text.txt
     def openScript(self):
+        path_to_script = self.get_Script_Name()
         try: 
-            with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt")) as file:
+            with open(path_to_script) as file:
             # with open('saved_text.txt', 'r') as file:
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
         except FileNotFoundError:
-            # with open('sample_text.txt', 'r') as file:
-            with open(os.path.join(os.path.dirname(__file__),"sample_text.txt")) as file:
+            # Try to open the base script
+            with open(os.path.join(os.path.dirname(path_to_script),"sample_text.txt")) as file:
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
@@ -839,11 +852,11 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
         "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
         self.df_ZH = self.load_pandas(self.con, f'SELECT Date, Temp1, Temp2, Temp3, Temp4 FROM RawMeasuresTemp WHERE PointKey = {self.pointKey}', ["date", "t1", "t2", "t3", "t4"])
-        convertDates(self.df_ZH)
+        # convertDates(self.df_ZH)
         # Uncomment if original data is in Fahrenheit
         # self.df_ZH[["t1","t2","t3","t4"]] = self.df_ZH[["t1","t2","t3","t4"]].apply(lambda x: (x-32)/1.8, axis=1) 
-        self.df_Pressure = self.load_pandas(self.con, f'SELECT Date, Pressure, TempBed FROM RawMeasuresPress WHERE PointKey = {self.pointKey}', ["date", "tension", "t_stream"])
-        convertDates(self.df_Pressure)
+        self.df_Pressure = self.load_pandas(self.con, f'SELECT Date, Tension, TempBed FROM RawMeasuresPress WHERE PointKey = {self.pointKey}', ["date", "tension", "t_stream"])
+        # convertDates(self.df_Pressure)
         # Uncomment if original data is in Fahrenheit
         # self.df_Pressure[["t_stream"]] = self.df_Pressure[["t_stream"]].apply(lambda x: (x-32)/1.8, axis=1) 
         idPressureSensor = getPressureSensorByname(self.samplingPointDb,self.name)
@@ -872,7 +885,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             self.editScript()
         else:
             self.df_selected = pd.DataFrame(columns=self.varList)
-            self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
+            self.df_selected.to_csv(os.path.join(self.pointDir,"selected_points.csv"))
+
 
             
 
