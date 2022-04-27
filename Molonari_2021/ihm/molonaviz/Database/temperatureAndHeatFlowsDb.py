@@ -36,7 +36,8 @@ class TemperatureAndHeatFlowsDb():
         createQuery.finish()
         
     
-    def insert(self, temps, advective_flux, conductive_flux, flows, point):
+    def insert(self, temps, advective_flux, conductive_flux, flows):
+        self.con.transaction()
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """
@@ -69,4 +70,6 @@ class TemperatureAndHeatFlowsDb():
                 insertQuery.exec_()
             
         insertQuery.finish()
+        
+        self.con.commit()
         
