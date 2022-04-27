@@ -14,6 +14,14 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from usefulfonctions import *
 from dialogreset import DialogReset
+# check if pyheatmy is correctly installed. If not, block the compute button
+try:
+    from pyheatmy import *
+    block_calcul = True
+except:
+    block_calcul = False
+    pass
+
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -43,7 +51,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         self.pushButtonReset.clicked.connect(self.reset)
         self.pushButtonCleanUp.clicked.connect(self.cleanup)
-        self.pushButtonCompute.clicked.connect(self.compute)
+        if block_calcul:
+            self.pushButtonCompute.clicked.connect(self.compute)
+        else:
+            self.pushButtonCompute.clicked.connect(self.compute_blocked)
         self.checkBoxRaw_Data.stateChanged.connect(self.checkbox)
         self.pushButtonRefresh.clicked.connect(self.refresh)
         self.pushButtonRefreshBins.clicked.connect(self.refreshbins)
@@ -280,6 +291,14 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
             self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
             self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
+    
+    def compute_blocked(self):
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
+        msg.setText("Warning : Package pyheatmy not installed, the calculation part of Molonaviz is not available.")
+        msg.setInformativeText("Please follow this guide for the installation of pyheatmy: https://github.com/mathisbrdn/pyheatmy.")
+        msg.exec_() 
+
 
     def onMCMCFinished(self):
 

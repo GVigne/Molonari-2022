@@ -5,8 +5,17 @@ import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from queue import Queue
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+from usefulfonctions import *
 
+# check if pyheatmy is correctly installed. If not, show the warning
+try:
+   from pyheatmy import *
+except Exception as e:
+    print(e, "==> Package pyheatmy not installed")
+    displayCriticalMessage_pyheatmy(str(os.path.join(os.path.dirname(__file__),"main.py")))
+    pass
 
+from Database.mainDb import MainDb
 from study import Study
 from point import Point
 from subwindow import SubWindow
@@ -18,7 +27,6 @@ from queuethread import *
 from usefulfonctions import *
 from errors import *
 
-from Database.mainDb import MainDb
 
 
 From_MainWindow = uic.loadUiType(os.path.join(os.path.dirname(__file__),"mainwindow.ui"))[0]

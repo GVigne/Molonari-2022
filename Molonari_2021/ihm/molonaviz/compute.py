@@ -6,12 +6,13 @@ from PyQt5 import QtCore
 from point import Point
 from errors import *
 from usefulfonctions import *
-
+# We have already check the pyheatmy package in mainwindow, so here we let it pass
 try:
-   from pyheatmy import *
-except Exception as e:
-    print(e, "==> Package pyheatmy not installed(compute.py)")
-    displayCriticalMessage_pyheatmy(str(os.path.join(os.path.dirname(__file__),"compute.py")))
+    from pyheatmy import *
+except:
+    pass
+   
+
 
 
 
