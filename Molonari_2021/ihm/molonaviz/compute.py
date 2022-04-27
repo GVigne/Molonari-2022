@@ -293,7 +293,7 @@ class Compute(QtCore.QObject):
             params = []
         
         try:
-            quantiles = [0] + self.col.get_quantiles()
+            quantiles = [0] + [k for k in self.col.get_quantiles()]
         except:
             quantiles = [0]
         
