@@ -1,7 +1,7 @@
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 import os
 
-from .bestParametersDb import BestParametersDb
+from .lastParametersDb import LastParametersDb
 from .cleanedMeasuresDb import CleanedMeasuresDb
 from .dateDb import DateDb
 from .depthDb import DepthDb
@@ -28,7 +28,7 @@ class MainDb():
         self.con = con
         
         
-        self.bestParametersDb = BestParametersDb(self.con)
+        self.lastParametersDb = LastParametersDb(self.con)
         self.cleanedMeasuresDb = CleanedMeasuresDb(self.con)
         self.dateDb = DateDb(self.con)
         self.depthDb = DepthDb(self.con)
@@ -64,7 +64,7 @@ class MainDb():
         self.dateDb.create()
         self.quantileDb.create()
         self.layerDb.create()
-        self.bestParametersDb.create()
+        self.lastParametersDb.create()
         self.depthDb.create()
         self.directParametersDb.create()
         self.parametersDistribution.create()

@@ -30,7 +30,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         query_test = QSqlQuery()
         query_test.exec_(f"SELECT id FROM Point WHERE SamplingPoint = {self.pointName}")
         query_test.first()
-        point_id = query_test.value(0)
+        self.point_id = query_test.value(0)
         
         self.setupUi(self)
 
@@ -159,10 +159,10 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                     self.tableWidget.showRow(k)
         
         #Find the bestParameter related to the id found
-
-        query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {point_id}")
+        query_test = QSqlQuery()
+        query_test.exec_(f"SELECT 1 FROM BestParameters WHERE PointKey = {self.point_id}")
         if not (query_test.first()): 
-            query_test.exec_(f"SELECT 1 FROM ParametersDistribution WHERE PointKey = {point_id}")
+            query_test.exec_(f"SELECT 1 FROM ParametersDistribution WHERE PointKey = {self.point_id}")
             if not (query_test.first()): 
                 print("Error, point not found")
                 return
