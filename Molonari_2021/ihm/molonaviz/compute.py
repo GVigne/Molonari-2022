@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 from PyQt5 import QtCore
 
-from pyheatmy import *
+from pyheatmy22 import *
 from point import Point
 
 
