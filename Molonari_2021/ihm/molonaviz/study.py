@@ -105,6 +105,7 @@ class Study(object):
             return
 
         except Exception as e :
+            shutil.rmtree(pointDir)
             raise e
     
     
