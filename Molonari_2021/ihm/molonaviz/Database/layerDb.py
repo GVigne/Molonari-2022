@@ -31,6 +31,8 @@ class LayerDb():
         
     
     def insert(self, layers):
+        self.con.transaction()
+        
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """
@@ -49,3 +51,4 @@ class LayerDb():
             
         insertQuery.finish()
         
+        self.con.commit()

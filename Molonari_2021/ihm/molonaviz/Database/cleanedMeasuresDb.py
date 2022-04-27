@@ -39,7 +39,7 @@ class CleanedMeasuresDb():
         
     
     def insert(self, study):
-        
+        self.con.transaction()
         insertQuery = QSqlQuery(self.con)
         
         insertQuery.prepare(
@@ -83,6 +83,8 @@ class CleanedMeasuresDb():
                 
                 insertQuery.exec_()
         insertQuery.finish()
+        
+        self.con.commit()
             
 
         

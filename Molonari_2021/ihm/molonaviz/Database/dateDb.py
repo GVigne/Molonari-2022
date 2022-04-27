@@ -29,6 +29,8 @@ class DateDb():
         createQuery.finish()
         
     def insert(self, times):
+        self.con.transaction()
+        
         insertQuery = QSqlQuery(self.con)
         
         insertQuery.prepare(
@@ -46,6 +48,8 @@ class DateDb():
             insertQuery.exec_()
             
         insertQuery.finish()
+        
+        self.con.commit()
         
     def getIdByDate(self, date):
         selectQuery = QSqlQuery(self.con)

@@ -30,6 +30,7 @@ class DepthDb():
         
     
     def insert(self, depths):
+        self.con.transaction()
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """
@@ -47,4 +48,6 @@ class DepthDb():
             insertQuery.exec_()
             
         insertQuery.finish()
+        
+        self.con.commit()
         

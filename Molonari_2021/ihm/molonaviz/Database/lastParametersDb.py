@@ -35,6 +35,8 @@ class LastParametersDb():
         
     
     def insert(self, layers):
+        self.con.transaction()
+
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """
@@ -62,3 +64,4 @@ class LastParametersDb():
             
         insertQuery.finish()
                 
+        self.con.commit()

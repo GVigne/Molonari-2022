@@ -35,6 +35,8 @@ class ParametersDistributionDb():
         
     
     def insert(self, params):
+        self.con.transaction()
+        
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """
@@ -64,3 +66,4 @@ class ParametersDistributionDb():
             
         insertQuery.finish()
         
+        self.con.commit()
