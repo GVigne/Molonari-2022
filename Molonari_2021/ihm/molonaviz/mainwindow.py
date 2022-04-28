@@ -116,26 +116,17 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         # self.setMaximumHeight(self.geometry().height())
         
         # On ouvre automatiquement une étude
-        rtd=os.path.split(os.path.dirname(__file__))
-        rtd=os.path.dirname(rtd[0])
-        self.currentStudy = Study(rootDir=os.path.join(rtd,"..","..", "studies", "study_2022"))
-        self.openStudy()
         
-        # Creation of the Database, its connection and the model
-        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
-        if os.path.exists(self.sqlfile):
-            os.remove(self.sqlfile)
+        # # Creation of the Database, its connection and the model
+        # self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
+        # if os.path.exists(self.sqlfile):
+        #     os.remove(self.sqlfile)
         
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sqlfile)
-        if not self.con.open():
-            print("Cannot open SQL database")
+        # self.con = QSqlDatabase.addDatabase("QSQLITE")
+        # self.con.setDatabaseName(self.sqlfile)
+        # if not self.con.open():
+        #     print("Cannot open SQL database")
             
-        self.model = QSqlTableModel(self, self.con)
-        
-        # Creation of the SQL tables
-        self.mainDb = MainDb(self.con)
-        self.mainDb.createTables()
 
     
     def appendText(self,text):
@@ -197,38 +188,41 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         res = dlg.exec_()
         errors = False
         if res == QtWidgets.QDialog.Accepted:
-            try :
-                self.currentStudy = dlg.setStudy()
-                self.currentStudy.saveStudyToText()
-                try :
-                    self.openStudy() #on ouvre automatiquement une étude qui vient d'être créée
-                    print("New study successfully created")
-                except LoadingError as e :
-                    print(e)
-                    print('Study creation aborted')
-                    displayCriticalMessage('Study creation aborted', f'An error occured \n Please check "Application messages" for further information')
-                    shutil.rmtree(self.currentStudy.getRootDir())
-                    self.currentStudy = None
-                    return None
-                except Exception as e :
-                    try :
-                        print(e)
-                    except :
-                        print('Unknown error')
-                    print('Study creation aborted')
-                    displayCriticalMessage('Study creation aborted', f'An error occured. Please check "Application messages" for further information')
-                    shutil.rmtree(self.currentStudy.getRootDir())
-                    self.currentStudy = None
-                    return None
-            except EmptyFieldError as e:
-                displayCriticalMessage(f"{str(e)} \nPlease try again")
-                self.createStudy()
-            except FileNotFoundError as e:
-                displayCriticalMessage(f"{str(e)} \nPlease try again")
-                self.createStudy()
-            except Exception as error:
-                print(f'error : {str(error)}')
-                self.currentStudy = None
+            self.currentStudy = dlg.setStudy() #Create the folders and sub-folders
+            self.currentStudy.open_connection()
+            self.currentStudy.create_tables()
+            self.currentStudy.setup_sensors()
+            #This study is ready to be used: it should be filled with all the tables and relevant information about the study (shaft, thermometers...)   
+                
+            #     try :
+            #         self.openStudy() #on ouvre automatiquement une étude qui vient d'être créée
+            #         print("New study successfully created")
+            #     except LoadingError as e :
+            #         print(e)
+            #         print('Study creation aborted')
+            #         displayCriticalMessage('Study creation aborted', f'An error occured \n Please check "Application messages" for further information')
+            #         shutil.rmtree(self.currentStudy.getRootDir())
+            #         self.currentStudy = None
+            #         return None
+            #     except Exception as e :
+            #         try :
+            #             print(e)
+            #         except :
+            #             print('Unknown error')
+            #         print('Study creation aborted')
+            #         displayCriticalMessage('Study creation aborted', f'An error occured. Please check "Application messages" for further information')
+            #         shutil.rmtree(self.currentStudy.getRootDir())
+            #         self.currentStudy = None
+            #         return None
+            # except EmptyFieldError as e:
+            #     displayCriticalMessage(f"{str(e)} \nPlease try again")
+            #     self.createStudy()
+            # except FileNotFoundError as e:
+            #     displayCriticalMessage(f"{str(e)} \nPlease try again")
+            #     self.createStudy()
+            # except Exception as error:
+            #     print(f'error : {str(error)}')
+            #     self.currentStudy = None
 
     def openStudy(self):
         if self.currentStudy == None : #si on ne vient pas de créer une étude
@@ -310,6 +304,9 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.convertingTimer.start(200)
     
     def convertDataInSQL(self):
+        #Shouldn't this function be removed? I don't think we will need to convert into SQL now that everything works with databases...
+        #This code was copy pasted in study.py
+        return
         try :
             self.mainDb.laboDb.insert()
             self.mainDb.studyDb.insert(self.currentStudy) 

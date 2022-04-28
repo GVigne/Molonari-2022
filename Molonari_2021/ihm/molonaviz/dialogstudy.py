@@ -42,7 +42,6 @@ class DialogStudy(QtWidgets.QDialog, From_DialogStudy):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), rootpath)
             
         rootdir = os.path.join(rootpath, name)
-        os.mkdir(rootdir)
         return Study(name, rootdir, sensorsdir)
 
             
