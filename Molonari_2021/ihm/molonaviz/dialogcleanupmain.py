@@ -1,4 +1,5 @@
 from binhex import openrsrc
+from logging import exception
 import sys, os
 
 from pkg_resources import run_script
@@ -21,6 +22,7 @@ import matplotlib.cm as cm
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
+from datetime import timedelta
 
 from dialogcleanpoints import DialogCleanPoints
 from dialogscript import DialogScript
@@ -194,7 +196,9 @@ def convertDates(df: pd.DataFrame):
                "%y/%m/%d %H:%M",    "%y/%m/%d %I:%M %p",
                "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %I:%M:%S %p", 
                "%Y/%m/%d %H:%M",    "%Y/%m/%d %I:%M %p",
-               None)
+               "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %I:%M:%S %p",
+               "%Y:%m:%d %H:%M:%S", "%Y:%m:%d %I:%M:%S %p",
+               "%m:%d:%Y %H:%M:%S", "%m:%d:%Y %I:%M:%S %p",None)
     times = df[df.columns[0]]
     for f in formats:
         try:
@@ -267,8 +271,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.name = name
         self.samplingPointDb = self.mainDb.samplingPointDb
         self.path_to_script = self.get_Script_Name()
-        print(self.path_to_script)
-        self.pointDir = os.path.dirname(self.path_to_script)
+        self.scriptDir = os.path.dirname(self.path_to_script)
         try:
             self.pointKey = self.samplingPointDb.getIdByname(self.name)
         except TypeError as e:
@@ -675,9 +678,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         return(script)
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
-        scriptDir = os.path.dirname(self.path_to_script)
-        scriptPyPath = os.path.join(scriptDir,"script.py")
-        sys.path.append(scriptDir) 
+        scriptPyPath = os.path.join(self.scriptDir,"script.py")
+        sys.path.append(self.scriptDir) 
 
         with open(scriptPyPath, "w") as f:
             f.write(script)
@@ -720,7 +722,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         
         
         try :
-            print("Enters try runscript")
             self.cleanup(script, df_ZH, df_Pressure, df_Calibration)
             
             
@@ -730,7 +731,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             if backupScript:
                 self.saveScript(backupScript)
             self.editScript()
-            raise e
             
 
     def editScript(self):
@@ -748,6 +748,9 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             except Exception as e:
                 print(e, "==> Clean-up aborted")
                 displayCriticalMessage("Error: Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ')
+                if backupScript:
+                    self.saveScript(backupScript)
+                self.editScript()
                 
                 
     
@@ -824,7 +827,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         "Cleans data and shows a previsuaization"
         self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
 
-        # selected_df = pd.read_csv("selected_points.csv")
+        # selected_df = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
 
         # for i in self.varList[1:]:
         #     df_var = selected_df[["date",i]].dropna()
@@ -832,6 +835,81 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         #     self.df_cleaned.loc[:,i] = values
 
         self.plotPrevisualizedVar()
+
+    def processData(self, dftemp, dfpress):
+        
+        
+        # On renomme (temporairement) les colonnes, on supprime les lignes sans valeur et on supprime l'index
+        val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
+        all_cols = ["Idx", "Date"] + val_cols
+        for i in range(len(all_cols)) :
+            dftemp.columns.values[i] = all_cols[i] 
+        dftemp.dropna(subset=val_cols,inplace=True)
+        dftemp.dropna(axis=1,inplace=True) # Remove last columns
+        dftemp.drop(["Idx"],axis=1,inplace=True) # Remove first column
+        val_cols = ["tension_V", "Temp_Stream"]
+        all_cols = ["Idx", "Date"] + val_cols
+        for i in range(len(all_cols)) :
+            dfpress.columns.values[i] = all_cols[i]
+        dfpress.dropna(subset=val_cols,inplace=True)
+        dfpress.dropna(axis=1,inplace=True) # Remove last columns
+        dfpress.drop(["Idx"],axis=1,inplace=True) # Remove first column
+        
+        # On convertie les dates au format yy/mm/dd HH:mm:ss
+        convertDates(dftemp)
+        convertDates(dfpress)
+        # On vérifie qu'on a le même deltaT pour les deux fichiers
+        # La référence sera l'écart entre les deux premières lignes pour chaque fichier 
+        # --> Demander à l'utilisateur de vérifier que c'est ok
+        dftemp_t0 = dftemp.iloc[0,0]
+        dfpress_t0 = dfpress.iloc[0,0]
+        deltaTtemp = dftemp.iloc[1,0] - dftemp_t0
+        deltaTpress = dfpress.iloc[1,0] - dfpress_t0
+        if deltaTtemp != deltaTpress :
+            print(deltaTtemp, deltaTpress)
+        else : 
+            deltaT = deltaTtemp
+
+        # On fait en sorte que les deux fichiers aient le même t0 et le même tf
+        dftemp_tf = dftemp.iloc[-1,0]
+        dfpress_tf = dfpress.iloc[-1,0]
+
+        if dfpress_t0 < dftemp_t0 : 
+            while dfpress_t0 != dftemp_t0:
+                dfpress.drop(dftemp.head(1).index, inplace=True)
+                dfpress_t0 = dfpress.iloc[0,0]
+        elif dfpress_t0 > dftemp_t0 : 
+            while dfpress_t0 != dftemp_t0:
+                dftemp.drop(dftemp.head(1).index, inplace=True)
+                dftemp_t0 = dftemp.iloc[0,0]
+
+        if dfpress_tf > dftemp_tf:
+            while dfpress_tf != dftemp_tf :
+                dfpress.drop(dfpress.tail(1).index, inplace=True)
+                dfpress_tf = dfpress.iloc[-1,0]
+        elif dfpress_tf < dftemp_tf:
+            while dfpress_tf != dftemp_tf :
+                dftemp.drop(dftemp.tail(1).index, inplace=True)
+                dftemp_tf = dftemp.iloc[-1,0]
+
+        # On supprime les lignes qui ne respecteraient pas le deltaT
+        i = 1
+        while i<dftemp.shape[0]:
+            if ( dftemp.iloc[i,0] - dftemp.iloc[i-1,0] ) % deltaT != timedelta(minutes=0) :
+                dftemp.drop(dftemp.iloc[i].name,  inplace=True)
+            else :
+                i += 1
+        i = 1
+        while i<dfpress.shape[0]:
+            if ( dfpress.iloc[i,0] - dfpress.iloc[i-1,0] ) % deltaT != timedelta(minutes=0) :
+                dfpress.drop(dfpress.iloc[i].name,  inplace=True)
+            else :
+                i += 1
+        
+        # On convertie les températures en Kelvin
+        
+        # On convertie les tensions en pression
+        return dftemp, dfpress
 
     def getDF(self):
         def getPressureSensorByname(bd, name):
@@ -849,20 +927,17 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
         "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
         self.df_ZH = self.load_pandas(self.con, f'SELECT Date, Temp1, Temp2, Temp3, Temp4 FROM RawMeasuresTemp WHERE PointKey = {self.pointKey}', ["date", "t1", "t2", "t3", "t4"])
-        # convertDates(self.df_ZH)
+        convertDates(self.df_ZH)
         # Uncomment if original data is in Fahrenheit
         # self.df_ZH[["t1","t2","t3","t4"]] = self.df_ZH[["t1","t2","t3","t4"]].apply(lambda x: (x-32)/1.8, axis=1) 
         self.df_Pressure = self.load_pandas(self.con, f'SELECT Date, Tension, TempBed FROM RawMeasuresPress WHERE PointKey = {self.pointKey}', ["date", "tension", "t_stream"])
-        # convertDates(self.df_Pressure)
+        convertDates(self.df_Pressure)
         # Uncomment if original data is in Fahrenheit
         # self.df_Pressure[["t_stream"]] = self.df_Pressure[["t_stream"]].apply(lambda x: (x-32)/1.8, axis=1) 
         idPressureSensor = getPressureSensorByname(self.samplingPointDb,self.name)
         # self.df_Calibration = self.load_pandas(self.con, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
         self.df_Calibration = self.load_pandas(self.con, f'SELECT Name, Intercept, [Du/Dh], [Du/Dt] FROM PressureSensor WHERE id = {idPressureSensor}', ["Name", "Intercept", "dUdH", "dUdT"])
-        print("---")
-        print(self.df_ZH)
-        print(self.df_Pressure)
-        print(self.df_Calibration)
+        
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
         self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
         self.widgetToolBar.addWidget(self.toolBar)
@@ -886,7 +961,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             self.editScript()
         else:
             self.df_selected = pd.DataFrame(columns=self.varList)
-            self.df_selected.to_csv(os.path.join(self.pointDir,"selected_points.csv"))
+            self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
 
 
             
@@ -901,7 +976,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
             self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
             self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
-            self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
+            self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
             
         self.previsualizeCleaning()
 
@@ -912,7 +987,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         nan_values.fill(np.nan)
         self.df_selected[self.varName()] = nan_values
         self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
-        self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
+        self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
 
         obj = self.buttonGroupMethod.button(3)
         self.selectMethod(obj)
@@ -921,11 +996,11 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=self.varList)
-        self.df_selected.to_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
+        self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
         # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         try:
-            os.remove(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt"))
+            os.remove(os.path.join(self.path_to_script))
         except FileNotFoundError:
             pass
         self.filter_dic = dict.fromkeys(self.varList[1:],False)

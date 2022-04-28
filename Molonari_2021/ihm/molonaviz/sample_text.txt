@@ -42,12 +42,12 @@ df_cleaned = df_loaded.copy().dropna()
 
 # MANUAL SELECTED POINTS
 try:
-    selected_df = pd.read_csv(os.path.join(self.pointDir,"processed_data","selected_points.csv"))
-
+    selected_df = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
     for i in varList[1:]:
         df_var = selected_df[["date",i]].dropna()
-        values = df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
-        df_cleaned.loc[:,i] = values
+        if not df_var.empty:
+            values = df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
+            df_cleaned.loc[:,i] = values
 except FileNotFoundError:
     pass
 
