@@ -253,13 +253,13 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.deleteCleaned()
             self.update_all_models()
 
-
     def cleanup(self):
         dlg = DialogCleanupMain(self.point.name, os.path.join(self.study.rootDir,"Cleanup_scripts"),self.study,self.study.con)
         res = dlg.exec_()
         #print(self.pointDir)
         if res == QtWidgets.QDialog.Accepted:
-            dlg.mainDb.DateDb.insert(dlg.df_cleaned)
+            dlg.df_cleaned["date"] = dlg.df_cleaned.apply(lambda x: x['date'].strftime("%Y:%m:%d:%H:%M:%S"), axis=1)
+            dlg.mainDb.dateDb.insert(dlg.df_cleaned["date"])
             dlg.mainDb.cleanedMeasuresDb.update(dlg.df_cleaned,dlg.pointKey)
         # #Needs to be adapted!
         # if self.currentdata == "raw":

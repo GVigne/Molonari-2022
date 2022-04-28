@@ -20,8 +20,9 @@ class DateDb():
         createQuery.exec_(
         """
         CREATE TABLE Date (
-            id             INTEGER  PRIMARY KEY AUTOINCREMENT,
-            Date           DATETIME
+            id             INTEGER  PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+            Date           DATETIME,
+            UNIQUE(Date)
         );
 
         """
@@ -41,10 +42,10 @@ class DateDb():
             VALUES (?)
             """
         )
-    
+        # times = df.apply(lambda x: x['date'].strftime("%Y:%m:%d:%H:%M:%S"), axis=1)
         for time in times:
             insertQuery.addBindValue(str(time))
-            
+
             insertQuery.exec_()
             
         insertQuery.finish()

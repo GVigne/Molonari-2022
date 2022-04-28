@@ -101,3 +101,56 @@ class CleanedMeasuresDb():
         id = int(selectQuery.value(0))
         selectQuery.finish()
         return id
+
+    def update(self, df, pointKey):
+        self.con.transaction()
+
+        deleteQuery = QSqlQuery(self.con)
+        statement = f'DELETE FROM CleanedMeasures WHERE PointKey = {pointKey}'
+        deleteQuery.exec(statement)
+        deleteQuery.finish()
+
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+            """
+            INSERT INTO CleanedMeasures (
+                Date,
+                TempBed,
+                Temp1,
+                Temp2,
+                Temp3,
+                Temp4,
+                Pressure,
+                PointKey
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """
+        )
+        col = df.columns
+        print(df)
+        for ind in df.index:
+            dateId = self.getIdDate(str(df[col[0]][ind]))
+            insertQuery.addBindValue(dateId)
+            insertQuery.addBindValue(str(df[col[1]][ind]))
+            insertQuery.addBindValue(str(df[col[3]][ind]))
+            insertQuery.addBindValue(str(df[col[4]][ind]))
+            insertQuery.addBindValue(str(df[col[5]][ind]))
+            insertQuery.addBindValue(str(df[col[6]][ind]))
+            insertQuery.addBindValue(str(df[col[2]][ind]))
+            insertQuery.addBindValue(str(pointKey))
+            
+            insertQuery.exec_()
+        insertQuery.finish()
+
+        self.con.commit()
+        
+    def getIdDate(self, date: str):
+        selectQuery = QSqlQuery(self.con)
+        selectQuery.prepare("SELECT id FROM Date where Date = :date")
+        selectQuery.bindValue(":date", date)
+        selectQuery.exec_()
+        
+        selectQuery.next()
+        id = int(selectQuery.value(0))
+        selectQuery.finish()
+        return id
