@@ -960,8 +960,13 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             print(e)
             self.editScript()
         else:
-            self.df_selected = pd.DataFrame(columns=self.varList)
-            self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
+            try:
+                print("Enters try")
+                self.df_selected = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
+                print("Exits try")
+            except FileNotFoundError:
+                self.df_selected = pd.DataFrame(columns=self.varList)
+                self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
 
 
             
