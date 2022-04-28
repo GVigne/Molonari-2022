@@ -842,24 +842,30 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         else:
             #Display cleaned measures
             if full_query:
-                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
                         FROM CleanedMeasures
+                        JOIN Date
+                        ON CleanedMeasures.Date = Date.id
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date
+                        ORDER BY Date.Date;
                             """
                 )
             elif field =="Temp":
-                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
                         FROM CleanedMeasures
+                        JOIN Date
+                        ON CleanedMeasures.Date = Date.id
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date
+                        ORDER BY Date.Date
                             """
                 )
             elif field =="Pressure":
-                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
+                return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Pressure
                         FROM CleanedMeasures
+                        JOIN Date
+                        ON CleanedMeasures.Date = Date.id
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date
+                        ORDER BY Date.Date
                             """
                 )
     def computation_type(self):
@@ -950,7 +956,7 @@ class FakeStudy():
 
 if __name__ == '__main__':
     p = Point()
-    p.name="P034" #This was a test point
+    p.name="Point035" #This was a test point
     p.shaft
     con = QSqlDatabase.addDatabase("QSQLITE")
     con.setDatabaseName("Demo/Demo_db/Demo_db.sqlite")
@@ -960,4 +966,5 @@ if __name__ == '__main__':
     mainWin = WidgetPoint(p,s)
     mainWin.show()
     mainWin.setInfoTab()
+
     sys.exit(app.exec_())

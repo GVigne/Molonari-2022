@@ -166,7 +166,6 @@ def date_to_mdates(dates2convert):
         Given a 1D array of strings representing dates, return the array converted to the matplotlib date format.
         Here, we suppose that the dates are in format YYYY:mm:dd:hh:mm:ss
         """
-        print(dates2convert)
         return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])
     
 def getShaftsDb(sensorDir):
