@@ -52,6 +52,68 @@
           </attribute>
          </widget>
         </item>
+        <item row="8" column="3">
+         <widget class="QCheckBox" name="checkBoxFilter">
+          <property name="text">
+           <string>Filter</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QCheckBox" name="checkBoxChanges">
+          <property name="text">
+           <string>Show changes</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" colspan="2">
+         <layout class="QVBoxLayout" name="widgetToolBar"/>
+        </item>
+        <item row="3" column="3">
+         <widget class="QLabel" name="labelMethod">
+          <property name="text">
+           <string>Outliers method:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="16" column="3">
+         <widget class="QPushButton" name="pushButtonResetVar">
+          <property name="text">
+           <string>Reset variable</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="lineEditShowPoint">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="3">
+         <widget class="QComboBox" name="comboBoxRawVar"/>
+        </item>
+        <item row="17" column="3">
+         <widget class="QPushButton" name="pushButtonResetAll">
+          <property name="text">
+           <string>Reset all</string>
+          </property>
+         </widget>
+        </item>
+        <item row="11" column="3">
+         <widget class="QPushButton" name="pushButtonSelectPoints">
+          <property name="text">
+           <string>Select points</string>
+          </property>
+         </widget>
+        </item>
+        <item row="12" column="3">
+         <widget class="QPushButton" name="pushButtonEditCode">
+          <property name="text">
+           <string>Edit code</string>
+          </property>
+         </widget>
+        </item>
         <item row="4" column="3">
          <widget class="QRadioButton" name="radioButtonZScore">
           <property name="text">
@@ -60,13 +122,6 @@
           <attribute name="buttonGroup">
            <string notr="true">buttonGroupMethod</string>
           </attribute>
-         </widget>
-        </item>
-        <item row="10" column="3">
-         <widget class="QLabel" name="labelAdvanced">
-          <property name="text">
-           <string>Advanced:</string>
-          </property>
          </widget>
         </item>
         <item row="5" column="3">
@@ -79,75 +134,34 @@
           </attribute>
          </widget>
         </item>
-        <item row="1" column="0" colspan="3">
-         <widget class="QComboBox" name="comboBoxRawVar"/>
-        </item>
-        <item row="8" column="3">
-         <widget class="QCheckBox" name="checkBoxFilter">
-          <property name="text">
-           <string>Filter</string>
-          </property>
-         </widget>
-        </item>
-        <item row="11" column="3">
-         <widget class="QPushButton" name="pushButtonSelectPoints">
-          <property name="text">
-           <string>Select points</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QCheckBox" name="checkBoxChanges">
-          <property name="text">
-           <string>Show changes</string>
-          </property>
-         </widget>
-        </item>
-        <item row="15" column="3">
-         <widget class="QPushButton" name="pushButtonResetVar">
-          <property name="text">
-           <string>Reset variable</string>
-          </property>
-         </widget>
-        </item>
-        <item row="16" column="3">
-         <widget class="QPushButton" name="pushButtonResetAll">
-          <property name="text">
-           <string>Reset all</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0" rowspan="13" colspan="3">
-         <layout class="QVBoxLayout" name="widgetRawData"/>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="lineEditShowPoint">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="12" column="3">
-         <widget class="QPushButton" name="pushButtonEditCode">
-          <property name="text">
-           <string>Edit code</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="3">
-         <widget class="QLabel" name="labelMethod">
-          <property name="text">
-           <string>Outliers method:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0" colspan="2">
-         <layout class="QVBoxLayout" name="widgetToolBar"/>
-        </item>
         <item row="0" column="2">
          <widget class="QPushButton" name="pushButtonLoadRawData">
           <property name="text">
            <string>Load Raw Data</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="3">
+         <widget class="QLabel" name="labelAdvanced">
+          <property name="text">
+           <string>Advanced:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" rowspan="14" colspan="3">
+         <layout class="QVBoxLayout" name="widgetRawData"/>
+        </item>
+        <item row="15" column="3">
+         <widget class="QCheckBox" name="checkBoxCK">
+          <property name="text">
+           <string>From ºC to K</string>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="3">
+         <widget class="QCheckBox" name="checkBoxFC">
+          <property name="text">
+           <string>From ºF to ºC</string>
           </property>
          </widget>
         </item>
