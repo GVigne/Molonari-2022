@@ -21,7 +21,7 @@ From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widget
 
 class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
-    def __init__(self, point: Point, study: Study):
+    def __init__(self, point: Point, study: Study, db):
         # Call constructor of parent classes
         super(WidgetPoint, self).__init__()
         QtWidgets.QWidget.__init__(self)
@@ -30,7 +30,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         self.point = point
         self.study = study
-        self.computeEngine = Compute(self.point)
+        self.pointDir = self.point.getPointDir()
+        self.computeEngine = Compute(db, self.point)
 
         #This should already be done in the .ui file
         self.checkBoxRaw_Data.setChecked(True)

@@ -9,7 +9,7 @@ class LastParametersDb():
         
         dropQuery.exec(
             """       
-            DROP TABLE BestParameters
+            DROP TABLE LastParameters
             """
         )
     
@@ -19,11 +19,11 @@ class LastParametersDb():
         
         createQuery.exec_(
         """
-        CREATE TABLE BestParameters (
+        CREATE TABLE LastParameters (
             id            INTEGER  PRIMARY KEY AUTOINCREMENT,
-            log10KBest         REAL,
-            LambdaSBest         REAL,
-            NBest           REAL,
+            log10K          REAL,
+            LambdaS         REAL,
+            N               REAL,
             Cap             REAL,
             Layer           INTEGER REFERENCES Layer (id),
             PointKey        INTEGER REFERENCES Point (id)
@@ -34,6 +34,34 @@ class LastParametersDb():
         createQuery.finish()
         
     
-    def insert(self):
-        pass
+    def insert(self, layers):
+        self.con.transaction()
+
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO LastParameters (
+            log10k,
+            LambdaS,
+            N,
+            Cap,
+            Layer,
+            PointKey
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """
+        )
         
+        
+        for i in range(len(layers)): # on parcourt les layers
+            insertQuery.addBindValue(str(layers[i].params[0]))
+            insertQuery.addBindValue(str(layers[i].params[2]))
+            insertQuery.addBindValue(str(layers[i].params[1]))
+            insertQuery.addBindValue(str(layers[i].params[3]))
+            insertQuery.addBindValue(str(i+1))
+            insertQuery.addBindValue(str(1))
+            insertQuery.exec_()
+            
+        insertQuery.finish()
+                
+        self.con.commit()

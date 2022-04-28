@@ -30,6 +30,25 @@ class LayerDb():
         createQuery.finish()
         
     
-    def insert(self):
-        pass
+    def insert(self, layers):
+        self.con.transaction()
         
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO Layer (
+            Layer,
+            DepthBed
+        )
+        VALUES (?, ?)
+        """
+        )
+        
+        for k in range(len(layers)):
+            insertQuery.addBindValue(str(k+1))
+            insertQuery.addBindValue(str(layers[k].zLow))
+            insertQuery.exec_()
+            
+        insertQuery.finish()
+        
+        self.con.commit()

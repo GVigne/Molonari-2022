@@ -34,6 +34,36 @@ class ParametersDistributionDb():
         createQuery.finish()
         
     
-    def insert(self):
-        pass
+    def insert(self, params):
+        self.con.transaction()
         
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO ParametersDistribution (
+            log10k,
+            LambdaS,
+            N,
+            Cap,
+            Layer,
+            PointKey
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """
+        )
+        
+        
+        for i in range(len(params)): # on parcourt les layers
+            for k in range(len(params[i])):
+                insertQuery.addBindValue(str(params[i][k, 0]))
+                insertQuery.addBindValue(str(params[i][k, 2]))
+                insertQuery.addBindValue(str(params[i][k, 1]))
+                insertQuery.addBindValue(str(params[i][k, 3]))
+                insertQuery.addBindValue(str(i))
+                insertQuery.addBindValue(str(params[i][k, 3]))
+                insertQuery.addBindValue(str(1))
+                insertQuery.exec_()
+            
+        insertQuery.finish()
+        
+        self.con.commit()

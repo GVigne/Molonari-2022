@@ -29,6 +29,25 @@ class DepthDb():
         createQuery.finish()
         
     
-    def insert(self):
-        pass
+    def insert(self, depths):
+        self.con.transaction()
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """
+        INSERT INTO Depth (
+            Depth
+        )
+        VALUES (?)
+        """
+        )
+        
+        
+        
+        for depth in depths:
+            insertQuery.addBindValue(str(depth))
+            insertQuery.exec_()
+            
+        insertQuery.finish()
+        
+        self.con.commit()
         
