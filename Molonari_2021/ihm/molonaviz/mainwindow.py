@@ -241,13 +241,14 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 return None
         if self.currentStudy != None :
             try :
-                self.currentStudy.refresh_name_dir() #charge le nom de l'étude et son sensorDir
+                self.currentStudy.refresh_name_dir() #Update study name and dir. Also create new db connection
                 self.setWindowTitle(f'MolonaViz – {self.currentStudy.getName()}')
             except TextFileError as e:
                 infoMessage = f"You might have selected the wrong root directory \n\nIf not, please see the Help section "
                 displayCriticalMessage(str(e), infoMessage)
                 self.currentStudy = None
                 return None
+            #What if we are loading an already existing Study? Shouldn't we skip these functions which read csvs and read directly in database?
             try :
                 self.currentStudy.loadThermometers(self.thermometersModel)
             except Exception :

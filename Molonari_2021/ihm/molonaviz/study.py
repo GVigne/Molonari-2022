@@ -10,6 +10,7 @@ from usefulfonctions import *
 from point import Point
 from errors import *
 import sqlite3
+import sys
 
 class Study():
     """
@@ -53,9 +54,17 @@ class Study():
         """
         Open connection to the database
         """
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.path_to_db)
-        self.con.open()
+        try:
+            if not self.con.isOpen():
+                self.con = QSqlDatabase.addDatabase("QSQLITE")
+                self.con.setDatabaseName(os.path.join(self.rootDir,f"{self.name}.sqlite"))
+                self.con.open()
+        except Exception as e:
+            #self.con is not defined: this happens when loading a previously created model.
+            self.con = QSqlDatabase.addDatabase("QSQLITE")
+            self.con.setDatabaseName(os.path.join(self.rootDir,f"{self.name}.sqlite"))
+            self.con.open()
+
         #This shouldn't be closed until the moment the app is closed
 
     def create_tables(self):
@@ -66,12 +75,14 @@ class Study():
         """
         Update the study's name and path to sensors. This should be used if the study was created via its path to the directory.
         """
-        self.name = self.rootDir.split("\\")[-1]
+        self.name = self.rootDir.split("/")[-1]
+        self.open_connection()
+        self.mainDb = MainDb(self.con) #DONT create tables using mainDb.createTables() -> it will drop all tables before recreating them.
+
         select_dir = QSqlQuery()
-        select_dir.exec(f"""SELECT SensorsDir FROM Study """)
+        select_dir.exec(f"""SELECT Study.SensorsDir FROM Study """)
         select_dir.next()
         self.sensorDir = select_dir.value(0)
-
 
     def setup_sensors(self):
         """
@@ -190,7 +201,6 @@ class Study():
             
             
     def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
-        #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
         sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
         files = glob.glob(sdir)
         files.sort()
@@ -252,11 +262,8 @@ class Study():
         """)  
 
         point = Point(name, psensor, shaft,rivBed,deltaH)
-        self.writeRawFiles()
         return point
-    
-    def writeRawFiles(self):
-        pass
+
 
     def close_connection(self):
         """
