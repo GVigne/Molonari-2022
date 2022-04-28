@@ -254,13 +254,19 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             self.update_all_models()
 
     def cleanup(self):
-        dlg = DialogCleanupMain(self.point.name, os.path.join(self.study.rootDir,"Cleanup_scripts"),self.study,self.study.con)
+        cleanUpDir = os.path.join(self.study.rootDir,"Cleanup_scripts")
+        dlg = DialogCleanupMain(self.point.name, cleanUpDir,self.study,self.study.con)
         res = dlg.exec_()
         #print(self.pointDir)
         if res == QtWidgets.QDialog.Accepted:
             dlg.df_cleaned["date"] = dlg.df_cleaned.apply(lambda x: x['date'].strftime("%Y:%m:%d:%H:%M:%S"), axis=1)
             dlg.mainDb.dateDb.insert(dlg.df_cleaned["date"])
             dlg.mainDb.cleanedMeasuresDb.update(dlg.df_cleaned,dlg.pointKey)
+
+            zh = dlg.df_cleaned[["date","t1","t2","t3","t4"]]
+            zh.to_csv(os.path.join(cleanUpDir,f"processed_temperatures_{self.point.name}.csv"))
+            press = dlg.df_cleaned[["date","charge_diff","t_stream"]]
+            press.to_csv(os.path.join(cleanUpDir,f"processed_pressures_{self.point.name}.csv"))
         # #Needs to be adapted!
         # if self.currentdata == "raw":
         #     print("Please clean-up your processed data. Click again on the raw data box")
