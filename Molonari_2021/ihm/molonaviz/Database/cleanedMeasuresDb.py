@@ -93,7 +93,7 @@ class CleanedMeasuresDb():
         
     def getIdDate(self, date: str):
         selectQuery = QSqlQuery(self.con)
-        selectQuery.prepare("SELECT id FROM NewDates where Date = :date")
+        selectQuery.prepare("SELECT id FROM Date where Date = :date")
         selectQuery.bindValue(":date", date)
         selectQuery.exec_()
         

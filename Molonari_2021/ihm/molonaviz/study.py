@@ -11,7 +11,6 @@ from point import Point
 from errors import *
 import sqlite3
 
-
 class Study():
     """
     """
@@ -43,6 +42,8 @@ class Study():
         os.mkdir(os.path.join(self.rootDir,"Cleanup_scripts"))
         os.mkdir(os.path.join(self.rootDir,"Notices"))
         os.mkdir(os.path.join(self.rootDir,"Images"))
+        shutil.copyfile(os.path.join(os.getcwd(),"sample_text.txt"), os.path.join(self.rootDir,"Cleanup_scripts", "sample_text.txt")) 
+
 
     def open_connection(self):
         """
@@ -63,29 +64,29 @@ class Study():
         """
         try :
             self.mainDb.laboDb.insert()
-            self.mainDb.studyDb.insert(self.currentStudy) 
+            self.mainDb.studyDb.insert(self) 
         except Exception :
             raise LoadingError('SQL, study or labo')
         try :
-            self.mainDb.thermometerDb.insert(self.currentStudy.getThermometersDb())
+            self.mainDb.thermometerDb.insert(self.getThermometersDb())
         except Exception :
             raise LoadingError("SQL, thermometers")
         try :
-            self.mainDb.pressureSensorDb.insert(self.currentStudy.getPressureSensorsDb())
+            self.mainDb.pressureSensorDb.insert(self.getPressureSensorsDb())
         except Exception :
             raise LoadingError("SQL, pressure sensors")
         try : 
-            self.mainDb.shaftDb.insert(self.currentStudy.getShaftsDb())
+            self.mainDb.shaftDb.insert(self.getShaftsDb())
         except Exception :
             raise LoadingError("SQL, shafts")
         try :
-            self.mainDb.samplingPointDb.insert(self.currentStudy)
+            self.mainDb.samplingPointDb.insert(self)
         except Exception :
             raise LoadingError('SQL, points')
         try :
-            self.mainDb.rawMeasuresTempDb.insert(self.currentStudy)
-            self.mainDb.rawMeasuresPressDb.insert(self.currentStudy)
-            self.mainDb.cleanedMeasuresDb.insert(self.currentStudy)
+            self.mainDb.rawMeasuresTempDb.insert(self)
+            self.mainDb.rawMeasuresPressDb.insert(self)
+            self.mainDb.cleanedMeasuresDb.insert(self)
         except Exception :
             raise LoadingError('SQL, Measures')
     
@@ -123,19 +124,81 @@ class Study():
         return shafts    
    
     def getPointsDb(self):
-        rdir = self.rootDir
-        dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file
-        dirs = list(filter(('.DS_Store').__ne__, dirs))
-        #permet de ne pas prendre en compte les fichiers '.DS_Store'
-        
+        select_points = QSqlQuery()
+        select_points.exec(f"""SELECT SamplingPoint.Name,
+                        PressureSensor.Name,
+                        Shaft.Name,
+                        SamplingPoint.RiverBed,
+                        SamplingPoint.DeltaH,
+                    FROM SamplingPoint
+                    JOIN Shaft
+                    ON SamplingPoint.Shaft = Shaft.id
+                    JOIN PressureSensor
+                    ON SamplingPoint.PressureSensor = PressureSensor.id""")
         points = []
-        for mydir in dirs:
-            pointDir = os.path.join(self.rootDir, mydir)
-            name = os.path.basename(pointDir)
-            point = Point(name, pointDir)
-            point.loadPointFromDir()
-            points.append(point)
+        while select_points.next():
+            points.append(Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4)))
         return points
+    
+    def addPoint(self, name: str, infofile: str, prawfile: str, trawfile: str, noticefile: str, configfile: str):
+
+        """
+        Create the point object and fill the database with associated information.
+        """
+        pointDir = os.path.join(self.rootDir, name) #le dossier porte le nom du point
+        df_info = pd.read_csv(infofile, header=None, index_col=0)
+        
+        psensor = df_info.iloc[1].at[1]
+        shaft = df_info.iloc[2].at[1]
+        impldate = df_info.iloc[3].at[1]
+        lastdate = df_info.iloc[4].at[1]
+        rivBed = float(df_info.iloc[5].at[1].replace(',','.'))
+        deltaH = float(df_info.iloc[6].at[1].replace(',','.'))
+
+        get_shaft_id = QSqlQuery(f'SELECT Shaft.id FROM Shaft WHERE Shaft.Name ="{shaft}"')
+        get_psensor_id = QSqlQuery(f'SELECT PressureSensor.id FROM PressureSensor WHERE PressureSensor.Name ="{psensor}"')
+        get_shaft_id.exec()
+        get_shaft_id.next()
+        get_psensor_id.exec()
+        get_psensor_id.next()
+        insert_point = QSqlQuery(f"""INSERT INTO SamplingPoint (
+                              Name,
+                              Notice,
+                              Longitude,
+                              Latitude,
+                              Implentation,
+                              LastTransfer,
+                              DeltaH,
+                              RiverBed,
+                              Shaft,
+                              PressureSensor,
+                              Study,
+                              Scheme,
+                              CleanupScript
+                          )
+                          VALUES (
+                              {name},
+                              {os.path.join(self.rootDir,"Notices",noticefile)},
+                              0,
+                              0,
+                              {impldate},
+                              {lastdate},
+                              {deltaH},
+                              {rivBed},
+                              {get_shaft_id.value(0)},
+                              {get_psensor_id.value(0)},
+                              1,
+                              {os.path.join(self.rootDir,"Images",configfile)},
+                              {os.path.join(self.rootDir,"Notices",noticefile)}   
+                          )
+        """)  
+
+        point = Point(name, psensor, shaft,rivBed,deltaH)
+        self.writeRawFiles()
+        return point
+    
+    def writeRawFiles(self):
+        pass
 
     def close_connection(self):
         """
@@ -147,145 +210,145 @@ class Study():
         self.con.close()
 
 
-class Study(object):
+# class Study(object):
     
-    '''
-    classdocs : to be written
-    '''
+#     '''
+#     classdocs : to be written
+#     '''
 
-    def __init__(self, name: str="", rootDir: str="", sensorDir: str=""):
-        self.name = name
-        self.rootDir = rootDir
-        self.sensorDir = sensorDir
+#     def __init__(self, name: str="", rootDir: str="", sensorDir: str=""):
+#         self.name = name
+#         self.rootDir = rootDir
+#         self.sensorDir = sensorDir
     
-    def getName(self):
-        return self.name
+#     def getName(self):
+#         return self.name
     
-    def getRootDir(self):
-        return self.rootDir
+#     def getRootDir(self):
+#         return self.rootDir
     
-    def getSensorDir(self):
-        return self.sensorDir
+#     def getSensorDir(self):
+#         return self.sensorDir
 
-    def saveStudyToText(self):
-        pathStudyText = os.path.join(self.rootDir, f"{clean_filename(self.name)}.txt")
-        with open(pathStudyText, "w") as studyText :
-            studyText.write(f"Name: {self.name} \n")
-            studyText.write(f"SensorsDirectory: {self.sensorDir}")
+#     def saveStudyToText(self):
+#         pathStudyText = os.path.join(self.rootDir, f"{clean_filename(self.name)}.txt")
+#         with open(pathStudyText, "w") as studyText :
+#             studyText.write(f"Name: {self.name} \n")
+#             studyText.write(f"SensorsDirectory: {self.sensorDir}")
 
-    def loadStudyFromText(self):
-        """
-        Le fichier texte doit se présenter sous la forme suivante :
-        Name: Nom de l'étude
-        SensorsDir: Chemin d'accès du dossier capteurs
-        """
-        os.chdir(self.rootDir)
-        textFiles = glob.glob("*.txt")
-        filesNumber = len(textFiles)
-        if  filesNumber != 1:
-            raise TextFileError(filesNumber)
-        else : 
-            textFile = textFiles[0]
-            with open(textFile, 'r') as studyText:
-                lines = studyText.read().splitlines() 
-                nameLine = lines[0]
-                sensorDirLine = lines[1]
-                name = nameLine.split(' ', 1)[1]
-                sensorDir = sensorDirLine.split(' ', 1)[1]
-            self.name = name
-            self.sensorDir = sensorDir
-            if not os.path.isdir(sensorDir):
-                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), sensorDir)
+#     def loadStudyFromText(self):
+#         """
+#         Le fichier texte doit se présenter sous la forme suivante :
+#         Name: Nom de l'étude
+#         SensorsDir: Chemin d'accès du dossier capteurs
+#         """
+#         os.chdir(self.rootDir)
+#         textFiles = glob.glob("*.txt")
+#         filesNumber = len(textFiles)
+#         if  filesNumber != 1:
+#             raise TextFileError(filesNumber)
+#         else : 
+#             textFile = textFiles[0]
+#             with open(textFile, 'r') as studyText:
+#                 lines = studyText.read().splitlines() 
+#                 nameLine = lines[0]
+#                 sensorDirLine = lines[1]
+#                 name = nameLine.split(' ', 1)[1]
+#                 sensorDir = sensorDirLine.split(' ', 1)[1]
+#             self.name = name
+#             self.sensorDir = sensorDir
+#             if not os.path.isdir(sensorDir):
+#                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), sensorDir)
     
-    def addPoint(self, name: str, infofile: str, prawfile: str, trawfile: str, noticefile: str, configfile: str):
+#     def addPoint(self, name: str, infofile: str, prawfile: str, trawfile: str, noticefile: str, configfile: str):
 
-        """
-        Crée, remplit le répertoire du point et retourne l'objet point
-        """
+#         """
+#         Crée, remplit le répertoire du point et retourne l'objet point
+#         """
     
-        pointDir = os.path.join(self.rootDir, name) #le dossier porte le nom du point
+#         pointDir = os.path.join(self.rootDir, name) #le dossier porte le nom du point
         
-        try :
-            df_info = pd.read_csv(infofile, header=None, index_col=0)
-            psensor = df_info.iloc[1].at[1]
-            shaft = df_info.iloc[2].at[1]
-            rivBed = float(df_info.iloc[5].at[1].replace(',','.'))
-            deltaH = float(df_info.iloc[6].at[1].replace(',','.'))
+#         try :
+#             df_info = pd.read_csv(infofile, header=None, index_col=0)
+#             psensor = df_info.iloc[1].at[1]
+#             shaft = df_info.iloc[2].at[1]
+#             rivBed = float(df_info.iloc[5].at[1].replace(',','.'))
+#             deltaH = float(df_info.iloc[6].at[1].replace(',','.'))
             
-            point = Point(name, pointDir, psensor, shaft, rivBed, deltaH)
+#             point = Point(name, pointDir, psensor, shaft, rivBed, deltaH)
 
-            os.mkdir(pointDir)
-            rawDataDir = os.path.join(pointDir, "raw_data")
-            processedDataDir = os.path.join(pointDir, "processed_data")
-            infoDataDir = os.path.join(pointDir, "info_data")
-            resultsDir = os.path.join(pointDir, "results")
+#             os.mkdir(pointDir)
+#             rawDataDir = os.path.join(pointDir, "raw_data")
+#             processedDataDir = os.path.join(pointDir, "processed_data")
+#             infoDataDir = os.path.join(pointDir, "info_data")
+#             resultsDir = os.path.join(pointDir, "results")
 
-            os.mkdir(rawDataDir)
-            shutil.copyfile(prawfile, os.path.join(rawDataDir, "raw_pressures.csv"))
-            shutil.copyfile(trawfile, os.path.join(rawDataDir, "raw_temperatures.csv"))
+#             os.mkdir(rawDataDir)
+#             shutil.copyfile(prawfile, os.path.join(rawDataDir, "raw_pressures.csv"))
+#             shutil.copyfile(trawfile, os.path.join(rawDataDir, "raw_temperatures.csv"))
 
-            os.mkdir(infoDataDir)
-            shutil.copyfile(infofile, os.path.join(infoDataDir, "info.csv"))
-            shutil.copyfile(noticefile, os.path.join(infoDataDir, "notice.txt"))
-            shutil.copyfile(configfile, os.path.join(infoDataDir, "config.png"))
+#             os.mkdir(infoDataDir)
+#             shutil.copyfile(infofile, os.path.join(infoDataDir, "info.csv"))
+#             shutil.copyfile(noticefile, os.path.join(infoDataDir, "notice.txt"))
+#             shutil.copyfile(configfile, os.path.join(infoDataDir, "config.png"))
             
-            os.mkdir(processedDataDir)  
-            point.processData(self.sensorDir)
+#             os.mkdir(processedDataDir)  
+#             point.processData(self.sensorDir)
 
-            os.mkdir(resultsDir)
-            resultsDirMCMC = os.path.join(pointDir, "results", "MCMC_results")
-            resultsDirDirectModel = os.path.join(pointDir, "results", "direct_model_results")
-            os.mkdir(resultsDirMCMC)
-            os.mkdir(resultsDirDirectModel)
-            return point
+#             os.mkdir(resultsDir)
+#             resultsDirMCMC = os.path.join(pointDir, "results", "MCMC_results")
+#             resultsDirDirectModel = os.path.join(pointDir, "results", "direct_model_results")
+#             os.mkdir(resultsDirMCMC)
+#             os.mkdir(resultsDirDirectModel)
+#             return point
 
-        except FileExistsError as e :
-            raise CustomError(f"{str(e)}\nPlease choose a different point name") 
-            return
+#         except FileExistsError as e :
+#             raise CustomError(f"{str(e)}\nPlease choose a different point name") 
+#             return
 
-        except Exception as e :
-            shutil.rmtree(pointDir)
-            raise e
+#         except Exception as e :
+#             shutil.rmtree(pointDir)
+#             raise e
     
     
-    # Fonctions utiles seulement dans le cadre de l'utilisation de l'interface graphique : 
+#     # Fonctions utiles seulement dans le cadre de l'utilisation de l'interface graphique : 
 
-    def loadPressureSensors(self, sensorModel: QtGui.QStandardItemModel):
-        sdir = os.path.join(self.sensorDir, "pressure_sensors", "*.csv")
-        files = glob.glob(sdir)
-        files.sort()
-        for file in files:
-            psensor = PressureSensor()
-            psensor.loadPressureSensor(file, sensorModel)
+#     def loadPressureSensors(self, sensorModel: QtGui.QStandardItemModel):
+#         sdir = os.path.join(self.sensorDir, "pressure_sensors", "*.csv")
+#         files = glob.glob(sdir)
+#         files.sort()
+#         for file in files:
+#             psensor = PressureSensor()
+#             psensor.loadPressureSensor(file, sensorModel)
         
     
-    def loadShafts(self, sensorModel: QtGui.QStandardItemModel):
-        sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
-        files = glob.glob(sdir)
-        files.sort()
-        for file in files:
-            shaft = Shaft()
-            shaft.loadShaft(file, sensorModel)  
+#     def loadShafts(self, sensorModel: QtGui.QStandardItemModel):
+#         sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
+#         files = glob.glob(sdir)
+#         files.sort()
+#         for file in files:
+#             shaft = Shaft()
+#             shaft.loadShaft(file, sensorModel)  
             
             
-    def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
-        #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
-        sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
-        files = glob.glob(sdir)
-        files.sort()
-        for file in files:
-            thermometer = Thermometer()
-            thermometer.loadThermometer(file, sensorModel)  
+#     def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
+#         #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
+#         sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
+#         files = glob.glob(sdir)
+#         files.sort()
+#         for file in files:
+#             thermometer = Thermometer()
+#             thermometer.loadThermometer(file, sensorModel)  
 
 
-    def loadPoints(self, pointModel: QtGui.QStandardItemModel):
-        rdir = self.rootDir
-        dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file
-        dirs = list(filter(('.DS_Store').__ne__, dirs))
-        #permet de ne pas prendre en compte les fichiers '.DS_Store'
-        for mydir in dirs:
-            pointDir = os.path.join(self.rootDir, mydir)
-            name = os.path.basename(pointDir)
-            point = Point(name, pointDir)
-            point.loadPointFromDir()
-            point.loadPoint(pointModel)
+#     def loadPoints(self, pointModel: QtGui.QStandardItemModel):
+#         rdir = self.rootDir
+#         dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file
+#         dirs = list(filter(('.DS_Store').__ne__, dirs))
+#         #permet de ne pas prendre en compte les fichiers '.DS_Store'
+#         for mydir in dirs:
+#             pointDir = os.path.join(self.rootDir, mydir)
+#             name = os.path.basename(pointDir)
+#             point = Point(name, pointDir)
+#             point.loadPointFromDir()
+#             point.loadPoint(pointModel)

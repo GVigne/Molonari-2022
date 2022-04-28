@@ -15,7 +15,6 @@ from usefulfonctions import *
 from dialogreset import DialogReset
 from MoloModel import  PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
 from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
-from Database.newDatesDb import NewDatesDb
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -264,7 +263,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         res = dlg.exec_()
         #print(self.pointDir)
         if res == QtWidgets.QDialog.Accepted:
-            dlg.mainDb.newDatesDb.insert(dlg.df_cleaned)
+            dlg.mainDb.DateDb.insert(dlg.df_cleaned)
             dlg.mainDb.cleanedMeasuresDb.update(dlg.df_cleaned,dlg.pointKey)
         # #Needs to be adapted!
         # if self.currentdata == "raw":

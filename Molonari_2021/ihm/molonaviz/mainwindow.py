@@ -380,20 +380,21 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             point = self.treeViewDataPoints.selectedIndexes()[0].parent().data(QtCore.Qt.UserRole)
 
         if point.getName() not in [openedSubwindow.getName() for openedSubwindow in self.mdi.subWindowList()]:
-            if not hasattr(self, "mainDb"):
-                # if we haven't created the database yet :
-                self.sqlfile = "molonari_" + self.currentStudy.name + "both" + ".sqlite"
-                if os.path.exists(self.sqlfile):
-                    os.remove(self.sqlfile)
+            ##Obsolete: the current study already has everything to work.
+            # if not hasattr(self, "mainDb"):
+            #     # if we haven't created the database yet :
+            #     self.sqlfile = "molonari_" + self.currentStudy.name + "both" + ".sqlite"
+            #     if os.path.exists(self.sqlfile):
+            #         os.remove(self.sqlfile)
                 
-                self.con = QSqlDatabase.addDatabase("QSQLITE")
-                self.con.setDatabaseName(self.sqlfile)
-                if not self.con.open():
-                    print("Cannot open SQL database")
+            #     self.con = QSqlDatabase.addDatabase("QSQLITE")
+            #     self.con.setDatabaseName(self.sqlfile)
+            #     if not self.con.open():
+            #         print("Cannot open SQL database")
                     
-                # Creation of the SQL tables
-                self.mainDb = MainDb(self.con)
-                self.mainDb.createTables()
+            #     # Creation of the SQL tables
+            #     self.mainDb = MainDb(self.con)
+            #     self.mainDb.createTables()
             subWin = SubWindow(point, self.currentStudy, self.mainDb)
             subWin.setPointWidget()
 

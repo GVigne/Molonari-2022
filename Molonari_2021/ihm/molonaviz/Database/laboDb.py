@@ -1,5 +1,5 @@
 from PyQt5.QtSql import QSqlQuery
-
+import sys
 class LaboDb():
     def __init__(self, con) -> None:
         self.con = con
@@ -55,4 +55,4 @@ class LaboDb():
         id = int(selectQuery.value(0))
         selectQuery.finish()
         return id
-        
+    

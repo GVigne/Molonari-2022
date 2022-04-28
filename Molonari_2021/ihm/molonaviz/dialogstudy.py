@@ -28,7 +28,6 @@ class DialogStudy(QtWidgets.QDialog, From_DialogStudy):
             self.lineEditSensorsDir.setText(dirPath) 
 
     def setStudy(self):
-
         name = self.lineEditName.text()
         if not name: #si la lineEdit est vide
             raise EmptyFieldError('New study should have a name')
