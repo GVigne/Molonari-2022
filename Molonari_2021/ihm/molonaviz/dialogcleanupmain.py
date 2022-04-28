@@ -227,7 +227,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
      - the UI base_class (here QDialog)
     This offers the possibility to access directly the graphical controls variables (i.e. self.editFile)
     """
-    def __init__(self,name,pointDir,study,con):
+    def __init__(self,name,cleanupDir,study,con):
         """
         Constructor
         """
@@ -266,9 +266,9 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.mainDb = MainDb(self.con)
         self.name = name
         self.samplingPointDb = self.mainDb.samplingPointDb
-        path_to_script = self.get_Script_Name()
-        print(path_to_script)
-        self.pointDir = os.path.dirname(path_to_script)
+        self.path_to_script = self.get_Script_Name()
+        print(self.path_to_script)
+        self.pointDir = os.path.dirname(self.path_to_script)
         try:
             self.pointKey = self.samplingPointDb.getIdByname(self.name)
         except TypeError as e:
@@ -276,7 +276,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             raise e
         else:
             # Create data models and associate to corresponding viewers
-
+            self.cleanupDir = cleanupDir
             self.getDF()
             
             self.comboBoxRawVar.addItems(self.varList[1:])
@@ -656,18 +656,17 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         return q.value(0)
             
     def getScript(self):
-        path_to_script = self.get_Script_Name()
         try:
             # with open('saved_text.txt', 'r') as f:
             #     sample_text = f.read()
             #     f.close()
-            with open(path_to_script) as f:
+            with open(self.path_to_script) as f:
                 sample_text = f.read()
                 f.close()
         except:
             #Once again,this is too permisive: what if no script was found?
             print("No saved script, show sample script")
-            with open(os.path.join(os.path.dirname(path_to_script),"sample_text.txt")) as f:
+            with open(os.path.join(os.path.dirname(self.path_to_script),"sample_text.txt")) as f:
                 sample_text = f.read()
                 f.close()
         # scriptpartiel = plainTextEdit.toPlainText()
@@ -676,13 +675,13 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         return(script)
 
     def cleanup(self, script, df_ZH, df_Pressure, df_Calibration):
-        path_to_script = self.get_Script_Name()
-        pointDir = os.path.dirname(path_to_script)
-        scriptDir = os.path.join(pointDir,"script.py")
-        sys.path.append(pointDir) 
+        scriptDir = os.path.dirname(self.path_to_script)
+        scriptPyPath = os.path.join(scriptDir,"script.py")
+        sys.path.append(scriptDir) 
 
-        with open(scriptDir, "w") as f:
+        with open(scriptPyPath, "w") as f:
             f.write(script)
+            print("file .py saved correctly")
             f.close()
 
         # There are different error in the script, sometimes it will cause the import step to fail, in this case we still have to remove the scripy.py file.
@@ -692,10 +691,11 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             print(e)
             raise e
         finally:
-            os.remove(scriptDir)
+            os.remove(scriptPyPath)
             del sys.modules["script"]
 
         try :
+            print("try fonction")
             self.df_loaded, self.df_cleaned, self.varList = fonction(self,df_ZH, df_Pressure, df_Calibration)
 
             #On réécrit les csv:
@@ -720,6 +720,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         
         
         try :
+            print("Enters try runscript")
             self.cleanup(script, df_ZH, df_Pressure, df_Calibration)
             
             
@@ -733,7 +734,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             
 
     def editScript(self):
-        dig = DialogScript(self.name, self.pointDir)
+        dig = DialogScript(self.name, self.path_to_script)
         res = dig.exec()
         if res == QtWidgets.QDialog.Accepted:
 
@@ -752,23 +753,23 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
     
     # Define the selectMethod function and edit the sample_text.txt
     def openScript(self):
-        path_to_script = self.get_Script_Name()
+        
         try: 
-            with open(path_to_script) as file:
+            with open(self.path_to_script) as file:
             # with open('saved_text.txt', 'r') as file:
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
         except FileNotFoundError:
             # Try to open the base script
-            with open(os.path.join(os.path.dirname(path_to_script),"sample_text.txt")) as file:
+            with open(os.path.join(os.path.dirname(self.path_to_script),"sample_text.txt")) as file:
                 # read a list of lines into data
                 data = file.readlines()
                 file.close()
         return data
     
     def saveScript(self, data):
-        with open(os.path.join(self.pointDir,"processed_data","script_"+self.name+".txt"), 'w') as file:
+        with open(self.path_to_script, 'w') as file:
             file.writelines( data )
             file.close()
     
