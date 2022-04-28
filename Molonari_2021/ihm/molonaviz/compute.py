@@ -8,6 +8,7 @@ from PyQt5.QtSql import QSqlQuery
 from pyheatmy import *
 from point import Point
 from Database.mainDb import MainDb
+from usefulfonctions import SQl_to_pandas
 
 
 class ColumnMCMCRunner(QtCore.QObject):
@@ -86,7 +87,7 @@ class Compute(QtCore.QObject):
         select_temps.exec()
         temps_array = []
         while select_temps.next():
-            temps_array.append((select_temps.value(0), [select_temps.value(i) for i in range(1,5)]))
+            temps_array.append((SQl_to_pandas(select_temps.value(0)), [select_temps.value(i) for i in range(1,5)]))
 
         select_press =QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure, CleanedMeasures.TempBed
                         FROM CleanedMeasures
@@ -95,7 +96,7 @@ class Compute(QtCore.QObject):
         select_press.exec()
         press_array = []
         while select_press.next():
-            press_array.append((select_press.value(0), [select_press.value(1),select_press.value(2)]))
+            press_array.append((SQl_to_pandas(select_press.value(0)), [select_press.value(1),select_press.value(2)]))
 
         col_dict = {
 	        "river_bed": self.point.rivBed, 
@@ -163,7 +164,6 @@ class Compute(QtCore.QObject):
         n = [i for i in range(len(depths))] #Layer name
         layersListInput = [(str(n[i]), depths[i], params[0][i],params[1][i],params[2][i],params[3][i]) for i in range(len(depths))]
         # return {"Premier":layersListInput, "Second":self.col.depth_sensors}
-        return [layer.zLow for layer in layersListCreator(layersListInput)], self.col.depth_sensors, self.col.offset
         return self.col.compute_solve_transi(layersListCreator(layersListInput), nb_cells)
 
         self.col.compute_solve_transi(layersListCreator(layersListInput), nb_cells)

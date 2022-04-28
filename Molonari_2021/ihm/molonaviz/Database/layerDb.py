@@ -52,3 +52,29 @@ class LayerDb():
         insertQuery.finish()
         
         self.con.commit()
+    
+    # def insert_layers(self, params: tuple, nb_cells: int, depths):
+    #     """
+    #     This function was made to be directly used by the compute engine
+    #     """
+    #     self.con.transaction()
+        
+    #     insertQuery = QSqlQuery(self.con)
+    #     insertQuery.prepare(
+    #     """
+    #     INSERT INTO Layer (
+    #         Layer,
+    #         DepthBed
+    #     )
+    #     VALUES (?, ?)
+    #     """
+    #     )
+        
+    #     for k in range(len(layers)):
+    #         insertQuery.addBindValue(str(k+1))
+    #         insertQuery.addBindValue(str(layers[k].zLow))
+    #         insertQuery.exec_()
+            
+    #     insertQuery.finish()
+        
+    #     self.con.commit()

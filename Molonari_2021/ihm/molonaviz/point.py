@@ -14,7 +14,7 @@ class Point():
     """
     This class is made to store some important data about the current point being viewed. It is nothing more then an elaborated list
     """
-    def __init__(self, name="",  psensor="", shaft="", rivBed=NaN, deltaH=NaN):
+    def __init__(self, name="",  psensor="", shaft="", rivBed=NaN, deltaH=0):
         self.name = name
         self.psensor = psensor #nom du capteur de pression associé
         self.shaft = shaft #nom de la tige de température associée

@@ -47,6 +47,13 @@ def celsiusToKelvin(df: pd.DataFrame):
     # change columns names
     df.columns = ['Date Heure, GMT+01:00', 'Température 1 (K)', 'Température 2 (K)', 'Température 3 (K)', 'Température 4 (K)']
     
+def SQl_to_pandas(date):
+    format =("%Y:%m:%d:%H:%M:%S","%Y:%m:%d:%H:%M")
+    for f in format:
+        try:
+            return pd.to_datetime(date, format=f)
+        except Exception:
+            continue
 
 def convertDates(df: pd.DataFrame):
     """
