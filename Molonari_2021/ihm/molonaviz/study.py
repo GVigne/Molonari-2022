@@ -58,6 +58,17 @@ class Study():
         self.mainDb = MainDb(self.con)
         self.mainDb.createTables()
     
+    def refresh_name_dir(self):
+        """
+        Update the study's name and path to sensors. This should be used if the study was created via its path to the directory.
+        """
+        self.name = os.getcwd().split("\\")[-1]
+        select_dir = QSqlQuery()
+        select_dir.exec(f"""SELECT SensorsDir FROM Study """)
+        select_dir.next()
+        self.sensorDir = select_dir.value(0)
+
+
     def setup_sensors(self):
         """
         Insert into the database the information concerning this study. Previously, this was the "Convert to SQL" button.
@@ -139,6 +150,49 @@ class Study():
         while select_points.next():
             points.append(Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4)))
         return points
+    
+    def loadPoints(self, pointModel: QtGui.QStandardItemModel):
+        select_points = QSqlQuery()
+        select_points.exec(f"""SELECT SamplingPoint.Name,
+                        PressureSensor.Name,
+                        Shaft.Name,
+                        SamplingPoint.RiverBed,
+                        SamplingPoint.DeltaH,
+                    FROM SamplingPoint
+                    JOIN Shaft
+                    ON SamplingPoint.Shaft = Shaft.id
+                    JOIN PressureSensor
+                    ON SamplingPoint.PressureSensor = PressureSensor.id""")
+        while select_points.next():
+            point = Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4))
+            point.loadPoint(pointModel)
+
+    def loadPressureSensors(self, sensorModel: QtGui.QStandardItemModel):
+        sdir = os.path.join(self.sensorDir, "pressure_sensors", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        for file in files:
+            psensor = PressureSensor()
+            psensor.loadPressureSensor(file, sensorModel)
+        
+    
+    def loadShafts(self, sensorModel: QtGui.QStandardItemModel):
+        sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        for file in files:
+            shaft = Shaft()
+            shaft.loadShaft(file, sensorModel)  
+            
+            
+    def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
+        #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
+        sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
+        files = glob.glob(sdir)
+        files.sort()
+        for file in files:
+            thermometer = Thermometer()
+            thermometer.loadThermometer(file, sensorModel)  
     
     def addPoint(self, name: str, infofile: str, prawfile: str, trawfile: str, noticefile: str, configfile: str):
 
@@ -313,35 +367,7 @@ class Study():
     
 #     # Fonctions utiles seulement dans le cadre de l'utilisation de l'interface graphique : 
 
-#     def loadPressureSensors(self, sensorModel: QtGui.QStandardItemModel):
-#         sdir = os.path.join(self.sensorDir, "pressure_sensors", "*.csv")
-#         files = glob.glob(sdir)
-#         files.sort()
-#         for file in files:
-#             psensor = PressureSensor()
-#             psensor.loadPressureSensor(file, sensorModel)
-        
-    
-#     def loadShafts(self, sensorModel: QtGui.QStandardItemModel):
-#         sdir = os.path.join(self.sensorDir, "shafts", "*.csv")
-#         files = glob.glob(sdir)
-#         files.sort()
-#         for file in files:
-#             shaft = Shaft()
-#             shaft.loadShaft(file, sensorModel)  
-            
-            
-#     def loadThermometers(self, sensorModel: QtGui.QStandardItemModel):
-#         #sdir = os.path.join(self.sensorDir, "thermometer_sensors", "*.csv") # API v1
-#         sdir = os.path.join(self.sensorDir, "temperature_sensors", "*.csv")
-#         files = glob.glob(sdir)
-#         files.sort()
-#         for file in files:
-#             thermometer = Thermometer()
-#             thermometer.loadThermometer(file, sensorModel)  
-
-
-#     def loadPoints(self, pointModel: QtGui.QStandardItemModel):
+# def loadPoints(self, pointModel: QtGui.QStandardItemModel):
 #         rdir = self.rootDir
 #         dirs = [ name for name in os.listdir(rdir) if os.path.isdir(os.path.join(rdir, name)) ] #no file
 #         dirs = list(filter(('.DS_Store').__ne__, dirs))

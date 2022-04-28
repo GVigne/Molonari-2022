@@ -22,7 +22,9 @@ class StudyDb():
         CREATE TABLE Study (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
             Name VARCHAR NOT NULL,
-            Labo INTEGER REFERENCES Labo (id)
+            Labo INTEGER REFERENCES Labo (id),
+            SensorsDir VARCHAR NOT NULL
+
         );
         """
         )
@@ -37,13 +39,15 @@ class StudyDb():
         """
         INSERT INTO Study (
             Name,
-            Labo
+            Labo,
+            SensorsDir
         )
-        VALUES (?, ?)
+        VALUES (?, ?, ?)
         """
         )
         insertQuery.addBindValue(study.name)
         insertQuery.addBindValue("1")
+        insertQuery.addBindValue(study.sensorDir)
         
         insertQuery.exec_()
             

@@ -21,7 +21,7 @@ class LaboDb():
         """
         CREATE TABLE Labo (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            Name VARCHAR NOT NULL
+            Name VARCHAR NOT NULL,
         );
         """
         )
@@ -35,7 +35,7 @@ class LaboDb():
         insertQuery.prepare(
         """
         INSERT INTO Labo (
-            Name
+            Name,
         )
         VALUES (?)
         """

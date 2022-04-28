@@ -4,7 +4,7 @@ import sys, os, shutil
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from queue import Queue
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+from PyQt5.QtSql import QSqlQuery, QSqlTableModel
 from dialogimportlabo import DialogImportLabo
 
 
@@ -192,6 +192,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             self.currentStudy.open_connection()
             self.currentStudy.create_tables()
             self.currentStudy.setup_sensors()
+
+            self.openStudy()
             #This study is ready to be used: it should be filled with all the tables and relevant information about the study (shaft, thermometers...)   
                 
             #     try :
@@ -239,7 +241,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 return None
         if self.currentStudy != None :
             try :
-                self.currentStudy.loadStudyFromText() #charge le nom de l'étude et son sensorDir
+                self.currentStudy.refresh_name_dir() #charge le nom de l'étude et son sensorDir
                 self.setWindowTitle(f'MolonaViz – {self.currentStudy.getName()}')
             except TextFileError as e:
                 infoMessage = f"You might have selected the wrong root directory \n\nIf not, please see the Help section "
@@ -297,7 +299,8 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionOpen_Point.setText(f"Open Point")
         self.actionOpen_Point.setEnabled(False)
 
-        self.currentStudy = None
+        self.currentStudy.close_connection() #Close the database
+        self.currentStudy= None
 
     def convertDataInSQLTimer(self):
         print("Converting data...")
