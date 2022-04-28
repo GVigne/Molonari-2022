@@ -127,7 +127,6 @@ class CleanedMeasuresDb():
             """
         )
         col = df.columns
-        print(df)
         for ind in df.index:
             dateId = self.getIdDate(str(df[col[0]][ind]))
             insertQuery.addBindValue(dateId)
