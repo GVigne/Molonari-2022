@@ -70,5 +70,38 @@ class RawMeasuresPressDb():
         
     def select(self):
         pass
+
+    def insert_one_point(self, pointkey,df):
+        """
+        Given a the ID of the sampling point and a dataframe, insert it for given point.
+        """
+        self.con.transaction()
+                
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """ 
+        INSERT INTO RawMeasuresPress (
+            Date,
+            TempBed,
+            Pressure,
+            PointKey
+        )
+        VALUES (?, ?, ?, ?)
+        """
+        )
+                
+        col = df.columns
+        for ind in df.index:
+            insertQuery.addBindValue(str(df[col[0]][ind]))
+            insertQuery.addBindValue(str(df[col[1]][ind]))
+            insertQuery.addBindValue(str(df[col[2]][ind]))
+            insertQuery.addBindValue(str(pointkey))
+            
+            insertQuery.exec_()
+        insertQuery.finish()
+        self.con.commit()
+    
+    def select(self):
+        pass
                         
                 

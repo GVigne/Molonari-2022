@@ -275,9 +275,24 @@ class Study():
         insert_point.addBindValue(os.path.join(self.rootDir,"Images",configfile))
         insert_point.addBindValue(os.path.join(self.rootDir,"Notices",noticefile))
         insert_point.exec()
+        self.writeRawTemp(name, trawfile)
+        self.writeRawPress(name,prawfile)
         point = Point(name, psensor, shaft,rivBed,deltaH)
         return point
 
+    def writeRawTemp(self, pointname, path_to_temp):
+        q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
+        q.exec()
+        q.next()
+        df = pd.read_csv(path_to_temp, skiprows=0, sep=',')
+        self.mainDb.rawMeasuresTempDb.insert_one_point(q.value(0),df)
+    
+    def writeRawPress(self,pointname, path_to_press):
+        q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
+        q.exec()
+        q.next()
+        df = pd.read_csv(path_to_press, skiprows=0, sep=',')
+        self.mainDb.rawMeasuresPressDb.insert_one_point(q.value(0),df)
 
     def close_connection(self):
         """

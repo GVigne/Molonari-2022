@@ -75,6 +75,39 @@ class RawMeasuresTempDb():
         insertQuery.finish()
         
         self.con.commit()
+    
+    def insert_one_point(self, pointkey,df):
+        self.con.transaction()
+
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+        """ 
+        INSERT INTO RawMeasuresTemp (
+            Date,
+            Temp1,
+            Temp2,
+            Temp3,
+            Temp4,
+            PointKey
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """
+        )
+    
+        col = df.columns
+        for ind in df.index:
+            insertQuery.addBindValue(str(df[col[0]][ind]))
+            insertQuery.addBindValue(str(df[col[1]][ind]))
+            insertQuery.addBindValue(str(df[col[2]][ind]))
+            insertQuery.addBindValue(str(df[col[3]][ind]))
+            insertQuery.addBindValue(str(df[col[4]][ind]))
+            insertQuery.addBindValue(str(pointkey))
+            
+            insertQuery.exec_()
+        
+        insertQuery.finish()
+        self.con.commit()
+
         
     def select(self):
         pass
