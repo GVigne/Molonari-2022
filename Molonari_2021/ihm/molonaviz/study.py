@@ -75,7 +75,7 @@ class Study():
         """
         Update the study's name and path to sensors. This should be used if the study was created via its path to the directory.
         """
-        self.name = self.rootDir.split("/")[-1]
+        self.name = os.path.basename(self.rootDir)
         self.open_connection()
         self.mainDb = MainDb(self.con) #DONT create tables using mainDb.createTables() -> it will drop all tables before recreating them.
 
@@ -215,6 +215,10 @@ class Study():
         """
         pointDir = os.path.join(self.rootDir, name) #le dossier porte le nom du point
         df_info = pd.read_csv(infofile, header=None, index_col=0)
+
+        #Copy the associated files
+        shutil.copyfile(noticefile, os.path.join(self.rootDir,"Notices", os.path.basename(noticefile))) #Add the notice
+        shutil.copyfile(configfile, os.path.join(self.rootDir,"Images", os.path.basename(configfile)))#Add the picture
         
         psensor = df_info.iloc[1].at[1]
         shaft = df_info.iloc[2].at[1]
@@ -246,7 +250,7 @@ class Study():
                           )
                           VALUES (
                               {name},
-                              {os.path.join(self.rootDir,"Notices",noticefile)},
+                              {os.path.join(self.rootDir,"Notices", os.path.basename(noticefile))},
                               0,
                               0,
                               {impldate},
@@ -256,8 +260,8 @@ class Study():
                               {get_shaft_id.value(0)},
                               {get_psensor_id.value(0)},
                               1,
-                              {os.path.join(self.rootDir,"Images",configfile)},
-                              {os.path.join(self.rootDir,"Notices",noticefile)}   
+                              {os.path.join(self.rootDir,"Images", os.path.basename(configfile))},
+                              { os.path.join(self.rootDir,"Cleanup_scripts", "sample_text.txt")}   
                           )
         """)  
 
