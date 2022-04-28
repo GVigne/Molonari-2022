@@ -310,7 +310,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         res = dlg.exec()
 
         if res == 10: #Direct Model
-            print(dlg.getInputDirectModel())
+            params, nb_cells = dlg.getInputDirectModel()
+            self.computeEngine.computeDirectModel(params, nb_cells)
             # params, nb_cells = dlg.getInputDirectModel()
             # # compute = Compute(self.point)
             # # compute.computeDirectModel(params, nb_cells, sensorDir)
