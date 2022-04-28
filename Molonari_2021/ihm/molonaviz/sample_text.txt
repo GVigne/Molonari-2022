@@ -69,7 +69,7 @@ def longest_stretch(var):
         ss = np.flatnonzero(m[1:] != m[:-1]).reshape(-1,2)   # Start-stop limits
         start,stop = ss[(ss[:,1] - ss[:,0]).argmax()]  # Get max interval, interval limits
         return start, stop-1
-limits = np.array([list(longest_stretch(df["t_stream"])),list(longest_stretch(df["charge_diff"])),list(longest_stretch(df["t4"]))])
+limits = np.array([list(longest_stretch(df_cleaned["t_stream"])),list(longest_stretch(df_cleaned["charge_diff"])),list(longest_stretch(df_cleaned["t4"]))])
 lower = max(limits[:,0])
 upper = min(limits[:,1])
 df_cleaned = df_cleaned.loc[lower:upper, :]

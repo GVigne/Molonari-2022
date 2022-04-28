@@ -243,7 +243,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.setupUi(self)
         
         # Connect the buttons and checkbox
-        self.pushButtonLoadRawData.clicked.connect(self.browseRawData)
         self.pushButtonSelectPoints.clicked.connect(self.selectPoints)
         self.pushButtonEditCode.clicked.connect(self.editScript)
         self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
