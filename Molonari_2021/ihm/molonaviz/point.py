@@ -9,6 +9,36 @@ from usefulfonctions import *
 from pyheatmy import *
 from errors import *
 
+
+class Point():
+    """
+    This class is made to store some important data about the current point being viewed. It is nothing more then an elaborated list
+    """
+    def __init__(self,query_name, query_psensor, query_shaft):
+        query_name.exec()
+        query_name.next()
+        self.name = query_name.value(0)
+
+        query_psensor.exec()
+        query_psensor.next()
+        self.psensor = query_psensor.value(0) #Name of the associated pressor sensor
+        
+        query_shaft.exec()
+        query_shaft.next()
+        self.shaft = query_shaft.value(0) #Name of the associated temperature shaft
+    
+    def getName(self):
+        return self.name
+
+    # def getPointDir(self):
+    #     return self.pointDir
+
+    def getPressureSensor(self):
+        return self.psensor
+
+    def getShaft(self):
+        return self.shaft
+
 class Point(object):
     
     '''
@@ -26,18 +56,23 @@ class Point(object):
         self.dfpress = pd.DataFrame()
     
     def getName(self):
+        #VERY IMPORTANT
         return self.name
 
     def getPointDir(self):
+        #Can be omitted
         return self.pointDir
 
     def getPressureSensor(self):
+        #Can be omitted
         return self.psensor
 
     def getShaft(self):
+        #Important
         return self.shaft    
 
     def loadPointFromDir(self):
+        return
         
         tempcsv = os.path.join(self.pointDir, "processed_data", "processed_temperatures.csv")
         presscsv = os.path.join(self.pointDir, "processed_data", "processed_pressures.csv")
@@ -56,6 +91,7 @@ class Point(object):
         
 
     def loadPoint(self, pointModel): 
+        return
         try :
             item = QtGui.QStandardItem(self.name)
             item.setData(self, QtCore.Qt.UserRole)
@@ -71,9 +107,11 @@ class Point(object):
             raise e
     
     def delete(self):
+        return
         shutil.rmtree(self.pointDir)
 
     def processData(self, sensorDir):
+        return
         
         trawfile = os.path.join(self.pointDir, "raw_data", "raw_temperatures.csv")
         prawfile = os.path.join(self.pointDir, "raw_data", "raw_pressures.csv")
@@ -175,6 +213,7 @@ class Point(object):
 
 
     def cleanup(self, script, dft, dfp):
+        return
 
         scriptDir = self.pointDir + "/script.py"
         sys.path.append(self.pointDir)
@@ -213,12 +252,9 @@ class Point(object):
             # print("Failed to execute the script.py")
             raise e
 
-        
-              
-        
-  
     
     def reset(self):
+        return
         resultsDir = self.pointDir + "/results"
         DirectresultsDir = resultsDir + "/direct_model_results"
         MCMCresultsDir = resultsDir + "/MCMC_results"
