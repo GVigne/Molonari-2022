@@ -234,6 +234,22 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             if res == QtWidgets.QDialog.Accepted:
                 try :
                     self.currentStudy = Study(rootDir=dlg.getRootDir())
+                    try :
+                        self.currentStudy.loadThermometers(self.thermometersModel)
+                    except Exception :
+                        raise LoadingError("thermometers")
+                    try :
+                        self.currentStudy.loadPressureSensors(self.pSensorModel)
+                    except Exception :
+                        raise LoadingError("pressure sensors")
+                    try : 
+                        self.currentStudy.loadShafts(self.shaftModel)
+                    except Exception :
+                        raise LoadingError("shafts")
+                    try :
+                        self.currentStudy.loadPoints(self.pointModel)
+                    except Exception :
+                        raise LoadingError('points')
                 except FileNotFoundError as e:
                     displayCriticalMessage(f"{str(e)} \nPlease try again")
                     self.openStudy()

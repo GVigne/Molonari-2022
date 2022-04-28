@@ -171,8 +171,15 @@ class Compute(QtCore.QObject):
         # Sauvegarde des différents résultats du modèle direct
         resultsDir = os.path.join(self.point.getPointDir(), 'results', 'direct_model_results')
         self.saveLayers()
+        self.updatePointinDb(nb_cells)
         self.saveResults(resultsDir)
         self.saveParams(params, resultsDir)
+    
+    def updatePointinDb(self,nb_cells):
+        """
+        Update the number of cell in the database.
+        """
+        pass
 
     def saveParams(self, params: tuple, resultsDir: str):
         """

@@ -953,9 +953,9 @@ if __name__ == '__main__':
     p.name="P034" #This was a test point
     p.shaft
     con = QSqlDatabase.addDatabase("QSQLITE")
-    con.setDatabaseName("Dummy_database/MCMC.sqlite")
+    con.setDatabaseName("Demo/Demo_db/Demo_db.sqlite")
     con.open()
-    s = FakeStudy(con,"Dummy_database")
+    s = FakeStudy(con,"Demo/Demo_db")
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)
     mainWin.show()

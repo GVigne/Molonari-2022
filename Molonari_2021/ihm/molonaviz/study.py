@@ -16,10 +16,22 @@ class Study():
     """
     """
     def __init__(self, name: str="", rootDir: str="", sensorDir: str=""):
-        self.name = name
-        self.rootDir = rootDir
-        self.sensorDir = sensorDir
-        self.create_folders()
+        if name !="" and rootDir !="" and sensorDir !="":
+            #Creating a point from scratch
+            self.name = name
+            self.rootDir = rootDir
+            self.sensorDir = sensorDir
+            self.create_folders()
+        else:
+            #Only rootdir is available. Open the database in it.
+            self.rootDir = rootDir
+            self.name = os.path.basename(self.rootDir)
+            self.open_connection()
+            select_dir = QSqlQuery()
+            select_dir.exec(f"""SELECT Study.SensorsDir FROM Study """)
+            select_dir.next()
+            self.sensorDir = select_dir.value(0)
+            self.mainDb = MainDb(self.con)
     
     def getName(self):
         return self.name
@@ -172,7 +184,7 @@ class Study():
                         PressureSensor.Name,
                         Shaft.Name,
                         SamplingPoint.RiverBed,
-                        SamplingPoint.DeltaH,
+                        SamplingPoint.DeltaH
                     FROM SamplingPoint
                     JOIN Shaft
                     ON SamplingPoint.Shaft = Shaft.id
@@ -279,6 +291,7 @@ class Study():
         dftemp, dfpress = self.processData(trawfile, prawfile)
         self.writeRawTemp(name, dftemp)
         self.writeRawPress(name, dfpress)
+        self.add_to_db_Point(name)
         point = Point(name, psensor, shaft,rivBed,deltaH)
         return point
 
@@ -293,6 +306,15 @@ class Study():
         q.exec()
         q.next()
         self.mainDb.rawMeasuresPressDb.insert_one_point(q.value(0),df)
+    
+    def add_to_db_Point(self,pointname):
+        """
+        Create a Point entry in the Point table
+        """
+        q = QSqlQuery(f'SELECT SamplingPoint.id FROM SamplingPoint where SamplingPoint.Name = "{pointname}"')
+        q.exec()
+        q.next()
+        self.mainDb.pointDb.insert_one_point(q.value(0))
 
     def processData(self, trawfile, prawfile):
         

@@ -59,6 +59,24 @@ class PointDb():
             
         insertQuery.finish()
         selectQuery.finish()
+    
+    def insert_one_point(self, sampling_point_id):
+        insertQuery = QSqlQuery(self.con)
+        insertQuery.prepare(
+            """
+            INSERT INTO Point (
+                SamplingPoint,
+                IncertT,
+                n_discr
+            )
+            VALUES (?, ?, ?)
+            """
+        )
+        insertQuery.addBindValue(sampling_point_id)
+        insertQuery.addBindValue("0")
+        insertQuery.addBindValue("100")
+        insertQuery.exec_() 
+        insertQuery.finish()
         
     def getIdByName(self, name):
         selectQuery = QSqlQuery(self.con)
