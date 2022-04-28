@@ -323,6 +323,55 @@ class Study():
         # On convertie les dates au format yy/mm/dd HH:mm:ss
         convertDates(dftemp)
         convertDates(dfpress)
+        # On vérifie qu'on a le même deltaT pour les deux fichiers
+        # La référence sera l'écart entre les deux premières lignes pour chaque fichier 
+        # --> Demander à l'utilisateur de vérifier que c'est ok
+        dftemp_t0 = dftemp.iloc[0,0]
+        dfpress_t0 = dfpress.iloc[0,0]
+        deltaTtemp = dftemp.iloc[1,0] - dftemp_t0
+        deltaTpress = dfpress.iloc[1,0] - dfpress_t0
+        if deltaTtemp != deltaTpress :
+            self.delete()
+            raise TimeStepError(deltaTtemp, deltaTpress)
+        else : 
+            deltaT = deltaTtemp
+
+        # On fait en sorte que les deux fichiers aient le même t0 et le même tf
+        dftemp_tf = dftemp.iloc[-1,0]
+        dfpress_tf = dfpress.iloc[-1,0]
+
+        if dfpress_t0 < dftemp_t0 : 
+            while dfpress_t0 != dftemp_t0:
+                dfpress.drop(dftemp.head(1).index, inplace=True)
+                dfpress_t0 = dfpress.iloc[0,0]
+        elif dfpress_t0 > dftemp_t0 : 
+            while dfpress_t0 != dftemp_t0:
+                dftemp.drop(dftemp.head(1).index, inplace=True)
+                dftemp_t0 = dftemp.iloc[0,0]
+
+        if dfpress_tf > dftemp_tf:
+            while dfpress_tf != dftemp_tf :
+                dfpress.drop(dfpress.tail(1).index, inplace=True)
+                dfpress_tf = dfpress.iloc[-1,0]
+        elif dfpress_tf < dftemp_tf:
+            while dfpress_tf != dftemp_tf :
+                dftemp.drop(dftemp.tail(1).index, inplace=True)
+                dftemp_tf = dftemp.iloc[-1,0]
+
+        # On supprime les lignes qui ne respecteraient pas le deltaT
+        i = 1
+        while i<dftemp.shape[0]:
+            if ( dftemp.iloc[i,0] - dftemp.iloc[i-1,0] ) % deltaT != timedelta(minutes=0) :
+                dftemp.drop(dftemp.iloc[i].name,  inplace=True)
+            else :
+                i += 1
+        i = 1
+        while i<dfpress.shape[0]:
+            if ( dfpress.iloc[i,0] - dfpress.iloc[i-1,0] ) % deltaT != timedelta(minutes=0) :
+                dfpress.drop(dfpress.iloc[i].name,  inplace=True)
+            else :
+                i += 1
+        
         return dftemp, dfpress
 
     def close_connection(self):

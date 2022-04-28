@@ -45,6 +45,7 @@ class DialogScript(QtWidgets.QDialog, From_DialogScript):
         try:
             compilation = compile(scriptpartiel,"compilescript.py", "exec")
         except Exception as e:
+            print("compilation error")
             raise e
         # with open(os.path.join(self.pointDir,"script_"+self.point.name+".txt"),'w') as file:
         with open(self.path_to_script, "w") as f:

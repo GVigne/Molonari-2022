@@ -78,7 +78,9 @@ def convertDates(df: pd.DataFrame):
                "%y/%m/%d %H:%M",    "%y/%m/%d %I:%M %p",
                "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %I:%M:%S %p", 
                "%Y/%m/%d %H:%M",    "%Y/%m/%d %I:%M %p",
-               None)
+               "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %I:%M:%S %p",
+               "%Y:%m:%d %H:%M:%S", "%Y:%m:%d %I:%M:%S %p",
+               "%m:%d:%Y %H:%M:%S", "%m:%d:%Y %I:%M:%S %p",None)
     times = df[df.columns[0]]
     for f in formats:
         try:
