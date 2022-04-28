@@ -60,3 +60,18 @@ to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 
 for var in to_filter:
     if to_filter[var]:
         df_cleaned.loc[df_cleaned[var].notnull(),var] = savgol_filter(df_cleaned.loc[df_cleaned[var].notnull(),var],20,2)
+
+# DROP
+# This function allows to get the biggest DataFrame without NaN values in boundary conditions after cleaning up 
+def longest_stretch(var):
+        a = var.values  # Extract out relevant column from dataframe as array
+        m = np.concatenate(( [True], np.isnan(a), [True] ))  # Mask
+        ss = np.flatnonzero(m[1:] != m[:-1]).reshape(-1,2)   # Start-stop limits
+        start,stop = ss[(ss[:,1] - ss[:,0]).argmax()]  # Get max interval, interval limits
+        return start, stop-1
+limits = np.array([list(longest_stretch(df["t_stream"])),list(longest_stretch(df["charge_diff"])),list(longest_stretch(df["t4"]))])
+lower = max(limits[:,0])
+upper = min(limits[:,1])
+df_cleaned = df_cleaned.loc[lower:upper, :]
+df_cleaned.reset_index(inplace=True)
+df_cleaned.drop('index',axis=1,inplace=True)

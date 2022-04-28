@@ -519,90 +519,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             dynamicInsertQuery.addBindValue(str(val[1]))
             dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
         dynamicInsertQuery.finish()
-
-    def readCalibrationSQL(self):
-        """
-        Read the SQL database and display measures
-        """
-        print("Tables in the SQL Database:", self.rawCon.tables())
-
-        # Read the database and print its content
-        selectDataQuery = QSqlQuery(self.rawCon)
-        selectDataQuery.exec("SELECT Var, Value FROM Calibration")
-
-        while selectDataQuery.next() :
-            print("  ", selectDataQuery.value(0),
-                        selectDataQuery.value(1))
-        selectDataQuery.finish()    
-
-        selectDataQuery = QSqlQuery(self.rawCon)
-        selectDataQuery.exec("PRAGMA table_info(Calibration)") #get column names
-        while selectDataQuery.next():
-            print(selectDataQuery.value(1))
-        selectDataQuery.finish()
-               
-    def browseFileTemp(self):
-        """
-        Display an "Open file dialog" when the user click on the 'Browse' button then
-        store the selected CSV file path in the LineEdit (solved temperature)
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Temperature File")[0]
-        if filePath:
-            self.lineEditTempFile.setText(filePath)
-        
-    def browseFileDepth(self):
-        """
-        Display an "Open file dialog" when the user click on the 'Browse' button then
-        store the selected CSV file path in the LineEdit (solved depths)
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Solved Depths File")[0]
-        if filePath:
-            self.lineEditDepthFile.setText(filePath)
-    
-    def browseRawData(self):
-        """
-        Query the database to load the corresponding raw models.
-        """
-        pass
-    
-    def browseFileRawZH(self):
-        """
-        Get the CSV file for the raw data to be cleaned up
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw ZH File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
-        # filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw ZH File",'.', filter='*.csv')[0]
-        if filePath:
-            self.lineEditRawZHFile.setText(filePath)
-            df = self.readRawZHCSV()            
-            # Dump the measures to SQL database
-            self.writeRawZHSQL(df)
-            
-
-    def browseFileRawPressure(self):
-        """
-        Get the CSV file for the raw data to be cleaned up
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw Pressure File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/sampling_points/Point034', filter='*.csv')[0]
-        # filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Raw Pressure File",'.', filter='*.csv')[0]
-        if filePath:
-            self.lineEditRawPressureFile.setText(filePath)
-            df = self.readRawPressureCSV()            
-            # Dump the measures to SQL database
-            self.writeRawPressureSQL(df)
-            
-    def bbrowseFileCalibration(self):
-        """
-        Get the CSV file for the raw data to be cleaned up
-        """
-        filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Calibration File",'/home/jurbanog/T3/MOLONARI_1D_RESOURCES/configuration/pressure_sensors', filter='*.csv')[0]
-        # filePath = QtWidgets.QFileDialog.getOpenFileName(self, "Get Calibration File",'.', filter='*.csv')[0]
-        if filePath:
-            self.lineEditCalibrationFile.setText(filePath)
-            df = self.readCalibrationCSV()            
-            # Dump the measures to SQL database
-            self.writeCalibrationSQL(df)
-            self.getDF()
-
+                    
     def load_pandas(self,db, statement, cols):    
         db.transaction()
         query = QSqlQuery(db)
@@ -683,7 +600,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
         with open(scriptPyPath, "w") as f:
             f.write(script)
-            print("file .py saved correctly")
             f.close()
 
         # There are different error in the script, sometimes it will cause the import step to fail, in this case we still have to remove the scripy.py file.
@@ -697,7 +613,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             del sys.modules["script"]
 
         try :
-            print("try fonction")
             self.df_loaded, self.df_cleaned, self.varList = fonction(self,df_ZH, df_Pressure, df_Calibration)
 
             #On réécrit les csv:
@@ -836,81 +751,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
         self.plotPrevisualizedVar()
 
-    def processData(self, dftemp, dfpress):
-        
-        
-        # On renomme (temporairement) les colonnes, on supprime les lignes sans valeur et on supprime l'index
-        val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
-        all_cols = ["Idx", "Date"] + val_cols
-        for i in range(len(all_cols)) :
-            dftemp.columns.values[i] = all_cols[i] 
-        dftemp.dropna(subset=val_cols,inplace=True)
-        dftemp.dropna(axis=1,inplace=True) # Remove last columns
-        dftemp.drop(["Idx"],axis=1,inplace=True) # Remove first column
-        val_cols = ["tension_V", "Temp_Stream"]
-        all_cols = ["Idx", "Date"] + val_cols
-        for i in range(len(all_cols)) :
-            dfpress.columns.values[i] = all_cols[i]
-        dfpress.dropna(subset=val_cols,inplace=True)
-        dfpress.dropna(axis=1,inplace=True) # Remove last columns
-        dfpress.drop(["Idx"],axis=1,inplace=True) # Remove first column
-        
-        # On convertie les dates au format yy/mm/dd HH:mm:ss
-        convertDates(dftemp)
-        convertDates(dfpress)
-        # On vérifie qu'on a le même deltaT pour les deux fichiers
-        # La référence sera l'écart entre les deux premières lignes pour chaque fichier 
-        # --> Demander à l'utilisateur de vérifier que c'est ok
-        dftemp_t0 = dftemp.iloc[0,0]
-        dfpress_t0 = dfpress.iloc[0,0]
-        deltaTtemp = dftemp.iloc[1,0] - dftemp_t0
-        deltaTpress = dfpress.iloc[1,0] - dfpress_t0
-        if deltaTtemp != deltaTpress :
-            print(deltaTtemp, deltaTpress)
-        else : 
-            deltaT = deltaTtemp
-
-        # On fait en sorte que les deux fichiers aient le même t0 et le même tf
-        dftemp_tf = dftemp.iloc[-1,0]
-        dfpress_tf = dfpress.iloc[-1,0]
-
-        if dfpress_t0 < dftemp_t0 : 
-            while dfpress_t0 != dftemp_t0:
-                dfpress.drop(dftemp.head(1).index, inplace=True)
-                dfpress_t0 = dfpress.iloc[0,0]
-        elif dfpress_t0 > dftemp_t0 : 
-            while dfpress_t0 != dftemp_t0:
-                dftemp.drop(dftemp.head(1).index, inplace=True)
-                dftemp_t0 = dftemp.iloc[0,0]
-
-        if dfpress_tf > dftemp_tf:
-            while dfpress_tf != dftemp_tf :
-                dfpress.drop(dfpress.tail(1).index, inplace=True)
-                dfpress_tf = dfpress.iloc[-1,0]
-        elif dfpress_tf < dftemp_tf:
-            while dfpress_tf != dftemp_tf :
-                dftemp.drop(dftemp.tail(1).index, inplace=True)
-                dftemp_tf = dftemp.iloc[-1,0]
-
-        # On supprime les lignes qui ne respecteraient pas le deltaT
-        i = 1
-        while i<dftemp.shape[0]:
-            if ( dftemp.iloc[i,0] - dftemp.iloc[i-1,0] ) % deltaT != timedelta(minutes=0) :
-                dftemp.drop(dftemp.iloc[i].name,  inplace=True)
-            else :
-                i += 1
-        i = 1
-        while i<dfpress.shape[0]:
-            if ( dfpress.iloc[i,0] - dfpress.iloc[i-1,0] ) % deltaT != timedelta(minutes=0) :
-                dfpress.drop(dfpress.iloc[i].name,  inplace=True)
-            else :
-                i += 1
-        
-        # On convertie les températures en Kelvin
-        
-        # On convertie les tensions en pression
-        return dftemp, dfpress
-
     def getDF(self):
         def getPressureSensorByname(bd, name):
             bd.con.transaction()
@@ -961,9 +801,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             self.editScript()
         else:
             try:
-                print("Enters try")
                 self.df_selected = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
-                print("Exits try")
             except FileNotFoundError:
                 self.df_selected = pd.DataFrame(columns=self.varList)
                 self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
