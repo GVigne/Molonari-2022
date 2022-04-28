@@ -310,8 +310,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         res = dlg.exec()
 
         if res == 10: #Direct Model
-            params, nb_cells = dlg.getInputDirectModel()
-            self.computeEngine.computeDirectModel(params, nb_cells)
+            params, nb_cells, depths = dlg.getInputDirectModel()
+            print(self.computeEngine.computeDirectModel(params, nb_cells,depths))
+            sys.exit()
+            
             # params, nb_cells = dlg.getInputDirectModel()
             # # compute = Compute(self.point)
             # # compute.computeDirectModel(params, nb_cells, sensorDir)
@@ -949,6 +951,7 @@ class FakeStudy():
 if __name__ == '__main__':
     p = Point()
     p.name="P034" #This was a test point
+    p.shaft
     con = QSqlDatabase.addDatabase("QSQLITE")
     con.setDatabaseName("Dummy_database/MCMC.sqlite")
     con.open()

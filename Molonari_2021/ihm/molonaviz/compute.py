@@ -60,65 +60,52 @@ class Compute(QtCore.QObject):
                                 Depth2,
                                 Depth3,
                                 Depth4
-                            FROM Shaft WHERE Shaft.Name = "{self.point.getShaft()}" """)
+                            FROM Shaft 
+                            WHERE Shaft.id=(SELECT Samplingpoint.Shaft FROM Samplingpoint WHERE Samplingpoint.Name = "{self.point.name}");
+""")
         shaft_depth.exec()
         shaft_depth.next()
         shaft_depth_array = [shaft_depth.value(i) for i in range(4)]
 
         select_p_meas = QSqlQuery(f"""SELECT Precision
-                            FROM PressureSensor WHERE PressureSensor.Name = "{self.point.getPressureSensor()}" """)
+                            FROM PressureSensor WHERE PressureSensor.id=(SELECT Samplingpoint.PressureSensor FROM Samplingpoint WHERE Samplingpoint.Name = "{self.point.name}") """)
         select_t_meas = QSqlQuery(f"""SELECT Error FROM Thermometer 
                                     JOIN Shaft ON
                                     Thermometer.id = Shaft.Thermo_model
-                                    WHERE Shaft.Name = "{self.point.getShaft()}"
+                                    WHERE Shaft.id=(SELECT Samplingpoint.Shaft FROM Samplingpoint WHERE Samplingpoint.Name = "{self.point.name}")
                                 """)
         select_p_meas.exec()
         select_p_meas.next()
         select_t_meas.exec()
         select_t_meas.next()
 
-        select_temps = QSqlQuery(f"""SELECT Date.Date,
-                                CleanedMeasures.Temp1,
-                                CleanedMeasures.Temp2,
-                                CleanedMeasures.Temp3,
-                                CleanedMeasures.Temp4
-                            FROM CleanedMeasures
-                            JOIN Date
-                            ON CleanedMeasures.Date = Date.id
-                            JOIN SamplingPoint 
-                            ON SamplingPoint.id = CleanedMeasures.PointKey
-                            WHERE SamplingPoint.Name ="{self.point.name}"
-                            ORDER BY Date.Date; """)
+        select_temps = QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4
+                        FROM CleanedMeasures
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        ORDER BY CleanedMeasures.Date; """)
         select_temps.exec()
         temps_array = []
         while select_temps.next():
-            temps_array.append((select_temps.value(0), [select_temps.value[i] for i in range(1,5)]))
+            temps_array.append((select_temps.value(0), [select_temps.value(i) for i in range(1,5)]))
 
-        select_press =QSqlQuery(f"""SELECT Date.Date,
-                                CleanedMeasures.Pressure,
-                                CleanedMeasures.TempBed
-                            FROM CleanedMeasures
-                            JOIN Date
-                            ON CleanedMeasures.Date = Date.id
-                            JOIN SamplingPoint 
-                            ON SamplingPoint.id = CleanedMeasures.PointKey
-                            WHERE SamplingPoint.Name ="{self.point.name}"
-                            ORDER BY Date.Date """)
+        select_press =QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure, CleanedMeasures.TempBed
+                        FROM CleanedMeasures
+                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                        ORDER BY CleanedMeasures.Date """)
         select_press.exec()
         press_array = []
         while select_press.next():
-            press_array.append((select_temps.value(0), [select_temps.value(1),select_temps.value(2)]))
+            press_array.append((select_press.value(0), [select_press.value(1),select_press.value(2)]))
 
         col_dict = {
 	        "river_bed": self.point.rivBed, 
             "depth_sensors": shaft_depth_array,
 	        "offset": self.point.deltaH,
             "dH_measures": press_array,
-	        "T_measures": select_temps,
+	        "T_measures": temps_array,
             "sigma_meas_P": select_p_meas.value(0),
             "sigma_meas_T": select_t_meas.value(0)
             }
-
         self.col = Column.from_dict(col_dict)
         
     def computeMCMC(self, nb_iter: int, priors: dict, nb_cells: str, quantiles: tuple):
@@ -167,19 +154,25 @@ class Compute(QtCore.QObject):
         self.MCMCFinished.emit()
         
 
-    def computeDirectModel(self, params: tuple, nb_cells: int):
+    def computeDirectModel(self, params: tuple, nb_cells: int, depths):
 
         # Initialisation de la colonne
         self.setColumn()
 
         # Lancement du modèle direct
-        self.col.compute_solve_transi(params, nb_cells)
+        n = [i for i in range(len(depths))] #Layer name
+        layersListInput = [(str(n[i]), depths[i], params[0][i],params[1][i],params[2][i],params[3][i]) for i in range(len(depths))]
+        # return {"Premier":layersListInput, "Second":self.col.depth_sensors}
+        return [layer.zLow for layer in layersListCreator(layersListInput)], self.col.depth_sensors, self.col.offset
+        return self.col.compute_solve_transi(layersListCreator(layersListInput), nb_cells)
+
+        self.col.compute_solve_transi(layersListCreator(layersListInput), nb_cells)
 
         # Sauvegarde des différents résultats du modèle direct
         resultsDir = os.path.join(self.point.getPointDir(), 'results', 'direct_model_results')
+        self.saveLayers()
         self.saveResults(resultsDir)
         self.saveParams(params, resultsDir)
-    
 
     def saveParams(self, params: tuple, resultsDir: str):
         """
