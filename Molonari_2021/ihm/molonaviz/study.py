@@ -275,24 +275,54 @@ class Study():
         insert_point.addBindValue(os.path.join(self.rootDir,"Images",configfile))
         insert_point.addBindValue(os.path.join(self.rootDir,"Notices",noticefile))
         insert_point.exec()
-        self.writeRawTemp(name, trawfile)
-        self.writeRawPress(name,prawfile)
+        dftemp, dfpress = self.processData(trawfile, prawfile)
+        self.writeRawTemp(name, dftemp)
+        self.writeRawPress(name, dfpress)
         point = Point(name, psensor, shaft,rivBed,deltaH)
         return point
 
-    def writeRawTemp(self, pointname, path_to_temp):
+    def writeRawTemp(self, pointname, df):
         q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
         q.exec()
         q.next()
-        df = pd.read_csv(path_to_temp, skiprows=0, sep=',')
         self.mainDb.rawMeasuresTempDb.insert_one_point(q.value(0),df)
     
-    def writeRawPress(self,pointname, path_to_press):
+    def writeRawPress(self,pointname, df):
         q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
         q.exec()
         q.next()
-        df = pd.read_csv(path_to_press, skiprows=0, sep=',')
         self.mainDb.rawMeasuresPressDb.insert_one_point(q.value(0),df)
+
+    def processData(self, trawfile, prawfile):
+        
+        # On charge les données
+        dftemp = pd.read_csv(trawfile, skiprows=1)
+        if dftemp.shape[1] < 6 :  # Idx + Date + Temp x4
+            raise LoadingError("Too few columns in temperature file")
+        dfpress = pd.read_csv(prawfile, skiprows=1)
+        if dfpress.shape[1] < 4 : # Idx + Date + Tens + Temp
+            raise LoadingError("Too few columns in pressure file")
+        
+        # On renomme (temporairement) les colonnes, on supprime les lignes sans valeur et on supprime l'index
+        val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
+        all_cols = ["Idx", "Date"] + val_cols
+        for i in range(len(all_cols)) :
+            dftemp.columns.values[i] = all_cols[i] 
+        dftemp.dropna(subset=val_cols,inplace=True)
+        dftemp.dropna(axis=1,inplace=True) # Remove last columns
+        dftemp.drop(["Idx"],axis=1,inplace=True) # Remove first column
+        val_cols = ["tension_V", "Temp_Stream"]
+        all_cols = ["Idx", "Date"] + val_cols
+        for i in range(len(all_cols)) :
+            dfpress.columns.values[i] = all_cols[i]
+        dfpress.dropna(subset=val_cols,inplace=True)
+        dfpress.dropna(axis=1,inplace=True) # Remove last columns
+        dfpress.drop(["Idx"],axis=1,inplace=True) # Remove first column
+        
+        # On convertie les dates au format yy/mm/dd HH:mm:ss
+        convertDates(dftemp)
+        convertDates(dfpress)
+        return dftemp, dfpress
 
     def close_connection(self):
         """
