@@ -882,6 +882,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             pass
         self.filter_dic = dict.fromkeys(self.varList[1:],False)
         self.checkBoxFilter.setChecked(False)
+        self.checkBoxFC.setChecked(False)
+        self.checkBoxCK.setChecked(False)
         self.previsualizeCleaning()
     
     
