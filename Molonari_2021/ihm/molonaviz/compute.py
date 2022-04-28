@@ -80,19 +80,23 @@ class Compute(QtCore.QObject):
         select_t_meas.exec()
         select_t_meas.next()
 
-        select_temps = QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4
+        select_temps = QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4
                         FROM CleanedMeasures
+                        JOIN Date
+                        ON CleanedMeasures.Date = Date.id
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date; """)
+                        ORDER BY Date.Date; """)
         select_temps.exec()
         temps_array = []
         while select_temps.next():
             temps_array.append((SQl_to_pandas(select_temps.value(0)), [select_temps.value(i) for i in range(1,5)]))
 
-        select_press =QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure, CleanedMeasures.TempBed
+        select_press =QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Pressure, CleanedMeasures.TempBed
                         FROM CleanedMeasures
+                        JOIN Date
+                        ON CleanedMeasures.Date = Date.id
                         WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date """)
+                        ORDER BY Date.Date """)
         select_press.exec()
         press_array = []
         while select_press.next():
@@ -164,7 +168,6 @@ class Compute(QtCore.QObject):
         n = [i for i in range(len(depths))] #Layer name
         layersListInput = [(str(n[i]), depths[i], params[0][i],params[1][i],params[2][i],params[3][i]) for i in range(len(depths))]
         # return {"Premier":layersListInput, "Second":self.col.depth_sensors}
-        return self.col.compute_solve_transi(layersListCreator(layersListInput), nb_cells)
 
         self.col.compute_solve_transi(layersListCreator(layersListInput), nb_cells)
 
@@ -173,7 +176,10 @@ class Compute(QtCore.QObject):
         self.saveLayers()
         self.updatePointinDb(nb_cells)
         self.saveResults(resultsDir)
-        self.saveParams(params, resultsDir)
+        # self.saveParams(params, resultsDir)
+    
+    def saveLayers(self):
+        pass
     
     def updatePointinDb(self,nb_cells):
         """
@@ -393,67 +399,10 @@ class Compute(QtCore.QObject):
         times_string = times_string.astype('str')
         for i in range(n_dates):
             times_string[i,0] = times[i].strftime('%y/%m/%d %H:%M:%S')
-        
-        ## Profondeurs
-        df_depths = pd.DataFrame(depths, columns=['Depth (m)'])
-        depths_file = os.path.join(resultsDir, 'depths.csv')
-        df_depths.to_csv(depths_file, index=False)
-
-        ## Profils de températures
-
-        # Création du dataframe
-        np_temps_solve = np.concatenate((times_string, temps.T), axis=1)
-        df_temps_solve = pd.DataFrame(np_temps_solve, columns=['Date Heure, GMT+01:00']+[f'Température (K) pour la profondeur {depth:.4f} m' for depth in depths])
-        # Sauvegarde sous forme d'un fichier csv
-        temps_solve_file = os.path.join(resultsDir, 'solved_temperatures.csv')
-        df_temps_solve.to_csv(temps_solve_file, index=False)
-
-
-        ## Flux d'énergie advectifs
-
-        # Création du dataframe
-        np_advective_flux = np.concatenate((times_string, advective_flux.T), axis=1)
-        df_advective_flux = pd.DataFrame(np_advective_flux, columns=['Date Heure, GMT+01:00']+[f'Flux advectif (W/m2) pour la profondeur {depth:.4f} m' for depth in depths])
-        # Sauvegarde sous forme d'un fichier csv
-        advective_flux_file = os.path.join(resultsDir, 'advective_flux.csv')
-        df_advective_flux.to_csv(advective_flux_file, index=False)
-
-
-        ## Flux d'énergie conductifs
-
-        # Création du dataframe
-        np_conductive_flux = np.concatenate((times_string, conductive_flux.T), axis=1)
-        df_conductive_flux = pd.DataFrame(np_conductive_flux, columns=['Date Heure, GMT+01:00']+[f'Flux conductif (W/m2) pour la profondeur {depth:.4f} m' for depth in depths])
-        # Sauvegarde sous forme d'un fichier csv
-        conductive_flux_file = os.path.join(resultsDir, 'conductive_flux.csv')
-        df_conductive_flux.to_csv(conductive_flux_file, index=False)
-
-        ## Flux d'énergie totaux
-
-        # Création du dataframe
-        np_total_flux = np.concatenate((times_string, advective_flux.T+conductive_flux.T), axis=1)
-        df_total_flux = pd.DataFrame(np_total_flux, columns=['Date Heure, GMT+01:00']+[f"Flux d'énergie total (W/m2) pour la profondeur {depth:.4f} m" for depth in depths])
-        # Sauvegarde sous forme d'un fichier csv
-        total_flux_file = os.path.join(resultsDir, 'total_flux.csv')
-        df_total_flux.to_csv(total_flux_file, index=False)
-
-
-        ## Flux d'eau échangés entre la nappe et la rivière
-
-        # Création du dataframe
-        np_flows = np.zeros((n_dates,1))
-        for i in range(n_dates):
-            np_flows[i,0] = flows[i]
-        np_flows_solve = np.concatenate((times_string, np_flows), axis=1)
-        df_flows_solve = pd.DataFrame(np_flows_solve, columns=["Date Heure, GMT+01:00", "Débit d'eau échangé (m/s)"])
-        # Sauvegarde sous forme d'un fichier csv
-        flows_solve_file = os.path.join(resultsDir, 'solved_flows.csv')
-        df_flows_solve.to_csv(flows_solve_file, index=False)
-
+       
 
         self.mainDb.dateDb.insert(times)
         self.mainDb.depthDb.insert(depths)
-        self.mainDb.pointDb.insert()
         self.mainDb.quantileDb.insert(quantiles)
         self.mainDb.parametersDistributionDb.insert(params)
         self.mainDb.layerDb.insert(layers)

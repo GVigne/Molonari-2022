@@ -175,7 +175,7 @@ class Study():
                     ON SamplingPoint.PressureSensor = PressureSensor.id""")
         points = []
         while select_points.next():
-            points.append(Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4)))
+            points.append(Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4), poindir=self.rootDir))
         return points
     
     def loadPoints(self, pointModel: QtGui.QStandardItemModel):
@@ -191,7 +191,7 @@ class Study():
                     JOIN PressureSensor
                     ON SamplingPoint.PressureSensor = PressureSensor.id""")
         while select_points.next():
-            point = Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4))
+            point = Point(select_points.value(0),select_points.value(1),select_points.value(2),select_points.value(3),select_points.value(4),poindir=self.rootDir )
             point.loadPoint(pointModel)
 
     def loadPressureSensors(self, sensorModel: QtGui.QStandardItemModel):
@@ -292,7 +292,7 @@ class Study():
         self.writeRawTemp(name, dftemp)
         self.writeRawPress(name, dfpress)
         self.add_to_db_Point(name)
-        point = Point(name, psensor, shaft,rivBed,deltaH)
+        point = Point(name, psensor, shaft,rivBed,deltaH,self.rootDir)
         return point
 
     def writeRawTemp(self, pointname, df):

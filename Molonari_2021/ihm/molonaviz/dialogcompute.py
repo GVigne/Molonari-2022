@@ -281,6 +281,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                             WHERE Shaft.id=(SELECT Samplingpoint.Shaft FROM Samplingpoint WHERE Samplingpoint.Name = "{self.pointName}");
                 """)
         shaft_depth.exec()
+        shaft_depth.next()
         if shaft_depth.value(0) is None:
             return shaft_depth.value(0)
         return 100*shaft_depth.value(0) #In cm

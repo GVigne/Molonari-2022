@@ -30,7 +30,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         self.point = point
         self.study = study
-        db = study.mainDb
+        db = study.con
         self.computeEngine = Compute(db, self.point)
 
         #This should already be done in the .ui file
@@ -311,8 +311,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         if res == 10: #Direct Model
             params, nb_cells, depths = dlg.getInputDirectModel()
-            print(self.computeEngine.computeDirectModel(params, nb_cells,depths))
-            sys.exit()
+            self.computeEngine.computeDirectModel(params, nb_cells,depths)
+            self.update_all_models()
             
             # params, nb_cells = dlg.getInputDirectModel()
             # # compute = Compute(self.point)
