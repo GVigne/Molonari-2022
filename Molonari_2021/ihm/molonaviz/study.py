@@ -33,16 +33,20 @@ class Study():
         """
         Initialise the overall structure, as well as the SQL database
         """
-        #New Folder and its database
-        os.mkdir(self.rootDir)
-        self.path_to_db = os.path.join(self.rootDir,f"{self.name}.sqlite")
-        con = sqlite3.connect(self.path_to_db)
-        con.close()
+        try:
+            #New Folder and its database
+            os.mkdir(self.rootDir)
+            self.path_to_db = os.path.join(self.rootDir,f"{self.name}.sqlite")
+            con = sqlite3.connect(self.path_to_db)
+            con.close()
 
-        os.mkdir(os.path.join(self.rootDir,"Cleanup_scripts"))
-        os.mkdir(os.path.join(self.rootDir,"Notices"))
-        os.mkdir(os.path.join(self.rootDir,"Images"))
-        shutil.copyfile(os.path.join(os.getcwd(),"sample_text.txt"), os.path.join(self.rootDir,"Cleanup_scripts", "sample_text.txt")) 
+            os.mkdir(os.path.join(self.rootDir,"Cleanup_scripts"))
+            os.mkdir(os.path.join(self.rootDir,"Notices"))
+            os.mkdir(os.path.join(self.rootDir,"Images"))
+            shutil.copyfile(os.path.join(os.getcwd(),"sample_text.txt"), os.path.join(self.rootDir,"Cleanup_scripts", "sample_text.txt")) 
+        except FileExistsError:
+            #This means that there is already a folder (we are trying to load a study)
+            pass
 
 
     def open_connection(self):
@@ -62,7 +66,7 @@ class Study():
         """
         Update the study's name and path to sensors. This should be used if the study was created via its path to the directory.
         """
-        self.name = os.getcwd().split("\\")[-1]
+        self.name = self.rootDir.split("\\")[-1]
         select_dir = QSqlQuery()
         select_dir.exec(f"""SELECT SensorsDir FROM Study """)
         select_dir.next()

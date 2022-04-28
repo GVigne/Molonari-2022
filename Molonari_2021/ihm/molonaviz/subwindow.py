@@ -3,13 +3,13 @@ from widgetpoint import WidgetPoint
 
 class SubWindow(QtWidgets.QMdiSubWindow):
     
-    def __init__(self, point, study, db):
+    def __init__(self, point, study):
         # Call constructor of parent classes
         super(SubWindow, self).__init__()
         QtWidgets.QMdiSubWindow.__init__(self)
         
         self.name = point.getName() #on donne à la subWindow le nom du point associé
-        wdg = WidgetPoint(point, study, db)
+        wdg = WidgetPoint(point, study)
         self.wdg = wdg
     
     def getName(self):

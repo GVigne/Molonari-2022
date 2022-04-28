@@ -398,7 +398,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             #     # Creation of the SQL tables
             #     self.mainDb = MainDb(self.con)
             #     self.mainDb.createTables()
-            subWin = SubWindow(point, self.currentStudy, self.mainDb)
+            subWin = SubWindow(point, self.currentStudy)
             subWin.setPointWidget()
 
             if self.mdi.viewMode() == QtWidgets.QMdiArea.SubWindowView and not self.actionSwitch_To_Cascade_View.isEnabled():

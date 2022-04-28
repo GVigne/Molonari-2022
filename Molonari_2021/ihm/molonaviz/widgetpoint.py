@@ -20,7 +20,7 @@ From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widget
 
 class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
-    def __init__(self, point: Point, study: Study, db):
+    def __init__(self, point: Point, study: Study):
         # Call constructor of parent classes
         super(WidgetPoint, self).__init__()
         QtWidgets.QWidget.__init__(self)
@@ -29,7 +29,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         
         self.point = point
         self.study = study
-        self.pointDir = self.point.getPointDir()
+        db = study.mainDb
         self.computeEngine = Compute(db, self.point)
 
         #This should already be done in the .ui file
@@ -59,10 +59,6 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         self.tabWidget.setCurrentIndex(3)
 
         #TO REMOVE
-        self.pointDir = self.point.getPointDir()
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName("Dummy_database/RawMeasures.sqlite")
-        self.con.open()
 
         self.setInfoTab()
         self.setWidgetInfos()
