@@ -118,7 +118,7 @@ class MoloView2D(MoloView):
         This method allows to apply changes to the data on the x-axis (for example, format a date).
         """
         if self.time_dependent:
-            self.x = self.date_to_mdates(self.x)
+            self.x = date_to_mdates(self.x)
             formatter = mdates.DateFormatter("%y/%m/%d %H:%M")
             self.axes.xaxis.set_major_formatter(formatter)
             self.axes.xaxis.set_major_locator(MaxNLocator(4))

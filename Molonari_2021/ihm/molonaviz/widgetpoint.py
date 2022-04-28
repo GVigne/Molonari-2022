@@ -15,6 +15,7 @@ from usefulfonctions import *
 from dialogreset import DialogReset
 from MoloModel import  PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
 from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
+from Database.mainDb import MainDb
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
@@ -308,8 +309,8 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         dlg = DialogCompute(self.point.name)
         res = dlg.exec()
 
-        if res == 10 : #Direct Model
-            print("Direct Model")
+        if res == 10: #Direct Model
+            print(dlg.getInputDirectModel())
             # params, nb_cells = dlg.getInputDirectModel()
             # # compute = Compute(self.point)
             # # compute.computeDirectModel(params, nb_cells, sensorDir)
@@ -937,10 +938,20 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                     """
             )
 
+
+class FakeStudy():
+    def __init__(self,con, rootDir) -> None:
+        self.con = con
+        self.rootDir = rootDir
+        self.mainDb = MainDb(self.con)
+
 if __name__ == '__main__':
     p = Point()
     p.name="P034" #This was a test point
-    s = Study()
+    con = QSqlDatabase.addDatabase("QSQLITE")
+    con.setDatabaseName("Dummy_database/MCMC.sqlite")
+    con.open()
+    s = FakeStudy(con,"Dummy_database")
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)
     mainWin.show()

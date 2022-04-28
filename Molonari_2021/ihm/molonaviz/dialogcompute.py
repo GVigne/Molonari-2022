@@ -293,16 +293,18 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     def getInputDirectModel(self):
         
         nb_cells = self.spinBoxNCellsDirect.value()
-        
         row = int(self.spinBoxNLayersDirect.value())
+        moinslog10K = []
+        n = []
+        lambda_s = []
+        rhos_cs = []
         
         for i in range (row):
-            
-            moinslog10K = -log10(float(self.tableWidget.item(i, 1).text()))
-            n = float(self.tableWidget.item(i, 2).text())
-            lambda_s = float(self.tableWidget.item(i, 3).text())
-            rhos_cs = float(self.tableWidget.item(i, 4).text())
-            return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
+            moinslog10K.append(-log10(float(self.tableWidget.item(i, 1).text())))
+            n.append(float(self.tableWidget.item(i, 2).text()))
+            lambda_s.append(float(self.tableWidget.item(i, 3).text()))
+            rhos_cs.append(float(self.tableWidget.item(i, 4).text()))
+        return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
 
 
     def getInputMCMC(self):
