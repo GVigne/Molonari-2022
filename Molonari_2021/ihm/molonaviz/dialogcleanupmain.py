@@ -858,7 +858,10 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         idPressureSensor = getPressureSensorByname(self.samplingPointDb,self.name)
         # self.df_Calibration = self.load_pandas(self.con, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
         self.df_Calibration = self.load_pandas(self.con, f'SELECT Name, Intercept, [Du/Dh], [Du/Dt] FROM PressureSensor WHERE id = {idPressureSensor}', ["Name", "Intercept", "dUdH", "dUdT"])
-
+        print("---")
+        print(self.df_ZH)
+        print(self.df_Pressure)
+        print(self.df_Calibration)
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
         self.toolBar = NavigationToolbar2QT(self.mplPrevisualizeCurve,self)
         self.widgetToolBar.addWidget(self.toolBar)
@@ -877,7 +880,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         ## END OF SCRIPT CODE
         try:    
             self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
-        except:
+        except Exception as e:
+            print(e)
             self.editScript()
         else:
             self.df_selected = pd.DataFrame(columns=self.varList)

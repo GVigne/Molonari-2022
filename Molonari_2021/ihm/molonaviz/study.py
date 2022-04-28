@@ -282,13 +282,13 @@ class Study():
         return point
 
     def writeRawTemp(self, pointname, df):
-        q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
+        q = QSqlQuery(f'SELECT SamplingPoint.id FROM SamplingPoint where SamplingPoint.Name = "{pointname}"')
         q.exec()
         q.next()
         self.mainDb.rawMeasuresTempDb.insert_one_point(q.value(0),df)
     
     def writeRawPress(self,pointname, df):
-        q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
+        q = QSqlQuery(f'SELECT SamplingPoint.id FROM SamplingPoint where SamplingPoint.Name = "{pointname}"')
         q.exec()
         q.next()
         self.mainDb.rawMeasuresPressDb.insert_one_point(q.value(0),df)
