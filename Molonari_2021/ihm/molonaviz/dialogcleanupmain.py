@@ -238,46 +238,36 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # See https://doc.qt.io/qt-5/designer-using-a-ui-file-python.html
         self.setupUi(self)
         
-        # Connect the buttons
+        # Connect the buttons and checkbox
         self.pushButtonLoadRawData.clicked.connect(self.browseRawData)
-        self.pushButtonBrowseRawZH.clicked.connect(self.browseFileRawZH)
-        self.pushButtonBrowseRauPressure.clicked.connect(self.browseFileRawPressure)
-        self.pushButtonBrowseCalibration.clicked.connect(self.bbrowseFileCalibration)
         self.pushButtonSelectPoints.clicked.connect(self.selectPoints)
         self.pushButtonEditCode.clicked.connect(self.editScript)
-
-        self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
-        self.checkBoxFilter.clicked.connect(self.triggerSetFilter)
         self.pushButtonResetVar.clicked.connect(self.resetCleanVar)
         self.pushButtonResetAll.clicked.connect(self.resetCleanAll)
 
-        # connects the slot function and makes the argument of the band int type
+        self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
+        self.checkBoxFilter.clicked.connect(self.triggerSetFilter)
+        
+
+        # connects the radio buttons
         self.buttonGroupMethod.setId(self.radioButtonZScore,1)
         self.buttonGroupMethod.setId(self.radioButtonIQR,2)
         self.buttonGroupMethod.setId(self.radioButtonNone,3)
         
         self.buttonGroupMethod.buttonClicked.connect(self.selectMethod)
-        self.radioButtonNone.setChecked(True)
 
+        # Initializes radio and check buttons
+        self.radioButtonNone.setChecked(True)
         self.checkBoxChanges.setChecked(True)
         self.checkBoxFilter.setChecked(False)
-        # Remove existing SQL database file (if so)
-        # self.sql = "molonari_grid_temp.sqlite"
-        # if os.path.exists(self.sql):
-        #     os.remove(self.sql)
-
-        # # Connect to the SQL database and display a critical message in case of failure
-        self.sqlfile = "molonari_" + study.name + ".sqlite"
         
+        # Initializes connection with database
         self.con = con
-        # self.con = QSqlDatabase.addDatabase("QSQLITE")
-        # self.con.setDatabaseName(self.sqlfile)
-        # if not self.con.open():
-        #     print("Cannot open SQL database")
         self.mainDb = MainDb(self.con)
         self.name = name
         self.samplingPointDb = self.mainDb.samplingPointDb
         path_to_script = self.get_Script_Name()
+        print(path_to_script)
         self.pointDir = os.path.dirname(path_to_script)
         try:
             self.pointKey = self.samplingPointDb.getIdByname(self.name)

@@ -245,22 +245,32 @@ class Study():
                               CleanupScript
                           )
                           VALUES (
-                              {name},
-                              {os.path.join(self.rootDir,"Notices",noticefile)},
+                              ?,
+                              ?,
                               0,
                               0,
-                              {impldate},
-                              {lastdate},
-                              {deltaH},
-                              {rivBed},
-                              {get_shaft_id.value(0)},
-                              {get_psensor_id.value(0)},
+                              ?,
+                              ?,
+                              ?,
+                              ?,
+                              ?,
+                              ?,
                               1,
-                              {os.path.join(self.rootDir,"Images",configfile)},
-                              {os.path.join(self.rootDir,"Notices",noticefile)}   
-                          )
-        """)  
+                              ?,
+                              ?  
+                          )""")  
 
+        insert_point.addBindValue(name)
+        insert_point.addBindValue(os.path.join(self.rootDir,"Notices",noticefile))
+        insert_point.addBindValue(impldate)
+        insert_point.addBindValue(lastdate)
+        insert_point.addBindValue(deltaH)
+        insert_point.addBindValue(rivBed)
+        insert_point.addBindValue(get_shaft_id.value(0))
+        insert_point.addBindValue(get_psensor_id.value(0))
+        insert_point.addBindValue(os.path.join(self.rootDir,"Images",configfile))
+        insert_point.addBindValue(os.path.join(self.rootDir,"Notices",noticefile))
+        insert_point.exec()
         point = Point(name, psensor, shaft,rivBed,deltaH)
         return point
 
