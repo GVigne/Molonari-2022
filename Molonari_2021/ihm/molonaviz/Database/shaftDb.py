@@ -35,10 +35,8 @@ class ShaftDb():
         createQuery.finish()
         
     
-    def insert(self, study):
+    def insert(self, shafts):
         self.con.transaction()
-        
-        shafts = study.getShaftsDb()
         
         insertQuery = QSqlQuery(self.con)
         

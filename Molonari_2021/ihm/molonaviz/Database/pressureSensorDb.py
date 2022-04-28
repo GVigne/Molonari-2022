@@ -36,11 +36,9 @@ class PressureSensorDb():
         createQuery.finish()
         
     
-    def insert(self, study):
+    def insert(self, pressure_sensors):
         self.con.transaction()
-        
-        pressure_sensors = study.getPressureSensorsDb()
-        
+            
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """ 
