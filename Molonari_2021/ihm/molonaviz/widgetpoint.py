@@ -255,7 +255,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
 
     def cleanup(self):
-        dlg = DialogCleanupMain(self.point.name,self.pointDir,self.study,self.con)
+        dlg = DialogCleanupMain(self.point.name, os.path.join(self.study.rootDir,"Cleanup_scripts"),self.study,self.study.con)
         res = dlg.exec_()
         #print(self.pointDir)
         if res == QtWidgets.QDialog.Accepted:
