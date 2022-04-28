@@ -342,7 +342,7 @@ class Study():
 
         if dfpress_t0 < dftemp_t0 : 
             while dfpress_t0 != dftemp_t0:
-                dfpress.drop(dftemp.head(1).index, inplace=True)
+                dfpress.drop(dfpress.head(1).index, inplace=True)
                 dfpress_t0 = dfpress.iloc[0,0]
         elif dfpress_t0 > dftemp_t0 : 
             while dfpress_t0 != dftemp_t0:
