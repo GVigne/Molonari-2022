@@ -219,6 +219,7 @@ class Study():
         #Copy the associated files
         shutil.copyfile(noticefile, os.path.join(self.rootDir,"Notices", os.path.basename(noticefile))) #Add the notice
         shutil.copyfile(configfile, os.path.join(self.rootDir,"Images", os.path.basename(configfile)))#Add the picture
+        scriptpath = os.path.join(self.rootDir,"Cleanup_scripts", f'script_{name}.txt')
         
         psensor = df_info.iloc[1].at[1]
         shaft = df_info.iloc[2].at[1]
@@ -273,7 +274,7 @@ class Study():
         insert_point.addBindValue(get_shaft_id.value(0))
         insert_point.addBindValue(get_psensor_id.value(0))
         insert_point.addBindValue(os.path.join(self.rootDir,"Images",configfile))
-        insert_point.addBindValue(os.path.join(self.rootDir,"Notices",noticefile))
+        insert_point.addBindValue(scriptpath)
         insert_point.exec()
         dftemp, dfpress = self.processData(trawfile, prawfile)
         self.writeRawTemp(name, dftemp)
@@ -282,13 +283,13 @@ class Study():
         return point
 
     def writeRawTemp(self, pointname, df):
-        q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
+        q = QSqlQuery(f'SELECT SamplingPoint.id FROM SamplingPoint where SamplingPoint.Name = "{pointname}"')
         q.exec()
         q.next()
         self.mainDb.rawMeasuresTempDb.insert_one_point(q.value(0),df)
     
     def writeRawPress(self,pointname, df):
-        q = QSqlQuery(f"""SELECT SamplingPoint.id where SamplingPoint.Name = "{pointname}" """)
+        q = QSqlQuery(f'SELECT SamplingPoint.id FROM SamplingPoint where SamplingPoint.Name = "{pointname}"')
         q.exec()
         q.next()
         self.mainDb.rawMeasuresPressDb.insert_one_point(q.value(0),df)

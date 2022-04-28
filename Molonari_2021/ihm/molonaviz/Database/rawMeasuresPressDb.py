@@ -45,7 +45,7 @@ class RawMeasuresPressDb():
         INSERT INTO RawMeasuresPress (
             Date,
             TempBed,
-            Pressure,
+            Tension,
             PointKey
         )
         VALUES (?, ?, ?, ?)
@@ -83,7 +83,7 @@ class RawMeasuresPressDb():
         INSERT INTO RawMeasuresPress (
             Date,
             TempBed,
-            Pressure,
+            Tension,
             PointKey
         )
         VALUES (?, ?, ?, ?)
