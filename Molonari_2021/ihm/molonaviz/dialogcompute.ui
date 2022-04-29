@@ -6,78 +6,278 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
-    <height>630</height>
+    <width>1084</width>
+    <height>523</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>0</width>
-    <height>630</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>16777215</width>
-    <height>630</height>
+    <width>1000</width>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Compute</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
    <item>
-    <widget class="QFrame" name="frameDirect">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="label_6">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Number of layers:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="spinBoxNLayersDirect"/>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Preferred</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButtonUpdate">
+       <property name="text">
+        <string>Update table</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_8">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Number of cells:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="spinBoxNCellsDirect">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>70</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>70</width>
+         <height>16777215</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableWidget">
+     <property name="enabled">
+      <bool>true</bool>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>false</bool>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
+     <property name="rowCount">
+      <number>10</number>
+     </property>
+     <attribute name="horizontalHeaderCascadingSectionResizes">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>194</number>
+     </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>100</number>
+     </attribute>
+     <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+      <bool>false</bool>
+     </attribute>
+     <row>
+      <property name="text">
+       <string>Layer1</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer2</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer3</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer4</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer5</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer6</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer7</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer8</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer9</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>Layer10</string>
+      </property>
+     </row>
+     <column>
+      <property name="text">
+       <string>Depth_bottom (cm)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Permeability (m/s)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Porosity</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>SediThermCon (W/m/K)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>SolVolThermCap (J/m^3/K)</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBoxMCMC">
+     <property name="title">
+      <string>Execute inversion before</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QRadioButton" name="radioButtonDirect">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Direct Model</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QGridLayout" name="DirectModelLayout">
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="lineEditThermalConductivityDirect">
+       <layout class="QGridLayout" name="MCMCLayout">
+        <item row="4" column="2">
+         <widget class="QLineEdit" name="lineEditThermalCapacityMin">
           <property name="minimumSize">
            <size>
-            <width>0</width>
-            <height>21</height>
+            <width>100</width>
+            <height>0</height>
            </size>
           </property>
           <property name="text">
-           <string>3.4</string>
+           <string>1000</string>
           </property>
           <property name="readOnly">
            <bool>true</bool>
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1">
+        <item row="3" column="5">
+         <widget class="QLabel" name="label_33">
+          <property name="text">
+           <string>Sigma :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="4">
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
-           <widget class="QLineEdit" name="lineEditKDirect">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>21</height>
-             </size>
-            </property>
+           <widget class="QLineEdit" name="lineEditKMax">
             <property name="text">
-             <string>5</string>
+             <string>7</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -86,194 +286,110 @@
           </item>
          </layout>
         </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEditPorosityDirect">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>21</height>
-           </size>
-          </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>0.15</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
+           <string>Max Iterations:</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_4">
+        <item row="5" column="2">
+         <widget class="QLineEdit" name="lineEditQuantiles">
+          <property name="text">
+           <string>0.05,0.5,0.95</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLineEdit" name="lineEditKMin">
+            <property name="text">
+             <string>2</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="4" column="3">
+         <widget class="QLabel" name="label_28">
+          <property name="text">
+           <string>Max:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QLabel" name="labelsigmaK">
+          <property name="text">
+           <string>Sigma :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="labelMoinsLog10KMCMC">
+          <property name="text">
+           <string>Permeability (m/s):</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLineEdit" name="lineEditMaxIterMCMC">
+          <property name="text">
+           <string>5000</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_15">
           <property name="text">
            <string>Sediment Thermal Conductivity (W/m/K):</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_5">
+        <item row="2" column="3">
+         <widget class="QLabel" name="label_26">
           <property name="text">
-           <string>Solid Volumetric Thermal Capacity (J/m^3/K):</string>
+           <string>Max:</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Porosity:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
-         <widget class="QComboBox" name="comboBoxNCellsDirect">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
+        <item row="2" column="4">
+         <widget class="QLineEdit" name="lineEditPorosityMax">
           <property name="minimumSize">
            <size>
-            <width>0</width>
-            <height>21</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>J/m^3/kg</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>Number of cells :</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="labelMoinsLog10KDirect">
-          <property name="toolTip">
-           <string extracomment="Please enter minus log10K"/>
-          </property>
-          <property name="text">
-           <string>Permeability:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLineEdit" name="lineEditThermalCapacityDirect">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>21</height>
+            <width>100</width>
+            <height>0</height>
            </size>
           </property>
           <property name="text">
-           <string>2.5e7</string>
+           <string>0.25</string>
           </property>
           <property name="readOnly">
            <bool>true</bool>
           </property>
          </widget>
         </item>
-        <item row="2" column="2">
-         <widget class="QLabel" name="label_7">
+        <item row="3" column="4">
+         <widget class="QLineEdit" name="lineEditThermalConductivityMax">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="text">
-           <string>W/m/K</string>
+           <string>5</string>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
-        <item row="1" column="2">
-         <spacer name="horizontalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="4" column="2">
-         <spacer name="horizontalSpacer_6">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="label_11">
-          <property name="text">
-           <string>m/s</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButtonDirect">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Run Direct Model</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QFrame" name="frame_2">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QRadioButton" name="radioButtonMCMC">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Bayesian Inversion</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QGridLayout" name="MCMCLayout">
-        <item row="2" column="2">
-         <widget class="QLineEdit" name="lineEditPorosityMin">
+        <item row="2" column="6">
+         <widget class="QLineEdit" name="lineEditPorositySigma">
           <property name="minimumSize">
            <size>
             <width>100</width>
@@ -288,24 +404,26 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="5">
-         <widget class="QLabel" name="labelsigmaK">
+        <item row="3" column="1">
+         <widget class="QLabel" name="label_12">
           <property name="text">
-           <string>Sigma :</string>
+           <string>Min:</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="3">
-         <widget class="QLabel" name="label_28">
-          <property name="text">
-           <string>Max:</string>
+        <item row="4" column="6">
+         <widget class="QLineEdit" name="lineEditThermalCapacitySigma">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
           </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="labelMoinsLog10KMCMC">
           <property name="text">
-           <string>Permeability (m/s):</string>
+           <string>100</string>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -346,17 +464,26 @@
           </property>
          </widget>
         </item>
+        <item row="2" column="2">
+         <widget class="QLineEdit" name="lineEditPorosityMin">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>0.01</string>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="1">
          <widget class="QLabel" name="label_23">
           <property name="text">
            <string>Min:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="2">
-         <widget class="QComboBox" name="comboBoxNCellsMCMC">
-          <property name="enabled">
-           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -376,13 +503,6 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
-         <widget class="QLabel" name="label_18">
-          <property name="text">
-           <string>Number of cells :</string>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="6">
          <widget class="QLineEdit" name="lineEditThermalConductivitySigma">
           <property name="minimumSize">
@@ -399,6 +519,20 @@
           </property>
          </widget>
         </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="label_22">
+          <property name="text">
+           <string>Min:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3">
+         <widget class="QLabel" name="label_25">
+          <property name="text">
+           <string>Max:</string>
+          </property>
+         </widget>
+        </item>
         <item row="2" column="5">
          <widget class="QLabel" name="label_32">
           <property name="text">
@@ -410,64 +544,6 @@
          <widget class="QLabel" name="label_16">
           <property name="text">
            <string>Solid Volumetric Thermal Capacity (J/m^3/K):</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLabel" name="label_22">
-          <property name="text">
-           <string>Min:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="4">
-         <widget class="QLineEdit" name="lineEditPorosityMax">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>0.25</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_15">
-          <property name="text">
-           <string>Sediment Thermal Conductivity (W/m/K):</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="3">
-         <widget class="QLabel" name="label_26">
-          <property name="text">
-           <string>Max:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_14">
-          <property name="text">
-           <string>Porosity:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="3">
-         <widget class="QLabel" name="label_25">
-          <property name="text">
-           <string>Max:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Quantiles (separated by &quot;,&quot;)</string>
           </property>
          </widget>
         </item>
@@ -487,157 +563,17 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
-         <widget class="QLineEdit" name="lineEditMaxIterMCMC">
+        <item row="5" column="0">
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>5000</string>
+           <string>Quantiles (separated by &quot;,&quot;)</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
-         <widget class="QLineEdit" name="lineEditThermalConductivityMax">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_14">
           <property name="text">
-           <string>5</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="6">
-         <widget class="QLineEdit" name="lineEditThermalCapacitySigma">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>100</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLabel" name="label_12">
-          <property name="text">
-           <string>Min:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="6">
-         <widget class="QLineEdit" name="lineEditPorositySigma">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>0.01</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="2">
-         <widget class="QLineEdit" name="lineEditQuantiles">
-          <property name="text">
-           <string>0.05,0.5,0.95</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="5">
-         <widget class="QLabel" name="label_33">
-          <property name="text">
-           <string>Sigma :</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="2">
-         <widget class="QLineEdit" name="lineEditThermalCapacityMin">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>1000</string>
-          </property>
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
-           <widget class="QLineEdit" name="lineEditKMin">
-            <property name="text">
-             <string>2</string>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Max Iterations:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="4">
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QLineEdit" name="lineEditKMax">
-            <property name="text">
-             <string>7</string>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButtonMCMC">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Run Inversion + Direct Model</string>
+           <string>Porosity:</string>
           </property>
          </widget>
         </item>
@@ -656,7 +592,7 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_3">
+      <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -669,26 +605,26 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButtonRun">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Run</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="standardButtons">
         <set>QDialogButtonBox::Cancel</set>
        </property>
+       <property name="centerButtons">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
     </layout>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>
@@ -706,38 +642,6 @@
     </hint>
     <hint type="destinationlabel">
      <x>395</x>
-     <y>314</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButtonMCMC</sender>
-   <signal>clicked()</signal>
-   <receiver>dialogCompute</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>898</x>
-     <y>514</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>509</x>
-     <y>314</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButtonDirect</sender>
-   <signal>clicked()</signal>
-   <receiver>dialogCompute</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>933</x>
-     <y>227</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>509</x>
      <y>314</y>
     </hint>
    </hints>
