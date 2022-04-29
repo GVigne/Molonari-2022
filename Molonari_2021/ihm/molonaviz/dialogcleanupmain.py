@@ -44,44 +44,39 @@ class MplCanvasTimeCompare(FigureCanvasQTAgg):
         super(MplCanvasTimeCompare, self).__init__(self.fig)
 
     def refresh_compare(self, df_or, df_cleaned,id):
+        """ Compare original data, semiprocessed data and cleaned data """
         suffix_or = "_or"
         varOr = df_or.dropna()[['date',id]]
-        # df_compare_or = df_or[["date",id]].join(varOr.set_index("date"),on="date",rsuffix=suffix_or) # TODO use merge
-        df_compare_or= df_or[["date",id]].merge(varOr,on=["date"],how="outer",suffixes=(None,suffix_or))           
+        df_compare_or= df_or[["date",id]].merge(varOr,on=["date"],how="outer",suffixes=(None,suffix_or))  # Merge "outer" to get nan values if VarOr is smaller    
         df_compare_or['missing'] = df_compare_or[list(df_compare_or.columns)[-1]]
 
-        df_compare_or.loc[np.isnan(df_compare_or['missing']),'missing'] = True
+        df_compare_or.loc[np.isnan(df_compare_or['missing']),'missing'] = True # Gets a mask
         df_compare_or.loc[df_compare_or['missing'] != True, 'missing'] = False
         
-        df_compare_or['date'] = mdates.date2num(df_compare_or['date'])
-        # df_compare_or[df_compare_or['missing'] == False].plot(x='date',y=id,ax = self.axes)
-        df_compare_or[df_compare_or['missing'] == True].plot.scatter(x='date',y=id,c = 'g',s = 3,ax = self.axes)
-        # self.format_axes()
-        # self.fig.canvas.draw()
+        df_compare_or['date'] = mdates.date2num(df_compare_or['date']) # ALWAYS be sure to converte to mdates. Otherwise, plot may not work
+        df_compare_or[df_compare_or['missing'] == True].plot.scatter(x='date',y=id,c = 'g',s = 3,ax = self.axes) # Plot the mask
         
+        # Compare cleaned data 
         suffix_cl = '_cleaned'
-        varCleaned = df_cleaned[["date",id]].dropna()
-        # df_compare = varOr.join(varCleaned.set_index("date"),on="date",rsuffix=suffix_cl) # TODO use merge
-        df_compare= varOr.merge(varCleaned,on=["date"],how="outer",suffixes=(None,suffix_cl))     
+        varCleaned = df_cleaned[["date",id]].dropna() 
+        df_compare= varOr.merge(varCleaned,on=["date"],how="outer",suffixes=(None,suffix_cl))     #M Merge "outer"
 
         df_compare['outliers'] = df_compare[list(df_compare.columns)[-1]]
-        mask = df_compare.apply(lambda x: True if x[id]!=x[id+suffix_cl] else False,axis=1)
-        point_sizes = df_compare[mask].apply(lambda x: 3 if np.isnan(x[id+suffix_cl]) else 0.2, axis=1)
-        if point_sizes.empty:
-            point_sizes = pd.Series([],dtype=np.float64)
-        # df_compare.loc[np.isnan(df_compare['outliers']),'outliers'] = True
-        # df_compare.loc[df_compare['outliers'] != True, 'outliers'] = False
+        mask = df_compare.apply(lambda x: True if x[id]!=x[id+suffix_cl] else False,axis=1) # Creates maks
+        point_sizes = df_compare[mask].apply(lambda x: 3 if np.isnan(x[id+suffix_cl]) else 0.2, axis=1) # Deleted points are bigger than modified points by the filter
+        if point_sizes.empty: 
+            point_sizes = pd.Series([],dtype=np.float64) # Avoids an error when ploting
         
         df_compare['date'] = mdates.date2num(df_compare['date'])
         varCleaned['date'] = mdates.date2num(varCleaned['date'])
-        # df_compare[df_compare['outliers'] == False].plot(x='date',y=id,ax = self.axes)
         varCleaned.plot(x='date',y=id,ax = self.axes)
         df_compare[mask].plot.scatter(x='date',y=id,c = '#FF6D6D',s =point_sizes,ax = self.axes)
         self.format_axes()
         self.fig.canvas.draw()
 
-    def refresh(self,df_cleaned,id):
-        varCleaned = df_cleaned[["date",id]].dropna()
+    def refresh(self,df_cleaned,id): # Plot without comparing. 
+        """ id is the string of the name variable"""
+        varCleaned = df_cleaned[["date",id]].dropna() # Get the var
         varCleaned['date'] = mdates.date2num(varCleaned['date'].copy())
         varCleaned.plot(x='date',y=id,ax = self.axes)
         self.format_axes()
@@ -122,56 +117,6 @@ def displayCriticalMessage(mainMessage: str, infoMessage: str=''):
     msg.setInformativeText(infoMessage) ####
     msg.exec()
 
-
-
-def loadCSV(path: str):
-    """
-    Open and read the CSV file
-    """
-    df = pd.read_csv(path)
-    
-    return df
-
-def loadRawCSV(path: str):
-    df = pd.read_csv(path,header=1)
-    return df
-
-def cleanupTempZH(df: pd.DataFrame):
-    """
-    Cleanup raw temperature Pandas Dataframe:
-        - Rename the columns,
-        - Remove lines having missing values 
-        - Remove unexpected last columns and
-        - Delete Index column
-    
-    This function works directly on the giving Pandas Dataframe (in place)
-    """
-    # New column names
-    val_cols = ["Temp1", "Temp2", "Temp3", "Temp4"]
-    all_cols = ["Idx", "Date"] + val_cols
-
-    # Rename the 6 first columns
-    for i in range(0, len(all_cols)) :
-        df.columns.values[i] = all_cols[i]
-    # Remove lines having at least one missing value
-    df.dropna(subset=val_cols,inplace=True)
-    # Remove last columns
-    df.dropna(axis=1,inplace=True)
-    # Remove first column
-    df.drop(["Idx"],axis=1,inplace=True)
-
-def cleanupPressure(df: pd.DataFrame):
-    val_cols = ["tension_V", "Temp_Stream"]
-    all_cols = ["Idx", "Date"] + val_cols
-    # Rename the 6 first columns
-    for i in range(0, len(all_cols)) :
-        df.columns.values[i] = all_cols[i]
-    # Remove lines having at least one missing value
-    df.dropna(subset=val_cols,inplace=True)
-    # Remove last columns
-    df.dropna(axis=1,inplace=True)
-    # Remove first column
-    df.drop(["Idx"],axis=1,inplace=True)
 
 def convertDates(df: pd.DataFrame):
     """
@@ -300,227 +245,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         Destructor
         """
         #Don't close the connection to the database as it is global.
-        pass
-
-
-    def readCSV(self):
-        """
-        Read the provided CSV files (depths values and gridded temperatures)
-        and load it into a Pandas dataframes
-        """
-        # Retrieve the CSV file paths from lineEditDepthFile and lineEditTempFile
-        depthfile = self.lineEditDepthFile.text()
-        gridfile = self.lineEditTempFile.text()
-        if depthfile and gridfile:
-            try :
-                # Load the CSV file
-                dfdepth = loadCSV(depthfile)
-                
-            except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different depth file")
-                return pd.DataFrame(), pd.DataFrame()
-            
-            try :
-                # Load the CSV file
-                dftemp = loadCSV(gridfile)
-                
-                # Convert the dates
-                convertDates(dftemp)
-                
-            except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different temperatures file")
-                return pd.DataFrame(), pd.DataFrame()
-            
-        return dfdepth, dftemp
-    
-    def readRawZHCSV(self):
-        trawfile = self.lineEditRawZHFile.text()
-        if trawfile:
-            try :
-                # Load the CSV file
-                dftemp = loadRawCSV(trawfile)
-                # Cleanup the dataframe
-                cleanupTempZH(dftemp)
-                # Convert the dates
-                convertDates(dftemp)
-                return dftemp
-
-            except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different file")
-    
-        # If failure, return an empty dataframe
-        return pd.DataFrame()
-
-    def readRawPressureCSV(self):
-        trawfile = self.lineEditRawPressureFile.text()
-        if trawfile:
-            try :
-                # Load the CSV file
-                dftemp = loadRawCSV(trawfile)
-                # Cleanup the dataframe
-                cleanupPressure(dftemp)
-                # Convert the dates
-                convertDates(dftemp)
-                return dftemp
-
-            except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different file")
-    
-        # If failure, return an empty dataframe
-        return pd.DataFrame()
-    
-    def readCalibrationCSV(self):
-        path = self.lineEditCalibrationFile.text()
-        
-        if path:
-            try :
-                # Load the CSV file
-                dftemp = loadCSV(path)
-                return dftemp
-
-            except Exception as e :
-                displayCriticalMessage(f"{str(e)}", "Please choose a different file")
-    
-        # If failure, return an empty dataframe
-        return pd.DataFrame()
-    
-
-    def writeRawZHSQL(self, df: pd.DataFrame):
-        """
-        Write the given Pandas dataframe into the SQL database
-        """
-        # Remove the previous measures table (if so)
-        dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
-        dropTableQuery.exec("DROP TABLE IF EXISTS ZH") 
-        dropTableQuery.finish()
-        
-        # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.rawCon) 
-        # Columns and their data type are defined
-        createTableQuery.exec(
-            """
-            CREATE TABLE IF NOT EXISTS ZH (
-                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                date TIMESTAMP,
-                t1 FLOAT,
-                t2 FLOAT,
-                t3 FLOAT,
-                t4 FLOAT           
-            )
-            """
-        )
-        createTableQuery.finish()
-
-        # Construct the dynamic insert SQL request and execute it        
-        dynamicInsertQuery = QSqlQuery(self.rawCon)
-        # In a dynamic query, first of all the query is prepared with placeholders (?)
-        dynamicInsertQuery.prepare(
-            """
-            INSERT INTO ZH (
-                date,
-                t1,
-                t2,
-                t3,
-                t4
-            )
-            VALUES (?, ?, ?, ?, ?)
-            """
-        )
-
-        for i in range(df.shape[0]): 
-            val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
-            dynamicInsertQuery.addBindValue(str(val[0])) # The first placeholder is for the date. Then, it should be a string
-            for j in range(1,5):
-                dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
-            dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
-        dynamicInsertQuery.finish()
-
-    def writeRawPressureSQL(self, df: pd.DataFrame):
-        """
-        Write the given Pandas dataframe into the SQL database
-        """
-        # Remove the previous measures table (if so)
-        dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query
-        dropTableQuery.exec("DROP TABLE IF EXISTS Pressure") 
-        dropTableQuery.finish()
-        
-        # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.rawCon) 
-        # Columns and their data type are defined
-        createTableQuery.exec(
-            """
-            CREATE TABLE IF NOT EXISTS Pressure (
-                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-                date TIMESTAMP,
-                tension FLOAT,
-                t_stream FLOAT      
-            )
-            """
-        )
-        createTableQuery.finish()
-
-        # Construct the dynamic insert SQL request and execute it
-        dynamicInsertQuery = QSqlQuery(self.rawCon)
-        # In a dynamic query, first of all the query is prepared with placeholders (?)
-        dynamicInsertQuery.prepare(
-            """
-            INSERT INTO Pressure (
-                date,
-                tension,
-                t_stream
-            )
-            VALUES (?, ?, ?)
-            """
-        )
-
-        for i in range(df.shape[0]): 
-            val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
-            dynamicInsertQuery.addBindValue(str(val[0])) # The first placeholder is for the date. Then, it should be a string
-            for j in range(1,3):
-                dynamicInsertQuery.addBindValue(float(val[j])) # The rest are for the temperatures (which are supposed to be float instead of np.float64)
-            dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
-        dynamicInsertQuery.finish()
-
-    def writeCalibrationSQL(self, df: pd.DataFrame):
-        """
-        Write the given Pandas dataframe into the SQL database
-        """
-        # Remove the previous measures table (if so)
-        dropTableQuery = QSqlQuery(self.rawCon) # Connection mustt be specified in each query        
-        dropTableQuery.exec("DROP TABLE IF EXISTS Calibration") 
-        dropTableQuery.finish()
-        
-        # Create the table for storing the temperature measures (id, date, temp*4)
-        createTableQuery = QSqlQuery(self.rawCon) 
-        # Columns and their data type are defined
-        createTableQuery.exec(
-            """
-            CREATE TABLE IF NOT EXISTS Calibration (
-                Var VARCHAR(20),
-                Value VARCHAR(40)  
-            )
-            """
-        )
-        createTableQuery.finish()
-        # Construct the dynamic insert SQL request and execute it
-        dynamicInsertQuery = QSqlQuery(self.rawCon)
-        # In a dynamic query, first of all the query is prepared with placeholders (?)
-        dynamicInsertQuery.prepare(
-            """
-            INSERT INTO Calibration (
-                Var,
-                Value
-            )
-            VALUES (?, ?)
-            """
-        )
-
-        for i in range(df.shape[0]): 
-            val = tuple(df.iloc[i])  # Each row of the DataFrame is selected as a tuple
-            dynamicInsertQuery.addBindValue(str(val[0]))
-            dynamicInsertQuery.addBindValue(str(val[1]))
-            dynamicInsertQuery.exec() # Once the placeholders are filled, the query is executed
-        dynamicInsertQuery.finish()
+        pass  
                     
     def load_pandas(self,db, statement, cols):    
         db.transaction()
@@ -533,8 +258,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
                 values.append(query.value(i))
             table.append(values)
         df = pd.DataFrame(table)
-        # for i in range(0, len(cols)) :
-        #     df.columns.values[i] = cols[i]
         df.columns = cols
         db.commit()
         return df
