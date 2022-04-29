@@ -20,6 +20,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         self.pointName = pointName
         
+        '''
+        Not yet possible
+        
         #Open the database
         db_point = QSqlDatabase.addDatabase("QSQLITE")
         db_point.setDatabaseName(r".\..\..\studies\study_2022\molonari_study_2022 .sqlite")
@@ -31,6 +34,9 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         print(query_test.exec_(f"""SELECT Point.id FROM Point,SamplingPoint WHERE SamplingPoint.Name = "{self.pointName}" AND Point.SamplingPoint = SamplingPoint.id"""))
         query_test.first()
         self.point_id = query_test.value(0)
+        
+        db_point.close()
+        '''
         
         self.setupUi(self)
 
@@ -61,8 +67,6 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         # Show the default table
         self.showdb()
         
-        db_point.close()
-
         self.pushButtonRun.clicked.connect(self.run)
 
         self.pushButtonRestoreDefault.clicked.connect(self.setDefaultValues)
@@ -140,12 +144,11 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
         
         row = self.spinBoxNLayersDirect.value() 
         # col always = 5 
-        # the default number of rows = 3
+        # the default number of rows = 1
         
         self.tableWidget.setRowCount(10)
         self.tableWidget.setColumnCount(5)
         
-        '''
         for i in range(row):
     
             self.tableWidget.setItem(i, 1, QTableWidgetItem("1e-5"))
@@ -153,15 +156,16 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 3, QTableWidgetItem("3.4"))
             self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
                     
-        self.tableWidget.setItem(0, 0, QTableWidgetItem("21"))
-        self.tableWidget.setItem(1, 0, QTableWidgetItem("31"))
-        self.tableWidget.setItem(2, 0, QTableWidgetItem("46"))
-        '''
+        self.tableWidget.setItem(0, 0, QTableWidgetItem("46"))
+        
         for k in range(10):
                 if k > row - 1:
                     self.tableWidget.hideRow(k)
                 else:
                     self.tableWidget.showRow(k)
+        
+        '''
+        Not yet possible
         
         #Find the bestParameter related to the id found
         query_test = QSqlQuery()
@@ -223,6 +227,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             self.tableWidget.setItem(i, 3, QTableWidgetItem(str(sediThermCon)))
             self.tableWidget.setItem(i, 4, QTableWidgetItem(str(solVolThermCap)))
             i+=1  
+        '''
         '''
         if not (self.searchTable(tableName = "BestParameters",point_id = point_id)):
             if not (self.searchTable(tableName = "ParametersDistribution",point_id = point_id)):
@@ -301,6 +306,7 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             n = float(self.tableWidget.item(i, 2).text())
             lambda_s = float(self.tableWidget.item(i, 3).text())
             rhos_cs = float(self.tableWidget.item(i, 4).text())
+            # TODO : return parameters for each layer
             return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
 
 
