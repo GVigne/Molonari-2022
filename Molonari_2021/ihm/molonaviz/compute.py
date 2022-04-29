@@ -134,6 +134,9 @@ class Compute(QtCore.QObject):
         '''
         SQL : INSERT INTO Layer (DepthBed) VALUES (1) WHERE id = layer
         '''
+        '''
+        Not yet possible
+        
         #Open the database
         db_point = QSqlDatabase.addDatabase("QSQLITE")
         db_point.setDatabaseNamedb_point.setDatabaseName(r".\..\..\studies\study_2022\molonari_study_2022 .sqlite")
@@ -163,6 +166,7 @@ class Compute(QtCore.QObject):
         query_new.exec_(f"""UPDATE Layer SET DepthBed={self.tableWidget.item(id,0).text()} WHERE id = {layer}""")
         
         db_point.close()   
+        '''
   
     def saveBestParams(self, resultsDir: str):
         """
