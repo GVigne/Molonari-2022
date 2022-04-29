@@ -248,6 +248,9 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         pass  
                     
     def load_pandas(self,db, statement, cols):    
+        """ constructs a pandas dataframe with the given column names, getting 
+        the data from the given database connection and using the given statement.
+        cols should be a list, statement a string and db a connection"""
         db.transaction()
         query = QSqlQuery(db)
         query.exec(statement)
@@ -255,15 +258,15 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         while query.next():
             values = []
             for i in range(query.record().count()):
-                values.append(query.value(i))
-            table.append(values)
+                values.append(query.value(i)) # Fills the row
+            table.append(values) # Fills the table
         df = pd.DataFrame(table)
         df.columns = cols
         db.commit()
         return df
     
-    def iqr(self,df_in, col_name):
-
+    def iqr(self,df_in, col_name): # Interquartile method. TODO: This function would be better situated in the script .txt instead of here
+        """ Applies the Interquartile method to the given variable in the given DataFrame"""
         q1 = df_in[col_name].quantile(0.25)
         q3 = df_in[col_name].quantile(0.75)
         iqr = q3-q1 #Interquartile range
@@ -273,16 +276,18 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         df_out[col_name] = df_in[col_name].loc[(df_in[col_name] > fence_low) & (df_in[col_name] < fence_high)]
         return df_out
 
-    def remove_outlier_z(self, df_in, col_name):
+    def remove_outlier_z(self, df_in, col_name): # z-score method. TODO: This function would be better situated in the script .txt instead of here
+        """ Applies the z-score method to the given variable in the given DataFrame"""
         df_out = df_in.copy()
         var = df_in[col_name].copy().dropna()
         df_out[col_name]= var.loc[(np.abs(stats.zscore(var)) < 3)]
         return df_out
 
     def plotPrevisualizedVar(self):
+        """ Updates the view of the radio buttons the checkbox and the plot """
         self.method_dic[self.varName()].setChecked(True)
         self.checkBoxFilter.setChecked(self.filter_dic[self.varName()])
-        "Refresh plot"
+        # Refresh plot 
         id = self.comboBoxRawVar.currentText()
         self.mplPrevisualizeCurve.clear()
 
@@ -302,19 +307,16 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             
     def getScript(self):
         try:
-            # with open('saved_text.txt', 'r') as f:
-            #     sample_text = f.read()
-            #     f.close()
-            with open(self.path_to_script) as f:
+            with open(self.path_to_script) as f: # Try to get customized script
                 sample_text = f.read()
                 f.close()
         except:
-            #Once again,this is too permisive: what if no script was found?
+            # TODO this is too permisive: what if no script was found? 
             print("No saved script, show sample script")
             with open(os.path.join(os.path.dirname(self.path_to_script),"sample_text.txt")) as f:
                 sample_text = f.read()
                 f.close()
-        # scriptpartiel = plainTextEdit.toPlainText()
+        
         scriptindente = sample_text.replace("\n", "\n   ")
         script = "def fonction(self, df_ZH, df_Pressure, df_Calibration): \n   " + scriptindente + "\n" + "   return(df_loaded, df_cleaned, varList)"
         return(script)
@@ -323,7 +325,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         scriptPyPath = os.path.join(self.scriptDir,"script.py")
         sys.path.append(self.scriptDir) 
 
-        with open(scriptPyPath, "w") as f:
+        with open(scriptPyPath, "w") as f: # Saves the script in a python file to be imported
             f.write(script)
             f.close()
 
@@ -333,23 +335,13 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         except Exception as e:
             print(e)
             raise e
-        finally:
+        finally: # Delete temporary file
             os.remove(scriptPyPath)
-            del sys.modules["script"]
+            del sys.modules["script"] 
 
         try :
             self.df_loaded, self.df_cleaned, self.varList = fonction(self,df_ZH, df_Pressure, df_Calibration)
-
-            #On réécrit les csv:
-            # os.remove(self.tprocessedfile)
-            # os.remove(self.pprocessedfile)
-            # new_dft.to_csv(self.tprocessedfile, index=False)
-            # new_dfp.to_csv(self.pprocessedfile, index=False)
-
-            # self.dftemp = readCSVWithDates(self.tprocessedfile)
-            # self.dfpress = readCSVWithDates(self.pprocessedfile)
-
-            return(1)
+            return
         
         except Exception as e :
             raise e
@@ -359,12 +351,9 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         df_Pressure = df_Pressure.copy()
         df_Calibration = df_Calibration.copy()
         script = self.getScript()
-        
-        
+    
         try :
-            self.cleanup(script, df_ZH, df_Pressure, df_Calibration)
-            
-            
+            self.cleanup(script, df_ZH, df_Pressure, df_Calibration)     
         except Exception as e :
             print(e, "==> Clean-up aborted")
             displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
@@ -372,31 +361,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
                 self.saveScript(backupScript)
             self.editScript()
             
-
-    def editScript(self):
-        dig = DialogScript(self.name, self.path_to_script)
-        res = dig.exec()
-        if res == QtWidgets.QDialog.Accepted:
-
-            # Save the modified text
-            try:
-                backupScript = self.openScript()
-                dig.updateScript()
-                self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration, backupScript) # TODO bug when file fails to run the first time the window is open
-                self.plotPrevisualizedVar()
-                print("Script successfully updated")
-            except Exception as e:
-                print(e, "==> Clean-up aborted")
-                displayCriticalMessage("Error: Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ')
-                if backupScript:
-                    self.saveScript(backupScript)
-                self.editScript()
-                
-                
-    
-    # Define the selectMethod function and edit the sample_text.txt
     def openScript(self):
-        
         try: 
             with open(self.path_to_script) as file:
             # with open('saved_text.txt', 'r') as file:
@@ -416,11 +381,33 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             file.writelines( data )
             file.close()
     
-    def parseKey(self,data,key):
+
+    def editScript(self):
+        dig = DialogScript(self.name, self.path_to_script)
+        res = dig.exec()
+        if res == QtWidgets.QDialog.Accepted:
+
+            # Save the modified text
+            try:
+                backupScript = self.openScript()
+                dig.updateScript()
+                self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration, backupScript) # TODO bug when file fails to run the first time the window is open
+                self.plotPrevisualizedVar()
+                print("Script successfully updated")
+            except Exception as e:
+                print(e, "==> Clean-up aborted")
+                displayCriticalMessage("Error: Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ')
+                if backupScript:
+                    self.saveScript(backupScript)
+                self.editScript() # Open again the editor in case of failure 
+                
+    def parseKey(self,data,key): #  Get the line in the script where the key is 
         for i in range(len(data)):
             if data[i].find(key) != -1:
                 line = i
         return line
+    
+    # Define the selectMethod function and edit the sample_text.txt
     def selectMethod(self,object):
         id = self.buttonGroupMethod.id(object)
         varIndex = self.varList.index(self.varName())
@@ -465,7 +452,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.saveScript(data)
         self.previsualizeCleaning()
 
-    def fromFtoC(self):
+    def fromFtoC(self): # From fahrenheit to Celsius
         data = self.openScript()
 
         fToCKey = "# TEMPERATURE F TO C"
@@ -481,7 +468,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.saveScript(data)
         self.previsualizeCleaning()
 
-    def fromCtoK(self):
+    def fromCtoK(self): # From Celsius to Kelvin
         data = self.openScript()
 
         cToKKey = "# TEMPERATURE C TO K"
@@ -499,16 +486,21 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         "Cleans data and shows a previsuaization"
         self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
 
+        ## CODE NOW IN THE SCRIPT
+        # This commented code could be implemented here to improve efficiency (instead of runing the script every time there is a modification)
+        
         # selected_df = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
 
         # for i in self.varList[1:]:
         #     df_var = selected_df[["date",i]].dropna()
         #     values = self.df_cleaned.apply(lambda x: np.nan if mdates.date2num(x['date']) in list(mdates.date2num(df_var['date'])) else x[i],axis=1)
         #     self.df_cleaned.loc[:,i] = values
+        ## END OF SCRIPT CODE
 
         self.plotPrevisualizedVar()
 
     def getDF(self):
+        "Gets the dataframes needed frm the database"
         def getPressureSensorByname(bd, name):
             bd.con.transaction()
             selectQuery = QSqlQuery(bd.con)
@@ -522,17 +514,12 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             bd.con.commit()
             return id
 
-        "Gets the unified pandas with charge_diff calculated and whitout tension voltage"
+        
         self.df_ZH = self.load_pandas(self.con, f'SELECT Date, Temp1, Temp2, Temp3, Temp4 FROM RawMeasuresTemp WHERE PointKey = {self.pointKey}', ["date", "t1", "t2", "t3", "t4"])
         convertDates(self.df_ZH)
-        # Uncomment if original data is in Fahrenheit
-        # self.df_ZH[["t1","t2","t3","t4"]] = self.df_ZH[["t1","t2","t3","t4"]].apply(lambda x: (x-32)/1.8, axis=1) 
         self.df_Pressure = self.load_pandas(self.con, f'SELECT Date, Tension, TempBed FROM RawMeasuresPress WHERE PointKey = {self.pointKey}', ["date", "tension", "t_stream"])
         convertDates(self.df_Pressure)
-        # Uncomment if original data is in Fahrenheit
-        # self.df_Pressure[["t_stream"]] = self.df_Pressure[["t_stream"]].apply(lambda x: (x-32)/1.8, axis=1) 
         idPressureSensor = getPressureSensorByname(self.samplingPointDb,self.name)
-        # self.df_Calibration = self.load_pandas(self.con, "SELECT Var, Value FROM Calibration", ["Var", "Value"])
         self.df_Calibration = self.load_pandas(self.con, f'SELECT Name, Intercept, [Du/Dh], [Du/Dt] FROM PressureSensor WHERE id = {idPressureSensor}', ["Name", "Intercept", "dUdH", "dUdT"])
         
         self.mplPrevisualizeCurve = MplCanvasTimeCompare()
@@ -540,6 +527,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.widgetToolBar.addWidget(self.toolBar)
 
         ## CODE NOW IN THE SCRIPT
+        # This commented code could be implemented here to improve efficiency (instead of runing the script every time there is a modification)
+
         # intercept = self.df_Calibration.loc[0,"Intercept"]
         # dUdH = self.df_Calibration.loc[0,"dUdH"]
         # dUdT = self.df_Calibration.loc[0,"dUdT"]
@@ -551,6 +540,7 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         # self.varList = list(self.df_loaded.columns)
         # self.df_cleaned = self.df_loaded.copy().dropna()
         ## END OF SCRIPT CODE
+
         try:    
             self.runScript(self.df_ZH, self.df_Pressure, self.df_Calibration)
         except Exception as e:
@@ -566,30 +556,29 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
             
 
-    def selectPoints(self):
+    def selectPoints(self): 
         dig = DialogCleanPoints()
         dig.plot(self.varName(), self.df_loaded, self.df_selected)
         res = dig.exec()
-        if res == QtWidgets.QDialog.Accepted:           
-            selection = dig.mplSelectCurve.df_selected[["date",self.varName()]]
-            self.df_selected = self.df_selected.merge(selection,on=["date"],how="outer",suffixes=(None,"_sel"))           
-            self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"]
-            self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True)
-            self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
-            self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
+        if res == QtWidgets.QDialog.Accepted: # Update selected points
+            selection = dig.mplSelectCurve.df_selected[["date",self.varName()]] # Get the selecton
+            self.df_selected = self.df_selected.merge(selection,on=["date"],how="outer",suffixes=(None,"_sel")) # Merge to get auxiliar column
+            self.df_selected[self.varName()] = self.df_selected[self.varName()+"_sel"] # Update old variable with new selected points (incluiding NaN values if needed)
+            self.df_selected.drop(self.varName()+"_sel",axis=1, inplace=True) # Drop auxiliar column
+            self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True) # Drop rows that only had information in this variable 
+            self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv')) # Save the selection
             
         self.previsualizeCleaning()
 
     def resetCleanVar(self):
-        # self.df_cleaned[self.varName()] = self.df_loaded[self.varName()]
 
         nan_values = np.empty((self.df_selected.shape[0],1))
         nan_values.fill(np.nan)
-        self.df_selected[self.varName()] = nan_values
-        self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True)
+        self.df_selected[self.varName()] = nan_values # Replace the selected values for the variable with NaN
+        self.df_selected.dropna(how="all",subset=self.varList[1:],inplace=True) # Drop rows that only had information in this variable 
         self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
 
-        obj = self.buttonGroupMethod.button(3)
+        obj = self.buttonGroupMethod.button(3) 
         self.selectMethod(obj)
         self.checkBoxFilter.setChecked(False)
         self.setFilter(self.varName())
@@ -597,7 +586,6 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
     def resetCleanAll(self):
         self.df_selected = pd.DataFrame(columns=self.varList)
         self.df_selected.to_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
-        # self.df_cleaned = self.df_loaded.copy().dropna() # TODO Is it ok the dropna()? 
         self.method_dic = dict.fromkeys(self.varList[1:],self.buttonGroupMethod.button(3))
         try:
             os.remove(os.path.join(self.path_to_script))
@@ -608,37 +596,3 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.checkBoxFC.setChecked(False)
         self.checkBoxCK.setChecked(False)
         self.previsualizeCleaning()
-    
-    
-
-
-# if __name__ == '__main__':
-#     """
-#     Main function of the script:
-#     - Create the QApplication object
-#     - Create the TemperatureViewer dialog and show it
-#     - Execute the infinite event loop and wait for interaction or exit
-#     """
-#     app = QtWidgets.QApplication(sys.argv)
-
-#     mainWin = DialogCleanupMain()
-#     mainWin.show()
-
-#     app.exec_()
-#     try:
-#         os.remove("saved_text.txt")
-#     except FileNotFoundError:
-#         pass
-#     try:
-#         os.remove("selected_points.csv")
-#     except FileNotFoundError:
-#         pass
-    # lower_limit = max(mainWin.df_cleaned[["t_stream"]].first_valid_index(),mainWin.df_cleaned[["charge_diff"]].first_valid_index(),mainWin.df_cleaned[["t4"]].first_valid_index())
-    # upper_limit = min(mainWin.df_cleaned[["t_stream"]].last_valid_index(),mainWin.df_cleaned[["charge_diff"]].last_valid_index(),mainWin.df_cleaned[["t4"]].last_valid_index())
-    # print(mainWin.df_cleaned)
-    # print(mainWin.df_cleaned.loc[lower_limit:upper_limit,:])
-    # cleaned = mainWin.df_cleaned.loc[lower_limit:upper_limit,:]
-    # zh = cleaned[["date","t1","t2","t3","t4"]]
-    # zh.to_csv("processed_temperatures_P51-1.csv")
-    # press = cleaned[["date","charge_diff","t_stream"]]
-    # press.to_csv("processed_pressures_P51-1.csv")

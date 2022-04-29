@@ -1,4 +1,4 @@
-####### DO NOT TOUCH #######
+################## DO NOT TOUCH #######################
 # MODULES 
 import sys, os
 import numpy as np
@@ -12,6 +12,7 @@ from scipy.signal import savgol_filter
 
 
 
+# Get pression in meters (m)
 # PRESSION
 intercept = self.df_Calibration.loc[0,"Intercept"]
 dUdH = self.df_Calibration.loc[0,"dUdH"]
@@ -20,6 +21,7 @@ df_Pressure["charge_diff"] = (df_Pressure["tension"]-df_Pressure["t_stream"]*dUd
 df_Pressure.drop(labels="tension",axis=1,inplace=True)
 
 
+# Mek sure that there are not nan values at the beginning and end of each boundary condition variable
 # TIMES - DATES
 
 df_loaded = df_Pressure.merge(df_ZH, how='outer', on="date").sort_values('date').reset_index().drop('index',axis=1)
@@ -28,9 +30,10 @@ varList = list(df_loaded.columns)
 
 lower_limit = max(df_loaded[["t_stream"]].first_valid_index(),df_loaded[["charge_diff"]].first_valid_index(),df_loaded[["t4"]].first_valid_index())
 upper_limit = min(df_loaded[["t_stream"]].last_valid_index(),df_loaded[["charge_diff"]].last_valid_index(),df_loaded[["t4"]].last_valid_index())
-# df_cleaned = df_loaded.copy().loc[lower_limit:upper_limit,:]
+# df_cleaned = df_loaded.copy().loc[lower_limit:upper_limit,:] # TODO is this working fine?
 df_cleaned = df_loaded.copy().dropna()
 
+# Methods to detection and elimination of outliers are overwritten in the next linens
 # METHODS
 # t_stream
 
@@ -44,6 +47,7 @@ df_cleaned = df_loaded.copy().dropna()
 
 # t4
 
+# Delete manual selected points stored in the .csv file
 # MANUAL SELECTED POINTS
 try:
     selected_df = pd.read_csv(os.path.join(self.scriptDir,f'selected_points_{self.name}.csv'))
@@ -55,8 +59,15 @@ try:
 except FileNotFoundError:
     pass
 
-# YOU CAN TOUCH - USER DEFINED FUNCTION
+############# END OF DO NOT TOUCH ####################
+####### YOU CAN TOUCH - USER DEFINED FUNCTION ########
 
+
+
+############## END OF YOU CAN TOUCH ###################
+################## DO NOT TOUCH #######################
+
+# Dictionary that allows to know if a variable should be filtered or not
 # SMOOTHING
 to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 't3': False, 't4': False}
 
@@ -65,6 +76,7 @@ for var in to_filter:
     if to_filter[var]:
         df_cleaned.loc[df_cleaned[var].notnull(),var] = savgol_filter(df_cleaned.loc[df_cleaned[var].notnull(),var],20,2)
 
+# Line to convert C to K at the end
 # TEMPERATURE C TO K
 
 
@@ -82,3 +94,5 @@ upper = min(limits[:,1])
 df_cleaned = df_cleaned.loc[lower:upper, :]
 df_cleaned.reset_index(inplace=True)
 df_cleaned.drop('index',axis=1,inplace=True)
+
+################# END OF SCRIPT #####################
