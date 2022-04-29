@@ -5,6 +5,7 @@ import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore, uic
 from queue import Queue
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+from dialogimportlabo import DialogImportLabo
 
 
 from study import Study
@@ -79,6 +80,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.actionSwitch_To_SubWindow_View.triggered.connect(self.switchToSubWindowView)
         self.actionSwitch_To_Cascade_View.triggered.connect(self.switchToCascadeView)
         self.actionOpen_Userguide_FR.triggered.connect(self.openUserguide)
+        self.actionImport_Labo.triggered.connect(self.importLabo)
         
         self.actionData_Points.triggered.connect(self.changeDockPointsStatus)
 
@@ -117,6 +119,22 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         rtd=os.path.dirname(rtd[0])
         self.currentStudy = Study(rootDir=os.path.join(rtd, "studies", "study_2022"))
         self.openStudy()
+        
+        # Creation of the Database, its connection and the model
+        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
+        if os.path.exists(self.sqlfile):
+            os.remove(self.sqlfile)
+        
+        self.con = QSqlDatabase.addDatabase("QSQLITE")
+        self.con.setDatabaseName(self.sqlfile)
+        if not self.con.open():
+            print("Cannot open SQL database")
+            
+        self.model = QSqlTableModel(self, self.con)
+        
+        # Creation of the SQL tables
+        self.mainDb = MainDb(self.con)
+        self.mainDb.createTables()
 
     
     def appendText(self,text):
@@ -291,37 +309,21 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         self.convertingTimer.start(200)
     
     def convertDataInSQL(self):
-        # Creation of the Database, its connection and the model
-        self.sqlfile = "molonari_" + self.currentStudy.name + ".sqlite"
-        if os.path.exists(self.sqlfile):
-            os.remove(self.sqlfile)
-        
-        self.con = QSqlDatabase.addDatabase("QSQLITE")
-        self.con.setDatabaseName(self.sqlfile)
-        if not self.con.open():
-            print("Cannot open SQL database")
-            
-        self.model = QSqlTableModel(self, self.con)
-        
-        # Creation of the SQL tables
-        self.mainDb = MainDb(self.con)
-        self.mainDb.createTables()
-        
         try :
             self.mainDb.laboDb.insert()
             self.mainDb.studyDb.insert(self.currentStudy) 
         except Exception :
             raise LoadingError('SQL, study or labo')
         try :
-            self.mainDb.thermometerDb.insert(self.currentStudy)
+            self.mainDb.thermometerDb.insert(self.currentStudy.getThermometersDb())
         except Exception :
             raise LoadingError("SQL, thermometers")
         try :
-            self.mainDb.pressureSensorDb.insert(self.currentStudy)
+            self.mainDb.pressureSensorDb.insert(self.currentStudy.getPressureSensorsDb())
         except Exception :
             raise LoadingError("SQL, pressure sensors")
         try : 
-            self.mainDb.shaftDb.insert(self.currentStudy)
+            self.mainDb.shaftDb.insert(self.currentStudy.getShaftsDb())
         except Exception :
             raise LoadingError("SQL, shafts")
         try :
@@ -347,7 +349,15 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             pointname = dlg.getPointInfo()[0]
             print(f"Importing {pointname}")
             self.importingTimer.start(200)
-                
+            
+    def importLabo(self):
+        # assuming that we converted data in SQL before
+        dlg = DialogImportLabo(self.con)
+        dlg.setWindowModality(QtCore.Qt.ApplicationModal)
+        res = dlg.exec()
+        if res == QtWidgets.QDialog.Accepted:
+            self.currentDlg = dlg
+
     def importPoint(self):
         try :
             name, infofile, prawfile, trawfile, noticefile, configfile  = self.currentDlg.getPointInfo()

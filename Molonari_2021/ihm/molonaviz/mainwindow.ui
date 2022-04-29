@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>1827</width>
-     <height>18</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuStudy">
@@ -90,9 +90,16 @@
     </property>
     <addaction name="actionOpen_Userguide_FR"/>
    </widget>
+   <widget class="QMenu" name="menuLabo">
+    <property name="title">
+     <string>Labo</string>
+    </property>
+    <addaction name="actionImport_Labo"/>
+   </widget>
    <addaction name="menuMolonaViz"/>
    <addaction name="menuStudy"/>
    <addaction name="menuPoint"/>
+   <addaction name="menuLabo"/>
    <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -385,6 +392,11 @@
   <action name="actionOpen_Userguide_FR">
    <property name="text">
     <string>Open Userguide (FR)</string>
+   </property>
+  </action>
+  <action name="actionImport_Labo">
+   <property name="text">
+    <string>Import Labo</string>
    </property>
   </action>
  </widget>
