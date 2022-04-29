@@ -14,7 +14,8 @@ From_DialogCleanPoints = uic.loadUiType(os.path.join(os.path.dirname(__file__),"
 
 class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
-    def __init__(self, button, df_selected,id):
+    def __init__(self, button, df_selected,id): # Figure initializer
+        """button is the undo button, id is the name of the current variable (string)"""
         self.id = id
         self.fig = Figure()
         self.axes = self.fig.add_subplot(111)
@@ -25,26 +26,27 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         self.undoButton = button
 
     def create_selector(self):
-        self.selector = RectangleSelector(self.axes, self.selec_function, useblit=True)
+        self.selector = RectangleSelector(self.axes, self.selec_function, useblit=True) # Rectangle selector
 
     def selec_function(self, event1, event2):
+        """Uptdates the plot with the selected pooints by the Rectangle Selector"""
         artist = list(self.axes.lines)[0]
         x,y = artist.get_data()
         x = pd.Series(mdates.num2date(x))
         y = pd.Series(y)
         self.x, self.y = x.copy(), y.copy()
         self.mask = np.zeros(len(x), dtype=bool)
-        self.mask = self.inside(event1, event2)
+        self.mask = self.inside(event1, event2) # Gets the mask of the points inside the rectangle
 
         data = pd.concat([self.x,self.y],axis=1,keys=["date",self.id])
 
         self.rectangle = data[self.mask]
         self.out_rectangle = data[~self.mask]
 
-        self.df_selected = pd.concat([self.df_selected,self.rectangle])
+        self.df_selected = pd.concat([self.df_selected,self.rectangle]) # Updates df_selected
 
-        self.undo_list.append(self.rectangle.shape[0])
-
+        self.undo_list.append(self.rectangle.shape[0])  # Updates undo_list with the amount of points selected
+        # Refresh plot
         self.clear()
         self.refresh(self.out_rectangle["date"],self.out_rectangle[self.id],'blue')
         self.refresh(self.df_selected["date"],self.df_selected[self.id],"red")
@@ -64,10 +66,10 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         return mask   
         
     def refresh(self, times: pd.Series, values: pd.Series, color):
-        if color=="blue":
+        if color=="blue":  # Blue line can be selected, then p != 0
             p = 4
             ms = 1
-        else:
+        else: # Red line cannot be selected, then p=0
             p = 0
             ms = 1
         self.axes.plot(mdates.date2num(times), values,'.',c=color,picker=p,markersize=ms)
@@ -78,10 +80,12 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
     
     def click_connect(self):
         def onpick(event):
-            ind = event.ind
+            ind = event.ind # Get the indices of the selected points
             datax,datay = event.artist.get_data()
-            datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind]
-            if len(ind) > 1:              
+            datax_,datay_ = [datax[i] for i in ind],[datay[i] for i in ind] 
+            if len(ind) > 1:  
+                # In case there were several points selected at one click (because they were too close),
+                # get the closest point to the mouse event            
                 msx, msy = event.mouseevent.xdata, event.mouseevent.ydata
                 dist = np.sqrt((np.array(datax_)-msx)**2+(np.array(datay_)-msy)**2)
                 
@@ -93,7 +97,7 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
                 x = datax_[0]
                 y = datay_[0]
             
-            datax = np.delete(datax,ind)
+            datax = np.delete(datax,ind) # Delete from the current data
             datay = np.delete(datay,ind)
 
             datax = pd.Series(mdates.num2date(datax))
@@ -102,9 +106,9 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
             x = mdates.num2date(x)
             
             self.r = pd.DataFrame([[x,y]],columns=["date",self.id])
-            self.df_selected = pd.concat([self.df_selected,self.r])
+            self.df_selected = pd.concat([self.df_selected,self.r]) # Add it to the selected data
             self.undo_list.append(1)
-
+            # Refresh plot
             self.clear()
             self.refresh(datax,datay,'blue')
             self.refresh(self.df_selected["date"],self.df_selected[self.id],"red")
@@ -116,6 +120,7 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
 
 
     def clear(self):
+        """ Clears figure and creates one again """
         self.fig.clf()
         self.axes = self.fig.add_subplot(111)
 
@@ -126,6 +131,7 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         self.axes.xaxis.set_major_locator(MaxNLocator(4))
     
     def undo(self):
+        """ recovers the last selected points in order """
         artist = list(self.axes.lines)[0]
         n=self.undo_list.pop()
         x = self.df_selected.iloc[-n:,0]
@@ -146,7 +152,7 @@ class MplCanvasTimeScatter(FigureCanvasQTAgg):
         return self.df_selected.shape[0]
     
     def reset(self, times: pd.Series, values: pd.Series, color):
-
+        """ cleans every selected point """
         self.df_selected = pd.DataFrame(columns=["date",self.id]) 
         self.r = pd.DataFrame(columns=["date",self.id])
         self.refresh(times, values, color)
@@ -180,22 +186,21 @@ class DialogCleanPoints(QtWidgets.QDialog, From_DialogCleanPoints):
     def plot(self,  varName, df : pd.DataFrame, df_selected : pd.DataFrame):
         self.id = varName
         self.df_original = df.copy().dropna()
-        self.df_selected = df_selected.copy()[["date",self.id]].dropna()
+        self.df_selected = df_selected.copy()[["date",self.id]].dropna() # Takes the variable only
         self.mplSelectCurve = MplCanvasTimeScatter(self.pushButtonUndo, self.df_selected, self.id)
         self.mplSelectCurve.clear()
         self.mplSelectCurve.refresh(self.df_original["date"], self.df_original[self.id],"blue")
         ## TODO Create function to execute if df_selected.shape[0] > 0 to update red and blue dots
-        if self.df_selected.shape[0]:
+        if self.df_selected.shape[0]: # If there are more than 1 selected points
             artist = list(self.mplSelectCurve.axes.lines)[0]
             x,y = artist.get_data()
             x = pd.Series(mdates.num2date(x))
             y = pd.Series(y)
 
-            mask = self.df_original.apply(lambda x: True if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else False,axis=1)
+            mask = self.df_original.apply(lambda x: True if mdates.date2num(x['date']) in list(mdates.date2num(self.df_selected['date'])) else False,axis=1) # Get mask
             
             data = pd.concat([x,y],axis=1,keys=["date",self.id])
  
-            selected = data[mask]
             not_selected = data[~mask]
 
             self.mplSelectCurve.undo_list.append(self.df_selected.shape[0])
