@@ -269,7 +269,9 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
             zh.to_csv(os.path.join(cleanUpDir,f"processed_temperatures_{self.point.name}.csv"))
             press = dlg.df_cleaned[["date","charge_diff","t_stream"]]
             press.to_csv(os.path.join(cleanUpDir,f"processed_pressures_{self.point.name}.csv"))
-        # #Needs to be adapted!
+            print("Data successfully cleaned, imported in the Database and exported in CSV Files!...")
+
+        # #Needs to be adapted!... or not? TODO Maybe just handling errors
         # if self.currentdata == "raw":
         #     print("Please clean-up your processed data. Click again on the raw data box")
         # else:
