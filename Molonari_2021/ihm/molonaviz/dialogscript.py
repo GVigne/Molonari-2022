@@ -15,26 +15,18 @@ class DialogScript(QtWidgets.QDialog, From_DialogScript):
         self.name = name
         self.path_to_script = path_to_script
 
-        # Read the sample_text.txt
-        # with open(os.path.join(os.path.dirname(__file__),"saved_text.txt")) as f:
-        #     sample_text = f.read()
-        # with open(os.path.join(pointDir,"saved_text.txt"),'w') as f:
-        #     f.write(pointDir)
         try:
-            # with open('saved_text.txt', 'r') as f:
-            #     sample_text = f.read()
-            #     f.close()
-            with open(self.path_to_script) as f:
+            with open(self.path_to_script) as f: # Try to open customized script for this point
                 sample_text = f.read()
         except:
-            print("No saved script, show sample script")
+            print("No saved script, show sample script") 
             with open(os.path.join(os.path.dirname(self.path_to_script),"sample_text.txt")) as f:
                 sample_text = f.read()
                 f.close()
         # Set sample_text.txt as the defaut text on plainTextEdit
         self.plainTextEdit.setPlainText(sample_text)
 
-    def getScript(self):
+    def getScript(self): # I believe this function is never called. TODO check if it can be eeliminated
         scriptpartiel = self.plainTextEdit.toPlainText()
         scriptindente = scriptpartiel.replace("\n", "\n   ")
         script = "def fonction(dft, dfp): \n   " + scriptindente + "\n" + "   return(dft, dfp)"
@@ -43,7 +35,7 @@ class DialogScript(QtWidgets.QDialog, From_DialogScript):
     def updateScript(self):
         scriptpartiel = self.plainTextEdit.toPlainText()
         try:
-            compilation = compile(scriptpartiel,"compilescript.py", "exec")
+            compilation = compile(scriptpartiel,"compilescript.py", "exec") # This verifies if there is a syntax error in the modified script.
         except Exception as e:
             print("compilation error")
             raise e
