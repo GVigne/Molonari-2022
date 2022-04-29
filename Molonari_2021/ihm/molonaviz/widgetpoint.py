@@ -908,12 +908,12 @@ class FakeStudy():
 
 if __name__ == '__main__':
     p = Point()
-    p.name="Point035" #This was a test point
+    p.name="P034" #This was a test point
     p.shaft
     con = QSqlDatabase.addDatabase("QSQLITE")
-    con.setDatabaseName("Demo_db/Demo_db.sqlite")
+    con.setDatabaseName("Dummy_database/MCMC.sqlite")
     con.open()
-    s = FakeStudy(con,"Demo_db")
+    s = FakeStudy(con,"Dummy_database")
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)
     mainWin.show()

@@ -380,6 +380,7 @@ class Compute(QtCore.QObject):
         conductive_flux = self.col.get_conduc_flows_solve()
         depths = self.col.get_depths_solve()
         times = self.col.get_times_solve()
+        water_flows = self.col.get_flows_solve()
         flows_for_insertion = self.col.flows_solve
         layers = self.col._layersList
         
@@ -399,13 +400,17 @@ class Compute(QtCore.QObject):
         times_string = times_string.astype('str')
         for i in range(n_dates):
             times_string[i,0] = times[i].strftime('%y/%m/%d %H:%M:%S')
-       
+
+       #WARNING: DEPTH AND DATE ID ARE HARDCODED -> IMPOSSIBLE TO RESET A POINT AS THE AUTOINCREMENTAL INDEX WOULD BE CHANGED
         self.mainDb.depthDb.insert(depths)
         self.mainDb.quantileDb.insert(quantiles)
         self.mainDb.parametersDistributionDb.insert(params)
         self.mainDb.layerDb.insert(layers)
         self.mainDb.lastParametersDb.insert(layers)
         
+        
         self.mainDb.temperatureAndHeatFlowsDb.insert_quantile_0(temps, advective_flux, conductive_flux, flows_for_insertion)
+        self.mainDb.waterFlowDb.insert_quantile_0(water_flows)
         if len(quantiles) > 1:
             self.mainDb.temperatureAndHeatFlowsDb.insert_quantiles(self.col, quantiles)
+            self.mainDb.waterFlowDb.insert_quantile_0(water_flows,quantiles)

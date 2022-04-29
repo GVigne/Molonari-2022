@@ -127,7 +127,7 @@ class MoloView2D(MoloView):
             pass
 
     def plot_data(self):
-        # if self.cmap.shape[0] ==self.x.shape[0] and self.cmap.shape[1] ==self.y.shape[0]:
+        if self.cmap.shape[0] ==len(self.x) and self.cmap.shape[1] == len(self.y):
             #View is not empty and should display something
             image = self.axes.imshow(self.cmap, cmap=cm.Spectral_r, aspect="auto", extent=[self.x[0], self.x[-1], float(self.y[-1]), float(self.y[0])], data="float")
             plt.colorbar(image)
