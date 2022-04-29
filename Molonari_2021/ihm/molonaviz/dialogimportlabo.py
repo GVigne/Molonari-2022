@@ -35,12 +35,15 @@ class DialogImportLabo(QtWidgets.QDialog, From_DialogImportLabo):
         psensors = getPressureSensorsDb(dirPath)
         
         thermometerDb = ThermometerDb(self.con)
+        thermometerDb.create()
         thermometerDb.insert(thermometers)
         
         psensorDb = PressureSensorDb(self.con)
+        psensorDb.create()
         psensorDb.insert(psensors)
         
         shaftDb = ShaftDb(self.con)
+        shaftDb.create()
         shaftDb.insert(shafts)
         
         if not thermometers or not psensors or not shafts:
