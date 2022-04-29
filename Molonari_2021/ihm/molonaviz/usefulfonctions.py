@@ -7,6 +7,10 @@ from PyQt5 import QtWidgets
 from datetime import datetime
 from traitlets.config.application import catch_config_error
 from errors import *
+import os, glob
+from sensors import Shaft
+from sensors import Thermometer
+from sensors import PressureSensor
 
 def clean_filename(filename: str, char_limit: int= 255, replace=' '):
 
@@ -154,3 +158,37 @@ def displayCriticalMessage_pyheatmy(place_of_error: str):
     msg.setText("Warning : Can not import package pyheatmy in " + place_of_error + ", the calculation part of Molonaviz is not available.")
     msg.setInformativeText("Please follow this guide for the installation of pyheatmy: https://github.com/mathisbrdn/pyheatmy.")
     msg.exec_() 
+    
+def getShaftsDb(sensorDir):
+    sdir = os.path.join(sensorDir, "shafts", "*.csv")
+    files = glob.glob(sdir)
+    files.sort()
+    shafts = []
+    for file in files:
+        shaft = Shaft()
+        shaft.setShaftFromFile(file)
+        shafts.append(shaft)
+    return shafts
+
+def getThermometersDb(sensorDir):
+    sdir = os.path.join(sensorDir, "temperature_sensors", "*.csv")
+    files = glob.glob(sdir)
+    files.sort()
+    thermometers = []
+    for file in files:
+        thermometer = Thermometer()
+        thermometer.setThermometerFromFile(file)
+        thermometers.append(thermometer)
+    return thermometers
+
+def getPressureSensorsDb(sensorDir):
+    sdir = os.path.join(sensorDir, "pressure_sensors", "*.csv")
+    files = glob.glob(sdir)
+    files.sort()
+    pressure_sensors = []
+    for file in files:
+        psensor = PressureSensor()
+        psensor.setPressureSensorFromFile(file)
+        pressure_sensors.append(psensor)
+    return pressure_sensors
+

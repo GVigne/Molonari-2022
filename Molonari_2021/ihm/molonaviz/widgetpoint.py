@@ -223,17 +223,29 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                     print(e, "==> Clean-up aborted")
                     displayCriticalMessage("Error : Clean-up aborted", f'Clean-up was aborted due to the following error : \n"{str(e)}" ' )
                     self.cleanup()
-    
+
 
     def compute(self):
         
         sensorDir = self.study.getSensorDir()
 
-        dlg = DialogCompute()
+        dlg = DialogCompute(self.point.getName())
         res = dlg.exec()
 
         if res == 10 : #Direct Model
-            params, nb_cells = dlg.getInputDirectModel()
+            params, nb_cells = dlg.getInputDirectModel()           #Here, params has 4 elements, which are 4 parameters (params[0] is -log(permeability) but we do not have constraints)
+            if params[1]>1 or params[1]<0:                         #params[1] is the pororisty, we don't want them to exceed 1 or to be under 0
+                try:
+                    raise ValueError
+                except ValueError:
+                    displayCriticalMessage("Error : The permeability value must be between 0 and 1")
+                    return None                                    #Return None makes that the model is not executed when an error is raised
+            if params[2]<0 or params[3]<0:                         #params[2] and params[3] are the conductivity and capacity, which must be positive
+                try:
+                    raise ValueError
+                except ValueError:
+                    displayCriticalMessage("Error : Negative value of parameters")
+                    return None
             # compute = Compute(self.point)
             # compute.computeDirectModel(params, nb_cells, sensorDir)
             self.computeEngine.computeDirectModel(params, nb_cells, sensorDir)
@@ -282,23 +294,40 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
     
         if res == 1 : #MCMC
-            nb_iter, priors, nb_cells, quantiles = dlg.getInputMCMC()
-            self.nb_quantiles = len(quantiles)
-            with open(self.MCMCDir+"/nb_quantiles", "w") as f:
-                f.write(str(self.nb_quantiles))
-                f.close()
-            # compute = Compute(self.point)
-            # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
-            self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
-            self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
-    
+            nb_iter, priors, nb_cells, quantiles = dlg.getInputMCMC()                   #priors is a dictionnary with each paramter
+            try:
+                if len(quantiles)!=3:                                                   #There can be only 3 quantiles, so that the SQL DataBase has a standart size
+                    VE = ValueError()
+                    VE.strerror = "Error : Number of quantiles must be 3"
+                    raise VE
+
+                if priors["moinslog10K"][0][0]>priors["moinslog10K"][0][0] or priors["n"][0][0]>priors["n"][0][1] or priors["lambda_s"][0][0]>priors["lambda_s"][0][1] or priors["lambda_s"][0][0]>priors["lambda_s"][0][1]:
+                        VE = ValueError()
+                        VE.strerror = "Error : There is a parameter where max<min \n (For K, max must be lower than min)"  #This error is raised when the user sets a min that exceeds the max
+                        raise VE
+                
+                if quantiles[0]<0 or quantiles[0]>1 or quantiles[1]<0 or quantiles[1]>1 or quantiles[2]<0 or quantiles[2]>1:
+                    VE = ValueError()
+                    VE.strerror = "Error : The quantiles must be between 0 and 1"
+                    raise VE
+                self.nb_quantiles = len(quantiles)
+                with open(self.MCMCDir+"/nb_quantiles", "w") as f:
+                    f.write(str(self.nb_quantiles))
+                    f.close()
+                # compute = Compute(self.point)
+                # compute.computeMCMC(nb_iter, priors, nb_cells, sensorDir)
+                self.computeEngine.MCMCFinished.connect(self.onMCMCFinished)
+                self.computeEngine.computeMCMC(nb_iter, priors, nb_cells, sensorDir, quantiles)
+            except ValueError as e:
+                displayCriticalMessage(e.strerror)
+                return None
+
     def compute_blocked(self):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Warning)
         msg.setText("Warning : Package pyheatmy not installed, the calculation part of Molonaviz is not available.")
         msg.setInformativeText("Please follow this guide for the installation of pyheatmy: https://github.com/mathisbrdn/pyheatmy.")
         msg.exec_() 
-
 
     def onMCMCFinished(self):
 

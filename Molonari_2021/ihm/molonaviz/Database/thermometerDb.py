@@ -31,11 +31,9 @@ class ThermometerDb():
         createQuery.finish()
         
     
-    def insert(self, study):
+    def insert(self, thermometers):
         self.con.transaction()
-        
-        thermometers = study.getThermometersDb()
-        
+                
         insertQuery = QSqlQuery(self.con)
         insertQuery.prepare(
         """
@@ -55,6 +53,8 @@ class ThermometerDb():
             insertQuery.addBindValue(str(thermometer.sigma))
             
             insertQuery.exec_()
+            if not insertQuery.exec_():
+                print("error during insertion of thermometers in the table")
             
         insertQuery.finish()
         
