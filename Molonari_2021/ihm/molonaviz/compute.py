@@ -400,8 +400,6 @@ class Compute(QtCore.QObject):
         for i in range(n_dates):
             times_string[i,0] = times[i].strftime('%y/%m/%d %H:%M:%S')
        
-
-        self.mainDb.dateDb.insert(times)
         self.mainDb.depthDb.insert(depths)
         self.mainDb.quantileDb.insert(quantiles)
         self.mainDb.parametersDistributionDb.insert(params)

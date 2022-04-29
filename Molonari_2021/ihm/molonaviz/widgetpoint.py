@@ -308,58 +308,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         dlg = DialogCompute(self.point.name)
         res = dlg.exec()
-
         if res == 10: #Direct Model
             params, nb_cells, depths = dlg.getInputDirectModel()
             self.computeEngine.computeDirectModel(params, nb_cells,depths)
             self.update_all_models()
-            
-            # params, nb_cells = dlg.getInputDirectModel()
-            # # compute = Compute(self.point)
-            # # compute.computeDirectModel(params, nb_cells, sensorDir)
-            # self.computeEngine.computeDirectModel(params, nb_cells, sensorDir)
-
-            # self.setDataFrames('DirectModel')
-            # self.comboBoxDepth.clear()
-            # for depth in self.dfdepths.values.tolist():
-            #     self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
-
-            # if self.directmodeliscomputed :
-            #     print('Direct Model is computed')
-            #     self.graphwaterdirect.update_(self.dfwater)
-            #     self.graphsolvedtempdirect.update_(self.dfsolvedtemp, self.dfdepths)
-            #     self.graphintertempdirect.update_(self.dfsolvedtemp, self.dfdepths)
-            #     self.graphfluxesdirect.update_(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-            #     self.parapluies.update_(self.dfsolvedtemp, self.dfdepths)
-            #     self.paramsModel.setData(self.dfparams)
-            #     print("Model successfully updated !")
-
-            # else :
-            #     print("Not direct")
-            #     #Flux d'eau
-            #     clearLayout(self.vboxwaterdirect)
-            #     self.plotWaterFlowsDirect(self.dfwater)
-
-            #     #Flux d'énergie
-            #     clearLayout(self.vboxfluxesdirect)
-            #     self.plotFriseHeatFluxesDirect(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-
-            #     #Frise de température
-            #     clearLayout(self.vboxfrisetempdirect)
-            #     self.plotFriseTempDirect(self.dfsolvedtemp, self.dfdepths)
-            #     #Parapluies
-            #     clearLayout(self.vboxsolvedtempdirect)
-            #     self.plotParapluies(self.dfsolvedtemp, self.dfdepths)
-
-            #     #Température à l'interface
-            #     clearLayout(self.vboxintertempdirect)
-            #     self.plotInterfaceTempDirect(self.dfsolvedtemp, self.dfdepths)
-                
-            #     # Les paramètres utilisés
-            #     self.setParamsModel(self.dfparams)
-
-            #     self.directmodeliscomputed = True
-            #     print("Model successfully created !")
 
     
         if res == 1 : #MCMC
@@ -959,9 +911,9 @@ if __name__ == '__main__':
     p.name="Point035" #This was a test point
     p.shaft
     con = QSqlDatabase.addDatabase("QSQLITE")
-    con.setDatabaseName("Demo/Demo_db/Demo_db.sqlite")
+    con.setDatabaseName("Demo_db/Demo_db.sqlite")
     con.open()
-    s = FakeStudy(con,"Demo/Demo_db")
+    s = FakeStudy(con,"Demo_db")
     app = QtWidgets.QApplication(sys.argv)
     mainWin = WidgetPoint(p,s)
     mainWin.show()
