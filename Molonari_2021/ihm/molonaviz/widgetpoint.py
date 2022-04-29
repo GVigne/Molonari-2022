@@ -21,12 +21,13 @@ From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widget
 
 class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
-    def __init__(self, point: Point, study: Study):
+    def __init__(self, point: Point, study: Study, demo_standalone=False):
         # Call constructor of parent classes
         super(WidgetPoint, self).__init__()
         QtWidgets.QWidget.__init__(self)
         
         self.setupUi(self)
+        self.demo_standalone =demo_standalone
         
         self.point = point
         self.study = study
@@ -799,33 +800,56 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 )
         else:
             #Display cleaned measures
-            if full_query:
-                return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
-                        FROM CleanedMeasures
-                        JOIN Date
-                        ON CleanedMeasures.Date = Date.id
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY Date.Date;
-                            """
-                )
-            elif field =="Temp":
-                return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
-                        FROM CleanedMeasures
-                        JOIN Date
-                        ON CleanedMeasures.Date = Date.id
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY Date.Date
-                            """
-                )
-            elif field =="Pressure":
-                return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Pressure
-                        FROM CleanedMeasures
-                        JOIN Date
-                        ON CleanedMeasures.Date = Date.id
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY Date.Date
-                            """
-                )
+            if not self.demo_standalone:
+                if full_query:
+                    return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            JOIN Date
+                            ON CleanedMeasures.Date = Date.id
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY Date.Date;
+                                """
+                    )
+                elif field =="Temp":
+                    return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                            FROM CleanedMeasures
+                            JOIN Date
+                            ON CleanedMeasures.Date = Date.id
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY Date.Date
+                                """
+                    )
+                elif field =="Pressure":
+                    return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            JOIN Date
+                            ON CleanedMeasures.Date = Date.id
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY Date.Date
+                                """
+                    )
+            else:
+                if full_query:
+                    return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY CleanedMeasures.Date;
+                                """
+                    )
+                elif field =="Temp":
+                    return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                            FROM CleanedMeasures
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY CleanedMeasures.Date
+                                """
+                    )
+                elif field =="Pressure":
+                    return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY CleanedMeasures.Date
+                                """
+                    )
     def computation_type(self):
         """
         Return None if no computation was made: else, return False if only the direct model was computed and True if the MCMC was computed.
@@ -921,7 +945,7 @@ if __name__ == '__main__':
     con.open()
     s = FakeStudy(con,"Dummy_database")
     app = QtWidgets.QApplication(sys.argv)
-    mainWin = WidgetPoint(p,s)
+    mainWin = WidgetPoint(p,s, demo_standalone=True)
     mainWin.show()
     mainWin.setInfoTab()
 
