@@ -440,7 +440,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         else:
             print(f"{point.getName()} is already open")
         
-    def removePoint(self):
+    def removePoint(self):          #We delete all the rows of the tables that have as an attribute the name of the point we want to remove
         title = "Warning ! You are about to delete a point"
         message = "All point data will be deleted. Are you sure you want to proceed ?"
         msgBox = displayConfirmationMessage(title, message)
