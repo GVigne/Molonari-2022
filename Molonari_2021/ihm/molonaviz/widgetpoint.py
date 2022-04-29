@@ -15,21 +15,23 @@ from usefulfonctions import *
 from dialogreset import DialogReset
 from MoloModel import  PressureDataModel, TemperatureDataModel, SolvedTemperatureModel, HeatFluxesModel, WaterFluxModel,ParamsDistributionModel
 from MoloView import PressureView, TemperatureView,UmbrellaView,TempDepthView,TempMapView,AdvectiveFlowView, ConductiveFlowView, TotalFlowView, WaterFluxView, Log10KView, ConductivityView, PorosityView, CapacityView
+from Database.mainDb import MainDb
 
 From_WidgetPoint = uic.loadUiType(os.path.join(os.path.dirname(__file__),"widgetpoint.ui"))[0]
 
 class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
     
-    def __init__(self, point: Point, study: Study):
+    def __init__(self, point: Point, study: Study, demo_standalone=False):
         # Call constructor of parent classes
         super(WidgetPoint, self).__init__()
         QtWidgets.QWidget.__init__(self)
         
         self.setupUi(self)
+        self.demo_standalone =demo_standalone
         
         self.point = point
         self.study = study
-        db = study.mainDb
+        db = study.con
         self.computeEngine = Compute(db, self.point)
 
         #This should already be done in the .ui file
@@ -225,7 +227,7 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
         deleteTableQuery.exec_(f'DELETE FROM ParametersDistribution WHERE ParametersDistribution.PointKey=(SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.Name="{pointname}"))')
         deleteTableQuery.exec_(f'DELETE FROM BestParameters WHERE BestParameters.PointKey=(SELECT Point.id FROM Point WHERE Point.SamplingPoint = (SELECT SamplingPoint.id FROM SamplingPoint WHERE SamplingPoint.Name="{pointname}"))')
 
-        deleteTableQuery.exec_("DELETE FROM Date WHERE (SELECT count(*) FROM RMSE)==0")
+        deleteTableQuery.exec_("DELETE FROM Date WHERE (SELECT count(*) FROM RMSE)==0")    #We delete the rows of this table if and only if the point we reset was the only one open
         deleteTableQuery.exec_("DELETE FROM Depth WHERE (SELECT count(*) FROM RMSE)==0")
 
         '''
@@ -313,55 +315,10 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
 
         dlg = DialogCompute(self.point.name)
         res = dlg.exec()
-
-        if res == 10 : #Direct Model
-            print("Direct Model")
-            # params, nb_cells = dlg.getInputDirectModel()
-            # # compute = Compute(self.point)
-            # # compute.computeDirectModel(params, nb_cells, sensorDir)
-            # self.computeEngine.computeDirectModel(params, nb_cells, sensorDir)
-
-            # self.setDataFrames('DirectModel')
-            # self.comboBoxDepth.clear()
-            # for depth in self.dfdepths.values.tolist():
-            #     self.comboBoxDepth.insertItem(len(self.dfdepths.values.tolist()), str(depth))
-
-            # if self.directmodeliscomputed :
-            #     print('Direct Model is computed')
-            #     self.graphwaterdirect.update_(self.dfwater)
-            #     self.graphsolvedtempdirect.update_(self.dfsolvedtemp, self.dfdepths)
-            #     self.graphintertempdirect.update_(self.dfsolvedtemp, self.dfdepths)
-            #     self.graphfluxesdirect.update_(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-            #     self.parapluies.update_(self.dfsolvedtemp, self.dfdepths)
-            #     self.paramsModel.setData(self.dfparams)
-            #     print("Model successfully updated !")
-
-            # else :
-            #     print("Not direct")
-            #     #Flux d'eau
-            #     clearLayout(self.vboxwaterdirect)
-            #     self.plotWaterFlowsDirect(self.dfwater)
-
-            #     #Flux d'énergie
-            #     clearLayout(self.vboxfluxesdirect)
-            #     self.plotFriseHeatFluxesDirect(self.dfadvec, self.dfconduc, self.dftot, self.dfdepths)
-
-            #     #Frise de température
-            #     clearLayout(self.vboxfrisetempdirect)
-            #     self.plotFriseTempDirect(self.dfsolvedtemp, self.dfdepths)
-            #     #Parapluies
-            #     clearLayout(self.vboxsolvedtempdirect)
-            #     self.plotParapluies(self.dfsolvedtemp, self.dfdepths)
-
-            #     #Température à l'interface
-            #     clearLayout(self.vboxintertempdirect)
-            #     self.plotInterfaceTempDirect(self.dfsolvedtemp, self.dfdepths)
-                
-            #     # Les paramètres utilisés
-            #     self.setParamsModel(self.dfparams)
-
-            #     self.directmodeliscomputed = True
-            #     print("Model successfully created !")
+        if res == 10: #Direct Model
+            params, nb_cells, depths = dlg.getInputDirectModel()
+            self.computeEngine.computeDirectModel(params, nb_cells,depths)
+            self.update_all_models()
 
     
         if res == 1 : #MCMC
@@ -843,27 +800,56 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                 )
         else:
             #Display cleaned measures
-            if full_query:
-                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
-                        FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date
-                            """
-                )
-            elif field =="Temp":
-                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
-                        FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date
-                            """
-                )
-            elif field =="Pressure":
-                return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
-                        FROM CleanedMeasures
-                        WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
-                        ORDER BY CleanedMeasures.Date
-                            """
-                )
+            if not self.demo_standalone:
+                if full_query:
+                    return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            JOIN Date
+                            ON CleanedMeasures.Date = Date.id
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY Date.Date;
+                                """
+                    )
+                elif field =="Temp":
+                    return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                            FROM CleanedMeasures
+                            JOIN Date
+                            ON CleanedMeasures.Date = Date.id
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY Date.Date
+                                """
+                    )
+                elif field =="Pressure":
+                    return QSqlQuery(f"""SELECT Date.Date, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            JOIN Date
+                            ON CleanedMeasures.Date = Date.id
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY Date.Date
+                                """
+                    )
+            else:
+                if full_query:
+                    return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY CleanedMeasures.Date;
+                                """
+                    )
+                elif field =="Temp":
+                    return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Temp1, CleanedMeasures.Temp2, CleanedMeasures.Temp3, CleanedMeasures.Temp4, CleanedMeasures.TempBed
+                            FROM CleanedMeasures
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY CleanedMeasures.Date
+                                """
+                    )
+                elif field =="Pressure":
+                    return QSqlQuery(f"""SELECT CleanedMeasures.Date, CleanedMeasures.Pressure
+                            FROM CleanedMeasures
+                            WHERE CleanedMeasures.PointKey = (SELECT id FROM SamplingPoint WHERE SamplingPoint.Name = "{self.point.name}")
+                            ORDER BY CleanedMeasures.Date
+                                """
+                    )
     def computation_type(self):
         """
         Return None if no computation was made: else, return False if only the direct model was computed and True if the MCMC was computed.
@@ -943,12 +929,24 @@ class WidgetPoint(QtWidgets.QWidget,From_WidgetPoint):
                     """
             )
 
+
+class FakeStudy():
+    def __init__(self,con, rootDir) -> None:
+        self.con = con
+        self.rootDir = rootDir
+        self.mainDb = MainDb(self.con)
+
 if __name__ == '__main__':
     p = Point()
     p.name="P034" #This was a test point
-    s = Study()
+    p.shaft
+    con = QSqlDatabase.addDatabase("QSQLITE")
+    con.setDatabaseName("Dummy_database/MCMC.sqlite")
+    con.open()
+    s = FakeStudy(con,"Dummy_database")
     app = QtWidgets.QApplication(sys.argv)
-    mainWin = WidgetPoint(p,s)
+    mainWin = WidgetPoint(p,s, demo_standalone=True)
     mainWin.show()
     mainWin.setInfoTab()
+
     sys.exit(app.exec_())

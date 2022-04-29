@@ -59,8 +59,8 @@ class TemperatureAndHeatFlowsDb():
         
         for k in range(temps.shape[0]):
             for i in range(temps.shape[1]):
-                insertQuery.addBindValue(str(i))
-                insertQuery.addBindValue(str(k))
+                insertQuery.addBindValue(str(i+1)) #SQL Indexing starts at 1
+                insertQuery.addBindValue(str(k+1)) #SQL Indexing starts at 1
                 insertQuery.addBindValue(str(temps[k, i]))
                 insertQuery.addBindValue(str(advective_flux[k, i]))
                 insertQuery.addBindValue(str(conductive_flux[k, i]))
@@ -104,8 +104,8 @@ class TemperatureAndHeatFlowsDb():
                 
                 for k in range(temps.shape[0]):
                     for i in range(temps.shape[1]):
-                        insertQuery.addBindValue(str(i))
-                        insertQuery.addBindValue(str(k))
+                        insertQuery.addBindValue(str(i +1)) #SQL Indexing starts at 1
+                        insertQuery.addBindValue(str(k+1)) #SQL Indexing starts at 1
                         insertQuery.addBindValue(str(temps[k, i]))
                         """insertQuery.addBindValue(str(advective_flux[k, i]))
                         insertQuery.addBindValue(str(conductive_flux[k, i]))"""

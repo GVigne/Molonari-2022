@@ -1,1 +1,9 @@
-This gives information related to the sampling point.
+Point 34
+
+27 juin 2016.
+
+Mise en place du dispositif. Il est situe au bout de la route de Montberneux.
+
+Releve point GPS
+Latitude N 48.842323
+Longitude E 3.143102

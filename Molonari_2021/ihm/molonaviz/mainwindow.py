@@ -234,6 +234,22 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
             if res == QtWidgets.QDialog.Accepted:
                 try :
                     self.currentStudy = Study(rootDir=dlg.getRootDir())
+                    try :
+                        self.currentStudy.loadThermometers(self.thermometersModel)
+                    except Exception :
+                        raise LoadingError("thermometers")
+                    try :
+                        self.currentStudy.loadPressureSensors(self.pSensorModel)
+                    except Exception :
+                        raise LoadingError("pressure sensors")
+                    try : 
+                        self.currentStudy.loadShafts(self.shaftModel)
+                    except Exception :
+                        raise LoadingError("shafts")
+                    try :
+                        self.currentStudy.loadPoints(self.pointModel)
+                    except Exception :
+                        raise LoadingError('points')
                 except FileNotFoundError as e:
                     displayCriticalMessage(f"{str(e)} \nPlease try again")
                     self.openStudy()
@@ -424,7 +440,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
         else:
             print(f"{point.getName()} is already open")
         
-    def removePoint(self):
+    def removePoint(self):          #We delete all the rows of the tables that have as an attribute the name of the point we want to remove
         title = "Warning ! You are about to delete a point"
         message = "All point data will be deleted. Are you sure you want to proceed ?"
         msgBox = displayConfirmationMessage(title, message)

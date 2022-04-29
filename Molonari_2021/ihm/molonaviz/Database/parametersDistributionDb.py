@@ -60,7 +60,6 @@ class ParametersDistributionDb():
                 insertQuery.addBindValue(str(params[i][k, 1]))
                 insertQuery.addBindValue(str(params[i][k, 3]))
                 insertQuery.addBindValue(str(i))
-                insertQuery.addBindValue(str(params[i][k, 3]))
                 insertQuery.addBindValue(str(1))
                 insertQuery.exec_()
             

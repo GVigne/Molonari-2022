@@ -47,6 +47,13 @@ def celsiusToKelvin(df: pd.DataFrame):
     # change columns names
     df.columns = ['Date Heure, GMT+01:00', 'Température 1 (K)', 'Température 2 (K)', 'Température 3 (K)', 'Température 4 (K)']
     
+def SQl_to_pandas(date):
+    format =("%Y:%m:%d:%H:%M:%S","%Y:%m:%d:%H:%M")
+    for f in format:
+        try:
+            return pd.to_datetime(date, format=f)
+        except Exception:
+            continue
 
 def convertDates(df: pd.DataFrame):
     """
@@ -159,7 +166,12 @@ def date_to_mdates(dates2convert):
         Given a 1D array of strings representing dates, return the array converted to the matplotlib date format.
         Here, we suppose that the dates are in format YYYY:mm:dd:hh:mm:ss
         """
-        return mdates.datestr2num([date[0:10].replace(":", "/") + ", " + date[11:] for date in dates2convert])
+        def convert_date(date):
+            if date[4]=="-":
+                return date[0:10].replace("-", "/") + ", " + date[11:]
+            else:
+                return date[0:10].replace(":", "/") + ", " + date[11:]
+        return [mdates.datestr2num(convert_date(date)) for date in dates2convert]
     
 def getShaftsDb(sensorDir):
     sdir = os.path.join(sensorDir, "shafts", "*.csv")

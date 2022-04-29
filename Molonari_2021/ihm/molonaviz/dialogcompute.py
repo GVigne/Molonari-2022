@@ -1,3 +1,4 @@
+from decimal import DivisionByZero
 import sys
 import os
 import pandas as pd
@@ -176,22 +177,25 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
             i = 0
             while i<row:
                 #Read the data
-                query_test.exec_(f"SELECT * FROM ParametersDistribution WHERE PointKey = {self.point_id} AND Layer = {i+1}")
+                query_test.exec_(f"""SELECT log10KBest,
+                            LambdaSBest,
+                            NBest,
+                            Cap,
+                            Layer.DepthBed
+                        FROM BestParameters
+                        JOIN Layer
+                        ON BestParameters.Layer = Layer.id;
+                """)
             
                 if not query_test.first():
                     break
-                permeability = query_test.value(1)
-                sediThermCon = query_test.value(2)
-                porosity = query_test.value(3)
-                #solVolThermCap = query_test.value(4)
-                solVolThermCap = 5e6
+                permeability = query_test.value(0)
+                sediThermCon = query_test.value(1)
+                porosity = query_test.value(2)
+                solVolThermCap = query_test.value(3)
+                # solVolThermCap = 5e6
                 #layer = query_test.value(5)
-                layer = query_test.value(4)
-                #Find the depthBed
-                query_new = QSqlQuery()
-                query_new.exec_("SELECT DepthBed FROM Layer WHERE id = {layer}")
-                query_new.first()
-                depth_bed = query_new.value(2)
+                depth_bed = query_test.value(4)
                 #Insert the values
             self.tableWidget.setItem(i, 0, QTableWidgetItem(str(depth_bed)))
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(permeability)))
@@ -249,10 +253,17 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 self.tableWidget.setItem(i, 2, QTableWidgetItem("0.15"))
                 self.tableWidget.setItem(i, 3, QTableWidgetItem("3.4"))
                 self.tableWidget.setItem(i, 4, QTableWidgetItem("5e6"))
-                
-            for j in range (row):
-                val = int(6+(40/row)*(j+1))
-                self.tableWidget.setItem(j, 0, QTableWidgetItem(str(val)))
+            
+            max_depth = self.get_max_depth()
+            try:
+                for j in range (row):
+                    val = int((max_depth/row)*(j+1))
+                    self.tableWidget.setItem(j, 0, QTableWidgetItem(str(val)))
+            except Exception:
+                #This shouldn't happen: the shaft must have a correct depth
+                for j in range (row):
+                    val = int((40/row)*(j+1))
+                    self.tableWidget.setItem(j, 0, QTableWidgetItem(str(val)))
                 
             for k in range(10):
                 if k > row - 1:
@@ -260,7 +271,22 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
                 else:
                     self.tableWidget.showRow(k)
 
-       
+    def get_max_depth(self):
+        """
+        Return the maximum depth allowed.
+        """
+        shaft_depth = QSqlQuery(f"""
+                            SELECT Shaft.Depth4
+                            FROM Shaft 
+                            WHERE Shaft.id=(SELECT Samplingpoint.Shaft FROM Samplingpoint WHERE Samplingpoint.Name = "{self.pointName}");
+                """)
+        shaft_depth.exec()
+        shaft_depth.next()
+        if shaft_depth.value(0) is None:
+            return shaft_depth.value(0)
+        return 100*shaft_depth.value(0) #In cm
+
+
     def setDefaultValues(self):
         
         # Direct model
@@ -293,16 +319,21 @@ class DialogCompute(QtWidgets.QDialog, From_DialogCompute):
     def getInputDirectModel(self):
         
         nb_cells = self.spinBoxNCellsDirect.value()
-        
         row = int(self.spinBoxNLayersDirect.value())
+        moinslog10K = []
+        n = []
+        lambda_s = []
+        rhos_cs = []
+        depths = []
         
         for i in range (row):
-            
-            moinslog10K = -log10(float(self.tableWidget.item(i, 1).text()))
-            n = float(self.tableWidget.item(i, 2).text())
-            lambda_s = float(self.tableWidget.item(i, 3).text())
-            rhos_cs = float(self.tableWidget.item(i, 4).text())
-            return (moinslog10K, n, lambda_s, rhos_cs), nb_cells
+            # depths.append(round(float(self.tableWidget.item(i, 0).text())/100,2))
+            depths.append(float(self.tableWidget.item(i, 0).text())/100)
+            moinslog10K.append(-log10(abs(float(self.tableWidget.item(i, 1).text()))))
+            n.append(float(self.tableWidget.item(i, 2).text()))
+            lambda_s.append(float(self.tableWidget.item(i, 3).text()))
+            rhos_cs.append(float(self.tableWidget.item(i, 4).text()))
+        return (moinslog10K, n, lambda_s, rhos_cs), nb_cells, depths
 
 
     def getInputMCMC(self):
