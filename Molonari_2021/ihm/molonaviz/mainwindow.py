@@ -240,6 +240,7 @@ class MainWindow(QtWidgets.QMainWindow,From_MainWindow):
                 except FileNotFoundError as e:
                     displayCriticalMessage(f"{str(e)} \nPlease try again")
                     self.openStudy()
+                    return None
             else :
                 return None
         if self.currentStudy != None :
