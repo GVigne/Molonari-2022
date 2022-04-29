@@ -8,6 +8,10 @@ import matplotlib
 import matplotlib.dates as mdates
 from scipy.signal import savgol_filter
 
+# TEMPERATURE F TO C
+
+
+
 # PRESSION
 intercept = self.df_Calibration.loc[0,"Intercept"]
 dUdH = self.df_Calibration.loc[0,"dUdH"]
@@ -60,6 +64,9 @@ to_filter = {'t_stream': False, 'charge_diff': False, 't1': False, 't2': False, 
 for var in to_filter:
     if to_filter[var]:
         df_cleaned.loc[df_cleaned[var].notnull(),var] = savgol_filter(df_cleaned.loc[df_cleaned[var].notnull(),var],20,2)
+
+# TEMPERATURE C TO K
+
 
 # DROP
 # This function allows to get the biggest DataFrame without NaN values in boundary conditions after cleaning up 

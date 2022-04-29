@@ -250,6 +250,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
 
         self.checkBoxChanges.clicked.connect(self.plotPrevisualizedVar)
         self.checkBoxFilter.clicked.connect(self.triggerSetFilter)
+        self.checkBoxFC.clicked.connect(self.fromFtoC)
+        self.checkBoxCK.clicked.connect(self.fromCtoK)
         
 
         # connects the radio buttons
@@ -263,7 +265,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         self.radioButtonNone.setChecked(True)
         self.checkBoxChanges.setChecked(True)
         self.checkBoxFilter.setChecked(False)
-        
+        self.checkBoxFC.setChecked(False)
+        self.checkBoxCK.setChecked(False)
         # Initializes connection with database
         self.con = con
         self.mainDb = MainDb(self.con)
@@ -690,6 +693,11 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             file.writelines( data )
             file.close()
     
+    def parseKey(self,data,key):
+        for i in range(len(data)):
+            if data[i].find(key) != -1:
+                line = i
+        return line
     def selectMethod(self,object):
         id = self.buttonGroupMethod.id(object)
         varIndex = self.varList.index(self.varName())
@@ -698,9 +706,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         data = self.openScript()
 
         method_key = '# METHOD'
-        for i in range(len(data)):
-            if data[i].find(method_key) != -1:
-                methodsLine = i
+        methodsLine = self.parseKey(data,method_key)
+        
             
         # now change the n-th line
         if id == 1:
@@ -728,11 +735,39 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
         data  = self.openScript()
 
         filter_key = '# SMOOTHING'
-        for i in range(len(data)):
-            if data[i].find(filter_key) != -1:
-                filterLine = i
+        filterLine = self.parseKey(data,filter_key)
         
         data[filterLine+1] = f'to_filter = {self.filter_dic}\n'
+
+        self.saveScript(data)
+        self.previsualizeCleaning()
+
+    def fromFtoC(self):
+        data = self.openScript()
+
+        fToCKey = "# TEMPERATURE F TO C"
+        fToCLine = self.parseKey(data,fToCKey)
+
+        if self.checkBoxFC.isChecked():
+            data[fToCLine+1] = 'df_ZH[["t1","t2","t3","t4"]] = df_ZH[["t1","t2","t3","t4"]].apply(lambda x: (x-32)/1.8, axis=1)\n'
+            data[fToCLine+2] =  'df_Pressure[["t_stream"]] = df_Pressure[["t_stream"]].apply(lambda x: (x-32)/1.8, axis=1)\n' 
+        else:
+            data[fToCLine+1] = '\n'
+            data[fToCLine+2] = '\n'
+        
+        self.saveScript(data)
+        self.previsualizeCleaning()
+
+    def fromCtoK(self):
+        data = self.openScript()
+
+        cToKKey = "# TEMPERATURE C TO K"
+        cToKLine = self.parseKey(data,cToKKey)
+
+        if self.checkBoxCK.isChecked():
+            data[cToKLine+1] = 'df_cleaned[["t_stream","t1","t2","t3","t4"]] = df_cleaned[["t_stream","t1","t2","t3","t4"]].apply(lambda x: x+273.15, axis=1)\n'
+        else:
+            data[cToKLine+1] = '\n'
 
         self.saveScript(data)
         self.previsualizeCleaning()
@@ -847,6 +882,8 @@ class DialogCleanupMain(QtWidgets.QDialog, From_DialogCleanUpMain[0]):
             pass
         self.filter_dic = dict.fromkeys(self.varList[1:],False)
         self.checkBoxFilter.setChecked(False)
+        self.checkBoxFC.setChecked(False)
+        self.checkBoxCK.setChecked(False)
         self.previsualizeCleaning()
     
     

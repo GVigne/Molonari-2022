@@ -93,8 +93,8 @@ class RawMeasuresPressDb():
         col = df.columns
         for ind in df.index:
             insertQuery.addBindValue(str(df[col[0]][ind]))
-            insertQuery.addBindValue(str(df[col[1]][ind]))
             insertQuery.addBindValue(str(df[col[2]][ind]))
+            insertQuery.addBindValue(str(df[col[1]][ind]))
             insertQuery.addBindValue(str(pointkey))
             
             insertQuery.exec_()
